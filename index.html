@@ -74,72 +74,67 @@
   ::-webkit-scrollbar-thumb:hover { background: #9B97AD; }
   #editor:focus { outline: none; }
 
+  /* 文章标题区：与 740px 画布对齐的文档式标题，不再是表单输入框 */
   .article-title-bar {
-    display:flex;
-    align-items:center;
-    gap:14px;
-    min-height:78px;
-    padding:12px 20px;
-    background:#F8F7FC;
-    border-bottom:1px solid #E4E1ED;
-    box-shadow:0 2px 8px rgba(37,34,56,.035);
     flex:0 0 auto;
     z-index:9;
+    padding:18px 40px 14px;
+    background:#FFFFFF;
+    border-bottom:1px solid #ECEAF3;
   }
-  .article-title-label {
-    flex:0 0 auto;
-    color:#5B43C6;
-    background:#EEE9FF;
-    border:1px solid #D8CEFF;
-    border-radius:6px;
-    padding:6px 9px;
-    font-size:12px;
-    font-weight:700;
-    letter-spacing:.04em;
-    white-space:nowrap;
-  }
-  .article-title-field {
-    min-width:0;
-    flex:1 1 auto;
+  .article-title-inner { max-width:740px; margin:0 auto; }
+  .article-title-meta {
     display:flex;
     align-items:center;
+    justify-content:space-between;
     gap:12px;
-    padding:0 12px 0 14px;
-    background:#fff;
-    border:1px solid #D8D5E4;
-    border-radius:9px;
-    box-shadow:0 1px 2px rgba(37,34,56,.04);
-    transition:border-color 160ms ease, box-shadow 160ms ease;
+    margin-bottom:6px;
   }
-  .article-title-field:focus-within { border-color:#8066E8; box-shadow:0 0 0 2px rgba(109,74,255,.10); }
-  .article-title-field input {
-    min-width:0;
+  .article-title-eyebrow {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    color:#8C889B;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.08em;
+  }
+  .article-title-eyebrow i {
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--accent);
+  }
+  .article-title-count {
+    color:#A6A2B5;
+    font-family:ui-monospace,Menlo,Monaco,Consolas,monospace;
+    font-size:11px;
+    font-variant-numeric:tabular-nums;
+    transition:color 160ms ease;
+  }
+  .article-title-count.is-over { color:#C2410C; font-weight:700; }
+  .article-title-input {
+    display:block;
     width:100%;
-    padding:8px 0;
+    padding:2px 0 8px;
     border:0;
+    border-bottom:1.5px solid transparent;
     outline:0;
     background:transparent;
-    color:#252238;
+    color:#13111E;
     font-family:"Songti SC",STSong,SimSun,serif;
-    font-size:18px;
-    font-weight:600;
+    font-size:24px;
+    font-weight:700;
     line-height:1.4;
-    letter-spacing:.01em;
+    letter-spacing:.02em;
+    transition:border-color 160ms ease;
   }
-  .article-title-field input::placeholder { color:#B0ACBB; font-weight:500; }
-  .article-title-hint {
-    flex:0 0 auto;
-    color:#8C889B;
-    font-size:10px;
-    font-weight:500;
-    white-space:nowrap;
-    padding-left:12px;
-    border-left:1px solid #E6E2EF;
-  }
+  .article-title-input:hover { border-bottom-color:#E4E1ED; }
+  .article-title-input:focus { border-bottom-color:#8066E8; }
+  .article-title-input::placeholder { color:#C4C0D0; font-weight:500; }
   @media (max-width: 860px) {
-    .article-title-bar { gap:10px; padding:10px 16px; }
-    .article-title-field input { font-size:17px; }
-    .article-title-hint { display:none; }
+    .article-title-bar { padding:14px 18px 10px; }
+    .article-title-input { font-size:20px; }
   }
 
   .editor-toolbar {
@@ -311,6 +306,10 @@
 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </button>
 </div>
+<button class="px-3 py-1.5 text-xs font-medium text-ink-700 hover:text-brand hover:border-brand/40 hover:bg-brand-soft/40 border border-ink-200 rounded-md transition flex items-center space-x-1.5 active:scale-95" id="draftHistoryBtn" title="查看和恢复历史作品">
+<svg class="w-3.5 h-3.5 text-ink-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 8v4l2.5 2.5M3.05 11a9 9 0 1 1 .5 4M3 4v5h5" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path></svg>
+<span>历史草稿</span>
+</button>
 <button class="px-3 py-1.5 text-xs font-medium text-ink-700 hover:text-brand hover:border-brand/40 hover:bg-brand-soft/40 border border-ink-200 rounded-md transition flex items-center space-x-1.5 active:scale-95" id="importDraftBtn">
 <svg class="w-3.5 h-3.5 text-ink-400 group-hover:text-brand" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path></svg>
 <span>导入文章</span>
@@ -628,10 +627,12 @@
 <!-- 中间编辑区 -->
 <main class="flex-1 flex flex-col bg-[#FAF9FF] overflow-hidden relative">
 <div class="article-title-bar" id="articleTitleEditorPanel">
-<label class="article-title-label" for="articleTitleEditor">公众号文章标题</label>
-<div class="article-title-field">
-<input id="articleTitleEditor" placeholder="请输入文章标题" type="text" value="北京周末去哪玩？春日踏青与公园漫步手记" />
-<span class="article-title-hint">发布到公众号的标题</span>
+<div class="article-title-inner">
+<div class="article-title-meta">
+<label class="article-title-eyebrow" for="articleTitleEditor"><i></i>公众号文章标题</label>
+<span class="article-title-count" id="articleTitleCount" title="公众号标题最多 64 个字">0 / 64</span>
+</div>
+<input class="article-title-input" id="articleTitleEditor" maxlength="120" placeholder="输入一个好标题，让读者愿意点开" type="text" value="北京周末去哪玩？春日踏青与公园漫步手记" />
 </div>
 </div>
 <!-- 段落排印工具栏 -->
@@ -797,6 +798,27 @@
 </aside>
 </div>
 <!-- 导入文章弹窗 -->
+<!-- 历史草稿弹窗 -->
+<div class="fixed inset-0 bg-ink-950/60 backdrop-blur-xs z-50 flex items-center justify-center hidden" id="draftHistoryModal">
+<div class="bg-white rounded-xl shadow-pop w-[640px] max-w-[92vw] max-h-[82vh] overflow-hidden border border-ink-200 flex flex-col">
+<div class="px-5 py-3.5 border-b border-ink-100 flex items-center justify-between shrink-0">
+<div class="flex items-center space-x-2">
+<div class="w-6 h-6 rounded-md bg-brand-soft text-brand flex items-center justify-center font-bold text-xs">稿</div>
+<h3 class="font-serif font-bold text-sm text-ink-950">历史草稿</h3>
+<span class="text-[11px] text-ink-400 font-mono" id="draftHistoryCount"></span>
+</div>
+<button class="p-1 text-ink-400 hover:text-ink-700 rounded" id="draftHistoryClose" aria-label="关闭">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+<div class="px-5 pt-4 pb-3 flex items-center space-x-2 shrink-0">
+<input class="flex-1 text-xs px-3 py-2 bg-white border border-ink-200 rounded-md focus:ring-1 focus:ring-brand focus:border-brand placeholder-ink-400" id="draftHistorySearch" placeholder="搜索标题或正文..." type="text"/>
+<button class="px-3.5 py-2 text-xs bg-brand hover:bg-brand-dark text-white rounded-md font-semibold transition active:scale-95 shadow-sm shadow-brand/20 whitespace-nowrap" id="draftHistoryNew">＋ 新建空白草稿</button>
+</div>
+<div class="flex-1 overflow-y-auto px-5 pb-4 space-y-2" id="draftHistoryList"></div>
+<div class="px-5 py-2.5 bg-[#FAF9FF] border-t border-ink-100 text-[11px] text-ink-400 shrink-0">作品会在编辑时自动保存到本机浏览器（最多保留 60 篇），清除浏览器数据会一并删除。</div>
+</div>
+</div>
 <div class="fixed inset-0 bg-ink-950/60 backdrop-blur-xs z-50 flex items-center justify-center hidden" id="importModal">
 <div class="bg-white rounded-xl shadow-pop w-[560px] max-w-[90vw] overflow-hidden border border-ink-200">
 <div class="px-5 py-3.5 border-b border-ink-100 flex items-center justify-between">
@@ -2675,6 +2697,10 @@
     return `${tens > 1 ? digits[tens] : ''}拾${ones ? digits[ones] : ''}`;
   }
 
+  // Component sizes are designed at 16px and scale with the 正文字号 control, so
+  // the whole article (headings, lists, quotes, cards, tables) resizes together.
+  const fz = px => Math.max(10, Math.round(px * typographyState.fontSize / 16));
+
   // One section-heading design per template. WeChat-safe: p/span + inline style,
   // decorations are glyphs or borders on non-empty spans, no float/transform.
   function headingBlock(index, parts, profile, roleAttribute = '', editorMode = false) {
@@ -2686,51 +2712,51 @@
     const label = escaped(parts.label);
     const sub = escaped(parts.sub);
     const base = `padding:0;color:${p.title};font-family:${p.font};font-weight:700;letter-spacing:0;text-indent:0;text-align:left;word-break:break-word;`;
-    const labelSpan = (style = '', inner = label) => `<span${part('label')} style="font-size:19px;line-height:1.5;${style}">${inner}</span>`;
-    const subSpan = (style = '', prefix = '') => sub ? `<span style="display:block;margin:4px 0 0 0;color:${p.muted};font-size:12px;line-height:1.6;font-weight:400;letter-spacing:.06em;${style}">${prefix ? `<span${lock}>${prefix}</span>` : ''}<span${part('sub')}>${sub}</span></span>` : '';
+    const labelSpan = (style = '', inner = label) => `<span${part('label')} style="font-size:${fz(19)}px;line-height:1.5;${style}">${inner}</span>`;
+    const subSpan = (style = '', prefix = '') => sub ? `<span style="display:block;margin:4px 0 0 0;color:${p.muted};font-size:${fz(12)}px;line-height:1.6;font-weight:400;letter-spacing:.06em;${style}">${prefix ? `<span${lock}>${prefix}</span>` : ''}<span${part('sub')}>${sub}</span></span>` : '';
     const r = roleAttribute;
     switch (p.theme) {
       case 'magazine':
-        return `<p${r} style="margin:40px 0 20px 0;${base}"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 4px 0 0;color:${p.accent};font-family:Georgia,'Times New Roman',serif;font-size:38px;line-height:1.25;font-weight:400;">${num}</span><span${lock} style="display:inline-block;vertical-align:middle;margin:0 12px 0 0;color:${p.line};font-size:34px;line-height:1.25;font-weight:300;">/</span><span style="display:inline-block;vertical-align:middle;max-width:62%;">${labelSpan('display:block;')}${subSpan('margin-top:2px;font-size:11px;letter-spacing:.2em;')}</span></p>`;
+        return `<p${r} style="margin:40px 0 20px 0;${base}"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 4px 0 0;color:${p.accent};font-family:Georgia,'Times New Roman',serif;font-size:${fz(38)}px;line-height:1.25;font-weight:400;">${num}</span><span${lock} style="display:inline-block;vertical-align:middle;margin:0 12px 0 0;color:${p.line};font-size:${fz(34)}px;line-height:1.25;font-weight:300;">/</span><span style="display:inline-block;vertical-align:middle;max-width:62%;">${labelSpan('display:block;')}${subSpan(`margin-top:2px;font-size:${fz(11)}px;letter-spacing:.2em;`)}</span></p>`;
       case 'reading':
         return `<p${r} style="margin:36px 0 20px 0;${base}padding:2px 0 2px 12px;border-left:4px solid ${p.accent};">${labelSpan('display:block;')}${subSpan('', '—— ')}</p>`;
       case 'cinnabar':
-        return `<p${r} style="margin:36px 0 20px 0;${base}"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 12px 0 0;padding:2px;border:1px solid ${p.accent};"><span style="display:block;width:28px;height:28px;line-height:28px;background-color:${p.accent};color:#FFFFFF;text-align:center;font-size:15px;font-weight:400;">${cn}</span></span><span style="display:inline-block;vertical-align:middle;max-width:72%;">${labelSpan('display:block;')}${subSpan('', '—— ')}</span></p>`;
+        return `<p${r} style="margin:36px 0 20px 0;${base}"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 12px 0 0;padding:2px;border:1px solid ${p.accent};"><span style="display:block;width:28px;height:28px;line-height:28px;background-color:${p.accent};color:#FFFFFF;text-align:center;font-size:${fz(15)}px;font-weight:400;">${cn}</span></span><span style="display:inline-block;vertical-align:middle;max-width:72%;">${labelSpan('display:block;')}${subSpan('', '—— ')}</span></p>`;
       case 'city': {
         const chars = [...parts.label];
         const inner = `<span style="padding:0 0 2px 0;border-bottom:3px solid ${p.accent};">${escaped(chars.slice(0, 2).join(''))}</span>${escaped(chars.slice(2).join(''))}`;
-        return `<p${r} style="margin:38px 0 20px 0;${base}">${labelSpan('display:block;font-size:20px;', inner)}${subSpan('margin-top:8px;padding-left:2em;', '—— ')}</p>`;
+        return `<p${r} style="margin:38px 0 20px 0;${base}">${labelSpan(`display:block;font-size:${fz(20)}px;`, inner)}${subSpan('margin-top:8px;padding-left:2em;', '—— ')}</p>`;
       }
       case 'lingnan':
-        return `<p${r} style="margin:36px 0 20px 0;${base}"><span${lock} style="display:inline-block;vertical-align:middle;width:36px;height:36px;line-height:36px;border-radius:50%;background-color:${p.accent};color:#FFFFFF;text-align:center;font-family:Georgia,serif;font-size:16px;font-weight:400;">${num}</span><span${lock} style="display:inline-block;vertical-align:middle;margin:0 8px;color:${p.line};font-size:20px;line-height:1.25;font-weight:400;">❦</span><span style="display:inline-block;vertical-align:middle;max-width:62%;">${labelSpan('display:block;')}${subSpan('letter-spacing:.1em;')}</span></p>`;
+        return `<p${r} style="margin:36px 0 20px 0;${base}"><span${lock} style="display:inline-block;vertical-align:middle;width:36px;height:36px;line-height:36px;border-radius:50%;background-color:${p.accent};color:#FFFFFF;text-align:center;font-family:Georgia,serif;font-size:${fz(16)}px;font-weight:400;">${num}</span><span${lock} style="display:inline-block;vertical-align:middle;margin:0 8px;color:${p.line};font-size:${fz(20)}px;line-height:1.25;font-weight:400;">❦</span><span style="display:inline-block;vertical-align:middle;max-width:62%;">${labelSpan('display:block;')}${subSpan('letter-spacing:.1em;')}</span></p>`;
       case 'gazette':
-        return `<p${r} style="margin:36px 0 20px 0;${base}padding:6px 0;border-top:2px solid ${p.ink};border-bottom:1px solid ${p.ink};"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 10px 0 0;padding:0 8px;background-color:${p.accent};color:${p.bg};font-family:Georgia,serif;font-size:20px;line-height:1.5;font-weight:400;">${num}</span>${labelSpan('vertical-align:middle;')}${sub ? `<span style="display:inline-block;vertical-align:middle;margin:0 0 0 10px;color:${p.muted};font-size:12px;font-weight:400;"><span${part('sub')}>${sub}</span></span>` : ''}</p>`;
+        return `<p${r} style="margin:36px 0 20px 0;${base}padding:6px 0;border-top:2px solid ${p.ink};border-bottom:1px solid ${p.ink};"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 10px 0 0;padding:0 8px;background-color:${p.accent};color:${p.bg};font-family:Georgia,serif;font-size:${fz(20)}px;line-height:1.5;font-weight:400;">${num}</span>${labelSpan('vertical-align:middle;')}${sub ? `<span style="display:inline-block;vertical-align:middle;margin:0 0 0 10px;color:${p.muted};font-size:${fz(12)}px;font-weight:400;"><span${part('sub')}>${sub}</span></span>` : ''}</p>`;
       case 'tech':
-        return `<p${r} style="margin:36px 0 20px 0;${base}padding:0 0 10px 0;border-bottom:1px solid ${p.line};"><span${lock} style="margin:0 8px 0 0;color:${p.accent};font-family:${MONO};font-size:15px;font-weight:700;">[${num}]</span>${labelSpan()}${subSpan(`font-family:${MONO};font-size:11px;letter-spacing:.08em;`, '// ')}</p>`;
+        return `<p${r} style="margin:36px 0 20px 0;${base}padding:0 0 10px 0;border-bottom:1px solid ${p.line};"><span${lock} style="margin:0 8px 0 0;color:${p.accent};font-family:${MONO};font-size:${fz(15)}px;font-weight:700;">[${num}]</span>${labelSpan()}${subSpan(`font-family:${MONO};font-size:${fz(11)}px;letter-spacing:.08em;`, '// ')}</p>`;
       case 'road':
-        return `<p${r} style="margin:36px 0 20px 0;${base}padding:0 0 10px 0;border-bottom:2px dashed ${p.accent};"><span${lock} style="display:inline-block;margin:0 0 6px 0;padding:1px 8px;border-radius:2px;background-color:${p.accent};color:#FFFFFF;font-family:${MONO};font-size:11px;line-height:1.8;letter-spacing:.12em;font-weight:700;">KM ${num}</span>${labelSpan('display:block;font-size:20px;')}${subSpan()}</p>`;
+        return `<p${r} style="margin:36px 0 20px 0;${base}padding:0 0 10px 0;border-bottom:2px dashed ${p.accent};"><span${lock} style="display:inline-block;margin:0 0 6px 0;padding:1px 8px;border-radius:2px;background-color:${p.accent};color:#FFFFFF;font-family:${MONO};font-size:${fz(11)}px;line-height:1.8;letter-spacing:.12em;font-weight:700;">KM ${num}</span>${labelSpan(`display:block;font-size:${fz(20)}px;`)}${subSpan()}</p>`;
       case 'photo':
-        return `<p${r} style="margin:44px 0 20px 0;${base}"><span${lock} style="display:block;margin:0 0 6px 0;color:${p.muted};font-family:${MONO};font-size:11px;line-height:1.6;letter-spacing:.25em;font-weight:400;">FRAME ${num}</span>${labelSpan('display:block;font-size:22px;line-height:1.4;')}${subSpan()}</p>`;
+        return `<p${r} style="margin:44px 0 20px 0;${base}"><span${lock} style="display:block;margin:0 0 6px 0;color:${p.muted};font-family:${MONO};font-size:${fz(11)}px;line-height:1.6;letter-spacing:.25em;font-weight:400;">FRAME ${num}</span>${labelSpan(`display:block;font-size:${fz(22)}px;line-height:1.4;`)}${subSpan()}</p>`;
       case 'nature':
-        return `<p${r} style="margin:36px 0 20px 0;${base}padding:0 0 8px 0;border-bottom:1px dashed ${p.line};"><span${lock} style="margin:0 6px 0 0;color:${p.accent};font-size:15px;font-weight:400;">▲</span><span${lock} style="margin:0 10px 0 0;color:${p.accent};font-family:${MONO};font-size:14px;">${num}</span>${labelSpan()}${subSpan('padding-left:2.6em;')}</p>`;
+        return `<p${r} style="margin:36px 0 20px 0;${base}padding:0 0 8px 0;border-bottom:1px dashed ${p.line};"><span${lock} style="margin:0 6px 0 0;color:${p.accent};font-size:${fz(15)}px;font-weight:400;">▲</span><span${lock} style="margin:0 10px 0 0;color:${p.accent};font-family:${MONO};font-size:${fz(14)}px;">${num}</span>${labelSpan()}${subSpan('padding-left:2.6em;')}</p>`;
       case 'journal':
-        return `<p${r} style="margin:36px 0 20px 0;${base}"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 10px 0 0;padding:1px 8px;border:1px dashed ${p.accent};border-radius:4px;color:${p.accent};font-family:${MONO};font-size:12px;line-height:1.7;font-weight:400;">NO.${num}</span>${labelSpan('vertical-align:middle;')}${subSpan()}</p>`;
+        return `<p${r} style="margin:36px 0 20px 0;${base}"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 10px 0 0;padding:1px 8px;border:1px dashed ${p.accent};border-radius:4px;color:${p.accent};font-family:${MONO};font-size:${fz(12)}px;line-height:1.7;font-weight:400;">NO.${num}</span>${labelSpan('vertical-align:middle;')}${subSpan()}</p>`;
       case 'zen':
-        return `<p${r} style="margin:48px 0 26px 0;${base}text-align:center;font-weight:600;"><span${lock} style="display:block;margin:0 0 10px 0;color:${p.accent};font-size:14px;letter-spacing:.3em;font-weight:400;">${cn}</span>${labelSpan('display:block;letter-spacing:.15em;')}${subSpan('letter-spacing:.12em;')}<span${lock} style="display:inline-block;width:36px;margin:14px 0 0 0;border-top:1px solid ${p.accent};font-size:1px;line-height:2px;">&nbsp;</span></p>`;
+        return `<p${r} style="margin:48px 0 26px 0;${base}text-align:center;font-weight:600;"><span${lock} style="display:block;margin:0 0 10px 0;color:${p.accent};font-size:${fz(14)}px;letter-spacing:.3em;font-weight:400;">${cn}</span>${labelSpan('display:block;letter-spacing:.15em;')}${subSpan('letter-spacing:.12em;')}<span${lock} style="display:inline-block;width:36px;margin:14px 0 0 0;border-top:1px solid ${p.accent};font-size:1px;line-height:2px;">&nbsp;</span></p>`;
       case 'food':
-        return `<p${r} style="margin:38px 0 20px 0;${base}"><span${lock} style="display:inline-block;margin:0 0 6px 0;padding:1px 10px;border-radius:999px;background-color:${p.soft};color:${p.accent};font-size:12px;line-height:1.8;letter-spacing:.15em;font-weight:700;">第${cn}道</span>${labelSpan('display:block;font-size:20px;')}${subSpan()}<span${lock} style="display:inline-block;width:48px;margin:8px 0 0 0;border-top:3px solid ${p.accent};font-size:1px;line-height:2px;">&nbsp;</span></p>`;
+        return `<p${r} style="margin:38px 0 20px 0;${base}"><span${lock} style="display:inline-block;margin:0 0 6px 0;padding:1px 10px;border-radius:999px;background-color:${p.soft};color:${p.accent};font-size:${fz(12)}px;line-height:1.8;letter-spacing:.15em;font-weight:700;">第${cn}道</span>${labelSpan(`display:block;font-size:${fz(20)}px;`)}${subSpan()}<span${lock} style="display:inline-block;width:48px;margin:8px 0 0 0;border-top:3px solid ${p.accent};font-size:1px;line-height:2px;">&nbsp;</span></p>`;
       case 'finance':
-        return `<p${r} style="margin:38px 0 20px 0;${base}padding:0 0 8px 0;border-bottom:2px solid ${p.title};"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 12px 0 0;padding:3px 10px;background-color:${p.title};color:${p.accent};font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.6;letter-spacing:.12em;font-weight:700;">PART ${num}</span><span style="display:inline-block;vertical-align:middle;max-width:66%;">${labelSpan('display:block;')}${subSpan('letter-spacing:.08em;')}</span></p>`;
+        return `<p${r} style="margin:38px 0 20px 0;${base}padding:0 0 8px 0;border-bottom:2px solid ${p.title};"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 12px 0 0;padding:3px 10px;background-color:${p.title};color:${p.accent};font-family:Georgia,'Times New Roman',serif;font-size:${fz(13)}px;line-height:1.6;letter-spacing:.12em;font-weight:700;">PART ${num}</span><span style="display:inline-block;vertical-align:middle;max-width:66%;">${labelSpan('display:block;')}${subSpan('letter-spacing:.08em;')}</span></p>`;
       case 'kids':
-        return `<p${r} style="margin:36px 0 20px 0;${base}padding:12px 14px;border-radius:14px;background-color:${p.soft};"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 10px 0 0;padding:2px 12px;border-radius:999px;background-color:${p.accent};color:#FFFFFF;font-size:12px;line-height:1.8;letter-spacing:.08em;font-weight:700;">STEP ${index}</span>${labelSpan('vertical-align:middle;')}${subSpan()}</p>`;
+        return `<p${r} style="margin:36px 0 20px 0;${base}padding:12px 14px;border-radius:14px;background-color:${p.soft};"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 10px 0 0;padding:2px 12px;border-radius:999px;background-color:${p.accent};color:#FFFFFF;font-size:${fz(12)}px;line-height:1.8;letter-spacing:.08em;font-weight:700;">STEP ${index}</span>${labelSpan('vertical-align:middle;')}${subSpan()}</p>`;
       case 'festival':
-        return `<p${r} style="margin:44px 0 24px 0;${base}text-align:center;"><span${lock} style="display:block;margin:0 0 10px 0;color:${p.accent};font-size:13px;line-height:1.6;letter-spacing:.3em;font-weight:400;">❖ 第${cn}章 ❖</span>${labelSpan(`display:inline-block;padding:6px 22px;border-top:2px solid ${p.line};border-bottom:2px solid ${p.line};background-color:${p.accent};color:#FFFFFF;letter-spacing:.12em;`)}${subSpan('letter-spacing:.12em;')}</p>`;
+        return `<p${r} style="margin:44px 0 24px 0;${base}text-align:center;"><span${lock} style="display:block;margin:0 0 10px 0;color:${p.accent};font-size:${fz(13)}px;line-height:1.6;letter-spacing:.3em;font-weight:400;">❖ 第${cn}章 ❖</span>${labelSpan(`display:inline-block;padding:6px 22px;border-top:2px solid ${p.line};border-bottom:2px solid ${p.line};background-color:${p.accent};color:#FFFFFF;letter-spacing:.12em;`)}${subSpan('letter-spacing:.12em;')}</p>`;
       case 'health':
-        return `<p${r} style="margin:36px 0 20px 0;${base}padding:0 0 10px 0;border-bottom:1px solid ${p.line};"><span${lock} style="display:inline-block;vertical-align:middle;width:28px;height:28px;margin:0 8px 0 0;border-radius:6px;background-color:${p.accent};color:#FFFFFF;text-align:center;font-size:15px;line-height:28px;font-weight:700;">✚</span><span${lock} style="display:inline-block;vertical-align:middle;margin:0 8px 0 0;color:${p.accent};font-family:${MONO};font-size:14px;">${num}</span><span style="display:inline-block;vertical-align:middle;max-width:66%;">${labelSpan('display:block;')}${subSpan()}</span></p>`;
+        return `<p${r} style="margin:36px 0 20px 0;${base}padding:0 0 10px 0;border-bottom:1px solid ${p.line};"><span${lock} style="display:inline-block;vertical-align:middle;width:28px;height:28px;margin:0 8px 0 0;border-radius:6px;background-color:${p.accent};color:#FFFFFF;text-align:center;font-size:${fz(15)}px;line-height:28px;font-weight:700;">✚</span><span${lock} style="display:inline-block;vertical-align:middle;margin:0 8px 0 0;color:${p.accent};font-family:${MONO};font-size:${fz(14)}px;">${num}</span><span style="display:inline-block;vertical-align:middle;max-width:66%;">${labelSpan('display:block;')}${subSpan()}</span></p>`;
       case 'emotion':
-        return `<p${r} style="margin:46px 0 24px 0;${base}text-align:center;"><span${lock} style="display:block;margin:0 0 8px 0;color:${p.accent};font-size:15px;line-height:1.6;letter-spacing:.3em;font-weight:400;">♡ ${num}</span>${labelSpan('display:block;letter-spacing:.12em;')}${subSpan('font-style:italic;letter-spacing:.1em;')}</p>`;
+        return `<p${r} style="margin:46px 0 24px 0;${base}text-align:center;"><span${lock} style="display:block;margin:0 0 8px 0;color:${p.accent};font-size:${fz(15)}px;line-height:1.6;letter-spacing:.3em;font-weight:400;">♡ ${num}</span>${labelSpan('display:block;letter-spacing:.12em;')}${subSpan('font-style:italic;letter-spacing:.1em;')}</p>`;
       default:
-        return `<p${r} style="margin:34px 0 18px 0;${base}padding:10px 0 10px 13px;border-left:3px solid ${p.accent};border-bottom:1px solid ${p.line};"><span${lock} style="margin-right:10px;color:${p.accent};font-size:13px;">${num}</span>${labelSpan()}${subSpan()}</p>`;
+        return `<p${r} style="margin:34px 0 18px 0;${base}padding:10px 0 10px 13px;border-left:3px solid ${p.accent};border-bottom:1px solid ${p.line};"><span${lock} style="margin-right:10px;color:${p.accent};font-size:${fz(13)}px;">${num}</span>${labelSpan()}${subSpan()}</p>`;
     }
   }
 
@@ -2847,32 +2873,32 @@
 
     const renderTip = ({ title, bodyHtml }) => {
       const box = p.quote === 'frame' ? `border:1px solid ${p.ink};` : `border-left:3px solid ${p.accent};`;
-      return `<section${role('tip')} style="margin:26px 0;padding:12px 16px;${box}border-radius:0;background-color:${p.soft};"><p${part('title')} style="margin:0 0 6px 0;${textBase}color:${p.title};font-size:14px;line-height:1.7;font-weight:700;"><span${part('badge')}${locked} style="display:inline-block;margin:0 8px 0 0;padding:0 7px;background-color:${p.accent};color:#FFFFFF;font-size:11px;line-height:1.8;letter-spacing:.1em;font-weight:700;">${p.tipLabel || 'TIP'}</span>${escaped(title)}</p>${bodyHtml || editorMode ? `<p style="margin:0;${textBase}color:${p.ink};font-size:14px;line-height:1.85;">${emptyEditable(bodyHtml)}</p>` : ''}</section>`;
+      return `<section${role('tip')} style="margin:26px 0;padding:12px 16px;${box}border-radius:0;background-color:${p.soft};"><p${part('title')} style="margin:0 0 6px 0;${textBase}color:${p.title};font-size:${fz(14)}px;line-height:1.7;font-weight:700;"><span${part('badge')}${locked} style="display:inline-block;margin:0 8px 0 0;padding:0 7px;background-color:${p.accent};color:#FFFFFF;font-size:${fz(11)}px;line-height:1.8;letter-spacing:.1em;font-weight:700;">${p.tipLabel || 'TIP'}</span>${escaped(title)}</p>${bodyHtml || editorMode ? `<p style="margin:0;${textBase}color:${p.ink};font-size:${fz(14)}px;line-height:${typographyState.lineHeight};">${emptyEditable(bodyHtml)}</p>` : ''}</section>`;
     };
 
     const renderRoute = ({ label, title, tags, stations }) => {
       const list = stations.length ? stations : (editorMode ? [{ name: '点击编辑站点', note: '' }] : []);
-      const tagHtml = tags.map(tag => `<span${part('tag')} style="display:inline-block;margin:0 6px 4px 0;padding:1px 9px;border-radius:999px;background-color:${p.soft};color:${p.title};font-size:12px;line-height:1.7;">${escaped(tag)}</span>`).join('');
+      const tagHtml = tags.map(tag => `<span${part('tag')} style="display:inline-block;margin:0 6px 4px 0;padding:1px 9px;border-radius:999px;background-color:${p.soft};color:${p.title};font-size:${fz(12)}px;line-height:1.7;">${escaped(tag)}</span>`).join('');
       const stationHtml = list.map((station, index) => {
         const glyph = index === 0 || index === list.length - 1 ? '●' : '○';
-        const note = station.note ? `<br/><span${part('note')} style="display:inline-block;margin:0 0 0 20px;color:${muted};font-size:12px;line-height:1.6;">${escaped(station.note)}</span>` : '';
-        return `<p style="margin:0;padding:0 0 10px 0;font-family:${p.font};text-indent:0;text-align:left;color:${p.ink};font-size:14px;line-height:1.7;"><span${part('dot')}${locked} style="margin:0 8px 0 0;color:${p.accent};font-size:12px;">${glyph}</span>${escaped(station.name)}${note}</p>`;
+        const note = station.note ? `<br/><span${part('note')} style="display:inline-block;margin:0 0 0 20px;color:${muted};font-size:${fz(12)}px;line-height:1.6;">${escaped(station.note)}</span>` : '';
+        return `<p style="margin:0;padding:0 0 10px 0;font-family:${p.font};text-indent:0;text-align:left;color:${p.ink};font-size:${fz(14)}px;line-height:1.7;"><span${part('dot')}${locked} style="margin:0 8px 0 0;color:${p.accent};font-size:${fz(12)}px;">${glyph}</span>${escaped(station.name)}${note}</p>`;
       }).join('');
       const frame = radius === '0'
         ? `border:1px solid ${p.line};border-top:3px solid ${p.accent};border-radius:0;`
         : `border:1px solid ${p.line};border-radius:${radius};`;
-      return `<section${role('route')} style="margin:26px 0;padding:14px 16px 6px 16px;${frame}"><p${part('label')} style="margin:0 0 2px 0;${textBase}color:${p.accent};font-family:${MONO};font-size:11px;line-height:1.6;letter-spacing:.15em;">${escaped(label || 'ROUTE')}</p><p${part('title')} style="margin:0 0 8px 0;${textBase}color:${p.title};font-size:16px;line-height:1.6;font-weight:700;">${escaped(title)}</p>${tagHtml ? `<p${part('tags')} style="margin:0 0 6px 0;${textBase}line-height:1.6;">${tagHtml}</p>` : ''}${stationHtml ? `<section${part('stations')} style="margin:6px 0 8px 4px;padding:2px 0 0 14px;border-left:1px dashed ${p.line};">${stationHtml}</section>` : ''}</section>`;
+      return `<section${role('route')} style="margin:26px 0;padding:14px 16px 6px 16px;${frame}"><p${part('label')} style="margin:0 0 2px 0;${textBase}color:${p.accent};font-family:${MONO};font-size:${fz(11)}px;line-height:1.6;letter-spacing:.15em;">${escaped(label || 'ROUTE')}</p><p${part('title')} style="margin:0 0 8px 0;${textBase}color:${p.title};font-size:${fz(16)}px;line-height:1.6;font-weight:700;">${escaped(title)}</p>${tagHtml ? `<p${part('tags')} style="margin:0 0 6px 0;${textBase}line-height:1.6;">${tagHtml}</p>` : ''}${stationHtml ? `<section${part('stations')} style="margin:6px 0 8px 4px;padding:2px 0 0 14px;border-left:1px dashed ${p.line};">${stationHtml}</section>` : ''}</section>`;
     };
 
     const renderCard = ({ category, title, rows }) => {
-      const rowHtml = rows.map(row => `<p style="margin:0 0 4px 0;${textBase}color:${p.ink};font-size:13px;line-height:1.8;">${row.key ? `<span${part('key')} style="display:inline-block;width:4em;color:${p.accent};font-size:12px;">${escaped(row.key)}</span>` : ''}${escaped(row.value)}</p>`).join('');
+      const rowHtml = rows.map(row => `<p style="margin:0 0 4px 0;${textBase}color:${p.ink};font-size:${fz(13)}px;line-height:1.8;">${row.key ? `<span${part('key')} style="display:inline-block;width:4em;color:${p.accent};font-size:${fz(12)}px;">${escaped(row.key)}</span>` : ''}${escaped(row.value)}</p>`).join('');
       const border = p.quote === 'frame' ? p.ink : p.line;
-      return `<section${role('card')} style="margin:26px 0;padding:0;border:1px solid ${border};border-radius:${radius};"><section style="margin:0 16px;padding:14px 0 12px 0;border-bottom:1px dashed ${border};">${category ? `<p${part('category')} style="margin:0 0 4px 0;${textBase}color:${p.accent};font-size:11px;line-height:1.6;letter-spacing:.1em;">${escaped(category)}</p>` : ''}<p${part('title')} style="margin:0;${textBase}color:${p.title};font-size:17px;line-height:1.5;font-weight:700;">${escaped(title)}</p></section>${rowHtml || editorMode ? `<section${part('rows')} style="margin:0;padding:10px 16px 10px 16px;">${rowHtml || `<p style="margin:0;${textBase}font-size:13px;line-height:1.8;color:${p.ink};"><br/></p>`}</section>` : ''}</section>`;
+      return `<section${role('card')} style="margin:26px 0;padding:0;border:1px solid ${border};border-radius:${radius};"><section style="margin:0 16px;padding:14px 0 12px 0;border-bottom:1px dashed ${border};">${category ? `<p${part('category')} style="margin:0 0 4px 0;${textBase}color:${p.accent};font-size:${fz(11)}px;line-height:1.6;letter-spacing:.1em;">${escaped(category)}</p>` : ''}<p${part('title')} style="margin:0;${textBase}color:${p.title};font-size:${fz(17)}px;line-height:1.5;font-weight:700;">${escaped(title)}</p></section>${rowHtml || editorMode ? `<section${part('rows')} style="margin:0;padding:10px 16px 10px 16px;">${rowHtml || `<p style="margin:0;${textBase}font-size:${fz(13)}px;line-height:1.8;color:${p.ink};"><br/></p>`}</section>` : ''}</section>`;
     };
 
     const renderQuote = ({ bodyHtml, cite }) => {
       if (p.quote === 'center') {
-        return `<section${role('quote')} style="margin:30px 0;padding:0 18px;text-align:center;"><p${part('mark')}${locked} style="margin:0;padding:0;text-indent:0;text-align:center;color:${p.line};font-family:Georgia,'Songti SC',serif;font-size:40px;line-height:1.25;">“</p><p style="margin:4px 0 12px 0;padding:0;text-indent:0;text-align:center;color:${p.title};font-family:${p.font};font-size:17px;font-style:italic;line-height:1.9;">${emptyEditable(bodyHtml)}</p>${cite || editorMode ? `<p${part('cite')} style="margin:0;padding:0;text-indent:0;text-align:center;line-height:1.6;"><span style="display:inline-block;padding:8px 0 0 0;border-top:1px solid ${p.accent};color:${muted};font-family:${p.font};font-size:12px;">— ${escaped(cite)}</span></p>` : ''}</section>`;
+        return `<section${role('quote')} style="margin:30px 0;padding:0 18px;text-align:center;"><p${part('mark')}${locked} style="margin:0;padding:0;text-indent:0;text-align:center;color:${p.line};font-family:Georgia,'Songti SC',serif;font-size:${fz(40)}px;line-height:1.25;">“</p><p style="margin:4px 0 12px 0;padding:0;text-indent:0;text-align:center;color:${p.title};font-family:${p.font};font-size:${fz(17)}px;font-style:italic;line-height:${typographyState.lineHeight};">${emptyEditable(bodyHtml)}</p>${cite || editorMode ? `<p${part('cite')} style="margin:0;padding:0;text-indent:0;text-align:center;line-height:1.6;"><span style="display:inline-block;padding:8px 0 0 0;border-top:1px solid ${p.accent};color:${muted};font-family:${p.font};font-size:${fz(12)}px;">— ${escaped(cite)}</span></p>` : ''}</section>`;
       }
       const boxes = {
         block: `padding:14px 18px;background-color:${p.soft};`,
@@ -2885,21 +2911,21 @@
       };
       const box = boxes[p.quote] || boxes.block;
       const textColor = p.quote === 'rule' ? p.accent : p.ink;
-      const mark = p.quote === 'rule' ? '' : `<p${part('mark')}${locked} style="margin:0;padding:0;text-indent:0;text-align:left;color:${p.quote === 'block' ? p.line : p.accent};font-family:Georgia,'Times New Roman',serif;font-size:36px;line-height:1.25;">“</p>`;
-      return `<section${role('quote')} style="margin:28px 0;${box}">${mark}<p style="margin:0;${textBase}color:${textColor};font-size:15px;font-style:italic;line-height:1.9;">${emptyEditable(bodyHtml)}</p>${cite || editorMode ? `<p${part('cite')} style="margin:8px 0 0 0;padding:0;text-indent:0;text-align:right;color:${muted};font-family:${p.font};font-size:12px;line-height:1.6;">—— ${escaped(cite)}</p>` : ''}</section>`;
+      const mark = p.quote === 'rule' ? '' : `<p${part('mark')}${locked} style="margin:0;padding:0;text-indent:0;text-align:left;color:${p.quote === 'block' ? p.line : p.accent};font-family:Georgia,'Times New Roman',serif;font-size:${fz(36)}px;line-height:1.25;">“</p>`;
+      return `<section${role('quote')} style="margin:28px 0;${box}">${mark}<p style="margin:0;${textBase}color:${textColor};font-size:${fz(15)}px;font-style:italic;line-height:${typographyState.lineHeight};">${emptyEditable(bodyHtml)}</p>${cite || editorMode ? `<p${part('cite')} style="margin:8px 0 0 0;padding:0;text-indent:0;text-align:right;color:${muted};font-family:${p.font};font-size:${fz(12)}px;line-height:1.6;">—— ${escaped(cite)}</p>` : ''}</section>`;
     };
 
     // Plain Markdown/body quotes: a quiet rule, visually distinct from the tip.
-    const renderNote = bodyHtml => `<section${role('note')} style="margin:24px 0;padding:2px 0 2px 14px;border-left:2px solid ${p.line};border-radius:0;"><p style="margin:0;${textBase}color:${muted};font-size:15px;line-height:1.9;">${emptyEditable(bodyHtml)}</p></section>`;
+    const renderNote = bodyHtml => `<section${role('note')} style="margin:24px 0;padding:2px 0 2px 14px;border-left:2px solid ${p.line};border-radius:0;"><p style="margin:0;${textBase}color:${muted};font-size:${fz(15)}px;line-height:${typographyState.lineHeight};">${emptyEditable(bodyHtml)}</p></section>`;
 
     const renderDivider = () => {
       const d = p.divider || { glyph: '◆', border: 'solid' };
       const ruleStyle = d.border === 'double' ? `3px double ${p.line}` : `1px ${d.border} ${p.line}`;
       const ruleSpan = width => `<span style="display:inline-block;width:${width};vertical-align:middle;border-top:${ruleStyle};font-size:1px;line-height:2px;">&nbsp;</span>`;
       let inner;
-      if (d.border === 'none') inner = `<span style="color:${p.accent};font-size:14px;letter-spacing:.3em;">${escaped(d.glyph)}</span>`;
+      if (d.border === 'none') inner = `<span style="color:${p.accent};font-size:${fz(14)}px;letter-spacing:.3em;">${escaped(d.glyph)}</span>`;
       else if (!d.glyph) inner = ruleSpan('100%');
-      else inner = `${ruleSpan('36%')}<span style="display:inline-block;vertical-align:middle;margin:0 10px;color:${p.accent};font-size:12px;line-height:1.25;">${escaped(d.glyph)}</span>${ruleSpan('36%')}`;
+      else inner = `${ruleSpan('36%')}<span style="display:inline-block;vertical-align:middle;margin:0 10px;color:${p.accent};font-size:${fz(12)}px;line-height:1.25;">${escaped(d.glyph)}</span>${ruleSpan('36%')}`;
       return `<p${role('divider')}${locked} style="margin:30px 0;padding:0;text-align:center;text-indent:0;line-height:1.25;">${inner}</p>`;
     };
 
@@ -2909,7 +2935,7 @@
       const rows = items.map((html, index) => {
         const ordered = type === 'ol';
         const marker = ordered ? String(index + 1).padStart(2, '0') : (p.bullet || '•');
-        return `<p style="margin:0 0 8px 0;padding:0 0 0 2em;font-family:${p.font};text-indent:-2em;text-align:left;color:${p.ink};font-size:15px;line-height:1.85;"><span${part('marker')}${locked} style="display:inline-block;width:2em;text-indent:0;color:${p.accent};font-family:${ordered ? "Georgia,'Times New Roman',serif" : p.font};font-size:${ordered ? '15px' : '12px'};font-weight:700;">${marker}</span>${html}</p>`;
+        return `<p style="margin:0 0 8px 0;padding:0 0 0 2em;font-family:${p.font};text-indent:-2em;text-align:left;color:${p.ink};font-size:${fz(15)}px;line-height:${typographyState.lineHeight};"><span${part('marker')}${locked} style="display:inline-block;width:2em;text-indent:0;color:${p.accent};font-family:${ordered ? "Georgia,'Times New Roman',serif" : p.font};font-size:${ordered ? fz(15) : fz(12)}px;font-weight:700;">${marker}</span>${html}</p>`;
       }).join('');
       return `<section${role('list')}${editorMode ? ` data-list="${type}"` : ''} style="margin:0 0 24px 0;padding:0;">${rows}</section>`;
     };
@@ -2924,7 +2950,7 @@
         const border = grid ? `border:1px solid ${p.line};` : `border:0;border-bottom:1px solid ${p.line};${head ? `border-top:1px solid ${p.line};` : ''}`;
         const cells = Array.from({ length: cols }, (_, colIndex) => {
           const text = row[colIndex] || '';
-          return `<td style="padding:8px 6px;${border}${head ? `background-color:${p.soft};color:${p.title};font-weight:700;` : `color:${p.ink};`}font-family:${p.font};font-size:13px;line-height:1.6;text-align:center;vertical-align:middle;word-break:break-all;">${escaped(text) || (editorMode ? '<br/>' : '&nbsp;')}</td>`;
+          return `<td style="padding:8px 6px;${border}${head ? `background-color:${p.soft};color:${p.title};font-weight:700;` : `color:${p.ink};`}font-family:${p.font};font-size:${fz(13)}px;line-height:1.6;text-align:center;vertical-align:middle;word-break:break-all;">${escaped(text) || (editorMode ? '<br/>' : '&nbsp;')}</td>`;
         }).join('');
         return `<tr>${cells}</tr>`;
       }).join('');
@@ -2938,7 +2964,7 @@
         center: 'text-align:center;letter-spacing:.1em;',
         plain: ''
       };
-      return `<p${role('subheading')} style="margin:28px 0 12px 0;${textBase}color:${p.title};font-size:17px;line-height:1.6;font-weight:700;${variants[p.h3] || ''}">${cleanInlineMarkup(node)}</p>`;
+      return `<p${role('subheading')} style="margin:28px 0 12px 0;${textBase}color:${p.title};font-size:${fz(17)}px;line-height:1.6;font-weight:700;${variants[p.h3] || ''}">${cleanInlineMarkup(node)}</p>`;
     };
 
     const fieldText = (root, name) => root.querySelector(`[data-part="${name}"]`)?.textContent.replace(/\s+/g, ' ').trim() || '';
@@ -3018,7 +3044,7 @@
         if (widgetType === 'quote') {
           blocks.push(renderQuote({ bodyHtml: copy.replace(/^[“"]|[”"]$/g, ''), cite: '旅途随想' }));
         } else if (widgetType === 'caption') {
-          blocks.push(`<p${role('caption')} style="margin:20px 0 24px 0;padding:8px 12px;color:${p.accent};font-family:${p.font};font-size:12px;line-height:1.7;text-align:center;text-indent:0;border:1px solid ${p.line};background-color:${p.soft};">${copy}</p>`);
+          blocks.push(`<p${role('caption')} style="margin:20px 0 24px 0;padding:8px 12px;color:${p.accent};font-family:${p.font};font-size:${fz(12)}px;line-height:1.7;text-align:center;text-indent:0;border:1px solid ${p.line};background-color:${p.soft};">${copy}</p>`);
         } else if (widgetType === 'route') {
           blocks.push(renderRoute({ label: 'ROUTE 01', title: '推荐徒步路线', tags: ['约 2 小时', '适中强度'], stations: splitStations(firstParagraph?.textContent.replace(/。$/, '')) }));
         } else if (widgetType === 'lodging') {
@@ -3107,9 +3133,9 @@
         const imgRadius = frame === 'rounded' || frame === 'shadow' ? '14px' : frame === 'none' ? (p.imageRadius || '0') : '0';
         const captionAlign = ['left', 'figure', 'mono'].includes(p.caption) ? 'left' : 'center';
         const captionFont = p.caption === 'mono' ? MONO : p.font;
-        const prefix = p.caption === 'figure' ? `<span${part('prefix')}${locked} style="display:inline-block;margin:0 6px 0 0;padding:0 5px;background-color:${p.soft};color:${p.ink};font-size:11px;font-weight:700;">图${imageIndex}</span>` : '';
+        const prefix = p.caption === 'figure' ? `<span${part('prefix')}${locked} style="display:inline-block;margin:0 6px 0 0;padding:0 5px;background-color:${p.soft};color:${p.ink};font-size:${fz(11)}px;font-weight:700;">图${imageIndex}</span>` : '';
         const editorFigureAttrs = editorMode ? ` class="editable-img-wrap" data-template-role="image" data-width="${width}%" data-align="${align}" data-frame="${frame}"` : '';
-        blocks.push(`<figure${editorFigureAttrs} style="display:block;width:${width}%;max-width:100%;margin:${margin};${frameStyle}"><img src="${escaped(src)}" alt="${escaped(alt)}" style="display:block;width:100%;max-width:100%;height:auto;border-radius:${imgRadius};"/>${caption ? `<figcaption style="display:block;margin:8px 0 28px 0;padding:0;color:${muted};font-family:${captionFont};font-size:12px;line-height:1.7;text-align:${captionAlign};">${prefix}${escaped(caption)}</figcaption>` : ''}</figure>`);
+        blocks.push(`<figure${editorFigureAttrs} style="display:block;width:${width}%;max-width:100%;margin:${margin};${frameStyle}"><img src="${escaped(src)}" alt="${escaped(alt)}" style="display:block;width:100%;max-width:100%;height:auto;border-radius:${imgRadius};"/>${caption ? `<figcaption style="display:block;margin:8px 0 28px 0;padding:0;color:${muted};font-family:${captionFont};font-size:${fz(12)}px;line-height:1.7;text-align:${captionAlign};">${prefix}${escaped(caption)}</figcaption>` : ''}</figure>`);
         return;
       }
       if (node.tagName === 'P') {
@@ -3117,7 +3143,7 @@
         if (!text) return;
         if (node.closest('h2,h3,blockquote')) return;
         if (node.dataset.templateRole === 'caption') {
-          blocks.push(`<p${role('caption')} style="margin:20px 0 24px 0;padding:8px 12px;color:${p.accent};font-family:${p.font};font-size:12px;line-height:1.7;text-align:center;text-indent:0;border:1px solid ${p.line};background-color:${p.soft};">${cleanInlineMarkup(node)}</p>`);
+          blocks.push(`<p${role('caption')} style="margin:20px 0 24px 0;padding:8px 12px;color:${p.accent};font-family:${p.font};font-size:${fz(12)}px;line-height:1.7;text-align:center;text-indent:0;border:1px solid ${p.line};background-color:${p.soft};">${cleanInlineMarkup(node)}</p>`);
           return;
         }
         if (node.dataset.templateRole === 'heading') {
@@ -3324,6 +3350,221 @@
   bindImageSelection();
   sync();
   commitHistoryState();
+
+  /*
+   * 历史草稿：每篇作品自动保存到 IndexedDB（容量远大于 localStorage，带图片的
+   * 草稿也能存下）。gzh-draft 仍保存“当前正在编辑”的那一篇。
+   */
+  const titleCount = document.getElementById('articleTitleCount');
+  function updateTitleCount() {
+    if (!titleCount) return;
+    const length = [...articleTitle.value.trim()].length;
+    titleCount.textContent = `${length} / 64`;
+    titleCount.classList.toggle('is-over', length > 64);
+  }
+
+  const DraftStore = (() => {
+    let dbPromise = null;
+    const open = () => dbPromise || (dbPromise = new Promise((resolve, reject) => {
+      if (!window.indexedDB) return reject(new Error('当前浏览器不支持本地历史草稿'));
+      const request = indexedDB.open('paihaokan-drafts', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('drafts', { keyPath: 'id' });
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    }));
+    const run = (mode, action) => open().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction('drafts', mode);
+      const result = action(tx.objectStore('drafts'));
+      tx.oncomplete = () => resolve(result && 'result' in result ? result.result : undefined);
+      tx.onerror = () => reject(tx.error);
+    }));
+    return {
+      all: () => run('readonly', store => store.getAll()).then(list => (list || []).sort((a, b) => b.updatedAt - a.updatedAt)),
+      get: id => run('readonly', store => store.get(id)),
+      put: record => run('readwrite', store => store.put(record)),
+      remove: id => run('readwrite', store => store.delete(id))
+    };
+  })();
+  const MAX_DRAFTS = 60;
+  const newDraftId = () => `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  let currentDraftId = null;
+  try { currentDraftId = localStorage.getItem('gzh-current-draft-id'); } catch (e) {}
+  if (!currentDraftId) currentDraftId = newDraftId();
+  const rememberDraftId = () => { try { localStorage.setItem('gzh-current-draft-id', currentDraftId); } catch (e) {} };
+  rememberDraftId();
+
+  function draftRecord(createdAt) {
+    const state = readHistoryState();
+    const text = editor.innerText.replace(/\s+/g, ' ').trim();
+    return { ...state, id: currentDraftId, excerpt: text.slice(0, 80), wordCount: text.replace(/\s/g, '').length, createdAt: createdAt || Date.now(), updatedAt: Date.now() };
+  }
+
+  let draftSaveTimer = null;
+  let draftCreatedAt = null;
+  async function saveCurrentDraft() {
+    clearTimeout(draftSaveTimer);
+    const record = draftRecord(draftCreatedAt);
+    if (!record.wordCount && !record.title.trim()) return;
+    try {
+      if (!draftCreatedAt) {
+        const existing = await DraftStore.get(currentDraftId);
+        draftCreatedAt = existing?.createdAt || record.createdAt;
+        record.createdAt = draftCreatedAt;
+      }
+      await DraftStore.put(record);
+      const all = await DraftStore.all();
+      await Promise.all(all.slice(MAX_DRAFTS).map(item => DraftStore.remove(item.id)));
+    } catch (e) {
+      console.warn('历史草稿保存失败', e);
+    }
+  }
+  const scheduleDraftSave = () => { clearTimeout(draftSaveTimer); draftSaveTimer = setTimeout(saveCurrentDraft, 1200); };
+  window.addEventListener('beforeunload', () => { if (draftSaveTimer) saveCurrentDraft(); });
+
+  const draftBaseSync = sync;
+  sync = function syncWithDraftHistory() {
+    draftBaseSync();
+    updateTitleCount();
+    scheduleDraftSave();
+  };
+
+  function showTemplateChrome(theme, accent) {
+    const profile = CANONICAL_PROFILES[theme];
+    markSelectedTemplate(theme);
+    if (activeThemeBadge) activeThemeBadge.textContent = profile.name;
+    if (currentSpecimenName) currentSpecimenName.textContent = profile.name;
+    if (currentSpecimenColor) currentSpecimenColor.textContent = profile.note;
+    if (miniPhoneTheme) miniPhoneTheme.textContent = profile.name;
+    if (miniPhoneColor) miniPhoneColor.textContent = profile.note;
+    if (accentDot) accentDot.style.backgroundColor = accent || profile.accent;
+    markSelectedPalette(accent || profile.accent);
+  }
+
+  function loadDraftIntoEditor(record) {
+    const theme = resolveTheme(record.theme);
+    const profile = CANONICAL_PROFILES[theme];
+    currentDraftId = record.id;
+    draftCreatedAt = record.createdAt || null;
+    rememberDraftId();
+    restoreHistoryState({
+      ...record,
+      theme,
+      fontSize: clampTypographyValue(record.fontSize, 12, 30, 16),
+      lineHeight: clampTypographyValue(record.lineHeight, 1.5, 2.4, 1.88),
+      accent: record.accent || profile.accent,
+      accentSoft: record.accentSoft || profile.soft,
+      accentDeep: record.accentDeep || profile.title
+    });
+    showTemplateChrome(theme, record.accent);
+    undoHistory.length = 0;
+    redoHistory.length = 0;
+    historyState = readHistoryState();
+    clearTimeout(draftSaveTimer);
+    draftSaveTimer = null;
+  }
+
+  const draftModal = document.getElementById('draftHistoryModal');
+  const draftList = document.getElementById('draftHistoryList');
+  const draftSearch = document.getElementById('draftHistorySearch');
+  const draftCount = document.getElementById('draftHistoryCount');
+
+  function relativeTime(time) {
+    const diff = Date.now() - time;
+    if (diff < 60e3) return '刚刚';
+    if (diff < 3600e3) return `${Math.floor(diff / 60e3)} 分钟前`;
+    if (diff < 86400e3) return `${Math.floor(diff / 3600e3)} 小时前`;
+    const d = new Date(time);
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  async function renderDraftList() {
+    let drafts = [];
+    try { drafts = await DraftStore.all(); } catch (e) {
+      draftList.innerHTML = `<p class="py-10 text-center text-xs text-ink-400">${escaped(e.message || '历史草稿不可用')}</p>`;
+      return;
+    }
+    draftCount.textContent = `${drafts.length} 篇`;
+    const query = draftSearch.value.trim().toLowerCase();
+    const shown = query ? drafts.filter(d => `${d.title} ${d.excerpt}`.toLowerCase().includes(query)) : drafts;
+    if (!shown.length) {
+      draftList.innerHTML = `<p class="py-10 text-center text-xs text-ink-400">${query ? '没有匹配的草稿' : '还没有历史草稿，开始写作后会自动保存在这里'}</p>`;
+      return;
+    }
+    draftList.innerHTML = shown.map(d => {
+      const profile = CANONICAL_PROFILES[resolveTheme(d.theme)];
+      const current = d.id === currentDraftId;
+      return `<div class="draft-item group p-3 rounded-lg border ${current ? 'border-brand bg-brand-soft/60' : 'border-ink-200/80 bg-white hover:border-brand/50 cursor-pointer'} transition" data-id="${escaped(d.id)}">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 mb-1"><span class="w-2 h-2 rounded-full shrink-0" style="background:${escaped(d.accent || profile.accent)}"></span><span class="font-serif text-sm font-bold text-ink-950 truncate">${escaped(d.title.trim() || '未命名文章')}</span>${current ? '<span class="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-brand text-white">正在编辑</span>' : ''}</div>
+            <p class="text-[11px] text-ink-500 leading-relaxed truncate">${escaped(d.excerpt || '（空白正文）')}</p>
+            <p class="mt-1.5 text-[10px] text-ink-400 font-mono">${escaped(profile.name)} · ${d.wordCount || 0} 字 · ${relativeTime(d.updatedAt)}</p>
+          </div>
+          <div class="flex items-center gap-1 shrink-0 text-[11px]">
+            ${current ? '' : '<button class="px-2 py-1 rounded text-brand hover:bg-brand-soft font-medium" data-action="open">打开</button>'}
+            <button class="px-2 py-1 rounded text-ink-500 hover:text-ink-900 hover:bg-ink-100" data-action="copy">复制</button>
+            ${current ? '' : '<button class="px-2 py-1 rounded text-ink-400 hover:text-red-600 hover:bg-red-50" data-action="delete">删除</button>'}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function openDraftHistory() {
+    if (draftSaveTimer) await saveCurrentDraft();
+    draftSearch.value = '';
+    draftModal.classList.remove('hidden');
+    renderDraftList();
+  }
+  const closeDraftHistory = () => draftModal.classList.add('hidden');
+
+  document.getElementById('draftHistoryBtn').addEventListener('click', openDraftHistory);
+  document.getElementById('draftHistoryClose').addEventListener('click', closeDraftHistory);
+  draftModal.addEventListener('click', e => { if (e.target === draftModal) closeDraftHistory(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !draftModal.classList.contains('hidden')) closeDraftHistory(); });
+  draftSearch.addEventListener('input', renderDraftList);
+
+  document.getElementById('draftHistoryNew').addEventListener('click', async () => {
+    await saveCurrentDraft();
+    const profile = CANONICAL_PROFILES[resolveTheme(document.body.getAttribute('data-theme'))];
+    loadDraftIntoEditor({ ...readHistoryState(), id: newDraftId(), title: '', content: '', createdAt: null, accent: profile.accent, accentSoft: profile.soft, accentDeep: profile.title });
+    closeDraftHistory();
+    articleTitleEditor?.focus();
+    triggerToast('已新建空白草稿，原作品已保存到历史草稿');
+  });
+
+  draftList.addEventListener('click', async e => {
+    const item = e.target.closest('.draft-item');
+    if (!item) return;
+    const id = item.getAttribute('data-id');
+    const action = e.target.closest('[data-action]')?.getAttribute('data-action') || (id === currentDraftId ? '' : 'open');
+    if (!action) return;
+    if (action === 'delete') {
+      if (!confirm('确定删除这篇历史草稿吗？删除后无法恢复。')) return;
+      await DraftStore.remove(id);
+      renderDraftList();
+      triggerToast('已删除历史草稿');
+      return;
+    }
+    if (id === currentDraftId) await saveCurrentDraft();
+    const record = await DraftStore.get(id);
+    if (!record) return renderDraftList();
+    if (action === 'copy') {
+      const now = Date.now();
+      await DraftStore.put({ ...record, id: newDraftId(), title: `${record.title.trim() || '未命名文章'}（副本）`, createdAt: now, updatedAt: now });
+      renderDraftList();
+      triggerToast('已复制一份草稿');
+      return;
+    }
+    await saveCurrentDraft();
+    loadDraftIntoEditor(record);
+    closeDraftHistory();
+    triggerToast(`已打开「${record.title.trim() || '未命名文章'}」`);
+  });
+
+  updateTitleCount();
+  scheduleDraftSave();
 </script>
 </body>
 </html>
