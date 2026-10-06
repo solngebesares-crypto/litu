@@ -1285,6 +1285,7 @@
 
   async function uploadImageBlob(blob) {
     const response = await fetch('/api/images', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': blob.type || 'application/octet-stream' }, body: blob });
+    if (response.status === 401 && window.phkSignedOut) { window.phkSignedOut(response); throw new Error('登录已失效'); }
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.ok) throw new Error(result.error || '图片上传失败');
     return new URL(result.url, location.origin).href;
@@ -3499,10 +3500,24 @@
       lock('请先运行 node server.js 启动服务，再在浏览器打开它显示的地址，输入邀请码后使用。', false);
       return;
     }
+    // Signed out (e.g. this login was used somewhere else and this copy was
+    // kicked): go to the login page. Drafts are already saved in this browser.
+    const toLogin = async response => {
+      const result = await response.json().catch(() => ({}));
+      location.replace(result.reason === 'kicked' ? '/login?kicked=1' : '/login');
+    };
+    // Re-check every 5 minutes and when the tab comes back, which also keeps
+    // this browser's login key fresh so a copied login elsewhere is cut off.
+    const recheck = () => fetch('/api/invite/session', { credentials: 'same-origin', cache: 'no-store' })
+      .then(response => { if (response.status === 401) toLogin(response); })
+      .catch(() => {});
+    window.phkSignedOut = toLogin;
     fetch('/api/invite/session', { credentials: 'same-origin', cache: 'no-store' })
       .then(response => {
-        if (response.status === 401) { location.replace('/login'); return; }
+        if (response.status === 401) { toLogin(response); return; }
         if (!response.ok) throw new Error(String(response.status));
+        setInterval(recheck, 5 * 60e3);
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') recheck(); });
         root.classList.remove('invite-pending');
         const logout = document.getElementById('logoutBtn');
         logout.classList.remove('hidden');

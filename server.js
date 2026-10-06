@@ -98,8 +98,19 @@ function deviceIdFrom(req) {
   return /^[a-f0-9]{32}$/.test(id || '') ? id : null;
 }
 
-function createSessionToken(code, deviceId) {
-  const payload = Buffer.from(JSON.stringify({ c: normalizeCode(code), d: deviceId, e: Date.now() + SESSION_DAYS * 86400e3 })).toString('base64url');
+/*
+ * One live login per device: every token carries the device's current session
+ * key, which is rotated about every 10 minutes and on every login. If the
+ * login is copied to another browser, whichever side refreshes first keeps
+ * working and the other is signed out on its next request ("kicked"). The
+ * previous key stays valid for 2 minutes so tabs racing the rotation in the
+ * same browser are not signed out.
+ */
+const ROTATE_AFTER_MS = Number(process.env.INVITE_ROTATE_SECONDS || 600) * 1000;
+const PREVIOUS_KEY_GRACE_MS = Number(process.env.INVITE_ROTATE_GRACE_SECONDS || 120) * 1000;
+
+function createSessionToken(code, deviceId, key) {
+  const payload = Buffer.from(JSON.stringify({ c: normalizeCode(code), d: deviceId, k: key, i: Date.now(), e: Date.now() + SESSION_DAYS * 86400e3 })).toString('base64url');
   return `${payload}.${sign(payload)}`;
 }
 
@@ -118,11 +129,28 @@ function currentSession(req) {
   let session;
   try { session = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')); } catch (error) { return null; }
   if (!session || Date.now() > session.e) return null;
-  const invite = findInvite(loadInvites(), session.c);
+  const data = loadInvites();
+  const invite = findInvite(data, session.c);
   if (inviteProblem(invite)) return null;
   // Unbinding a device (or an old pre-binding session) signs that device out.
-  if (!session.d || !boundDevices(invite).some(device => device.id === session.d)) return null;
-  return { code: invite.code, expiresAt: new Date(session.e).toISOString() };
+  const device = session.d && boundDevices(invite).find(item => item.id === session.d);
+  if (!device) return null;
+  const now = Date.now();
+  const current = Boolean(device.sessionKey) && session.k === device.sessionKey;
+  const previous = Boolean(device.previousKey) && session.k === device.previousKey && now < (device.previousValidUntil || 0);
+  // Devices activated before keys existed get one on their next request.
+  const migrating = !device.sessionKey && !session.k;
+  if (!current && !previous && !migrating) return { kicked: true };
+  let cookie = null;
+  if (migrating || (current && now - (session.i || 0) > ROTATE_AFTER_MS)) {
+    device.previousKey = device.sessionKey || null;
+    device.previousValidUntil = now + PREVIOUS_KEY_GRACE_MS;
+    device.sessionKey = crypto.randomBytes(16).toString('hex');
+    device.lastSeenAt = new Date(now).toISOString();
+    saveInvites(data);
+    cookie = sessionCookie(req, createSessionToken(invite.code, device.id, device.sessionKey), SESSION_DAYS * 86400);
+  }
+  return { code: invite.code, expiresAt: new Date(session.e).toISOString(), cookie };
 }
 
 function sessionCookie(req, value, maxAgeSeconds, name = SESSION_COOKIE) {
@@ -420,13 +448,17 @@ const server = http.createServer(async (req, res) => {
       const devices = boundDevices(invite);
       const now = new Date().toISOString();
       const known = devices.find(device => device.id === deviceId);
+      const sessionKey = crypto.randomBytes(16).toString('hex');
       if (known) {
+        // Logging in again on this device signs out any copy of its old login.
         known.lastLoginAt = now;
+        known.sessionKey = sessionKey;
+        known.previousKey = null;
       } else if (devices.length >= maxDevicesOf(invite)) {
         const limit = maxDevicesOf(invite);
         return json(res, 403, { ok: false, error: `该邀请码已在${limit > 1 ? ` ${limit} 台` : '另一台'}设备上激活，不能在这台设备上使用。如需更换设备，请联系卖家解绑。` });
       } else {
-        devices.push({ id: deviceId, boundAt: now, lastLoginAt: now, userAgent: String(req.headers['user-agent'] || '').slice(0, 160) });
+        devices.push({ id: deviceId, boundAt: now, lastLoginAt: now, sessionKey, userAgent: String(req.headers['user-agent'] || '').slice(0, 160) });
         invite.devices = devices;
       }
       invite.uses = (invite.uses || 0) + 1;
@@ -434,7 +466,7 @@ const server = http.createServer(async (req, res) => {
       saveInvites(data);
       failedLogins.delete(clientKey(req));
       return json(res, 200, { ok: true }, { 'Set-Cookie': [
-        sessionCookie(req, createSessionToken(invite.code, deviceId), SESSION_DAYS * 86400),
+        sessionCookie(req, createSessionToken(invite.code, deviceId, sessionKey), SESSION_DAYS * 86400),
         sessionCookie(req, deviceId, 5 * 365 * 86400, DEVICE_COOKIE)
       ] });
     }
@@ -442,13 +474,20 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(req, '', 0) });
     }
 
-    const session = currentSession(req);
+    const checked = currentSession(req);
+    const kicked = Boolean(checked?.kicked);
+    const session = checked && !kicked ? checked : null;
+    if (session?.cookie) res.setHeader('Set-Cookie', session.cookie);
+    const signedOut = kicked
+      ? { ok: false, reason: 'kicked', error: '该邀请码已在其他地方登录，本设备已下线' }
+      : { ok: false, error: '请先输入邀请码' };
     if (req.method === 'GET' && pathname === '/api/invite/session') {
-      return session ? json(res, 200, { ok: true, ...session }) : json(res, 401, { ok: false, error: '请先输入邀请码' });
+      return session ? json(res, 200, { ok: true, code: session.code, expiresAt: session.expiresAt }) : json(res, 401, signedOut);
     }
 
     // Pages: the editor is only ever sent to holders of a valid invite session.
     if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
+      if (kicked) { res.writeHead(302, { Location: '/login?kicked=1' }); return res.end(); }
       return session ? sendFile(res, 'index.html') : sendFile(res, 'login.html', 401);
     }
     if (req.method === 'GET' && pathname === '/login') {
@@ -456,7 +495,7 @@ const server = http.createServer(async (req, res) => {
       return sendFile(res, 'login.html');
     }
 
-    if (pathname.startsWith('/api/') && !session) return json(res, 401, { ok: false, error: '请先输入邀请码' });
+    if (pathname.startsWith('/api/') && !session) return json(res, 401, signedOut);
 
     if (req.method === 'POST' && pathname === '/api/images') {
       const url = await saveUploadedImage(req);

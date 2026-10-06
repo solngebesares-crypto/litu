@@ -61,6 +61,8 @@
   button:hover { background:var(--brand-dark); }
   button:active { transform:scale(.99); }
   button:disabled { opacity:.6; cursor:default; }
+  .notice { margin:0 0 14px; padding:10px 12px; border-radius:10px; background:#FFF4E5; color:#9A3412; font-size:12px; line-height:1.7; }
+  .notice[hidden] { display:none; }
   .foot { margin-top:22px; padding-top:16px; border-top:1px solid #F0EFF6; color:var(--ink-3); font-size:11px; line-height:1.7; text-align:center; }
   @media (max-width:420px) { .card { padding:28px 20px 22px; } }
 </style>
@@ -77,6 +79,7 @@
     <label for="code">邀请码</label>
     <input id="code" name="code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX" maxlength="24" required autofocus/>
     <div class="error" id="error" role="alert"></div>
+    <p class="notice" id="kickedNotice" hidden>这个邀请码刚刚在其他地方登录，本设备已下线。草稿仍保存在本机浏览器里；重新输入邀请码即可继续使用，另一处会被下线。</p>
     <button type="submit" id="submit">进入排好看</button>
   </form>
   <div class="foot">没有邀请码，或需要更换设备？请联系管理员。</div>
@@ -86,6 +89,7 @@
   const input = document.getElementById('code');
   const error = document.getElementById('error');
   const submit = document.getElementById('submit');
+  if (new URLSearchParams(location.search).get('kicked') === '1') document.getElementById('kickedNotice').hidden = false;
   input.addEventListener('input', () => { error.textContent = ''; input.removeAttribute('aria-invalid'); });
   form.addEventListener('submit', async event => {
     event.preventDefault();
