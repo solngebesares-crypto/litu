@@ -1259,9 +1259,9 @@
           <span class="h-1.5 rounded-md border border-black/5 shadow-inner" title="浅色 ${p.soft}" style="background-color:${p.soft};"></span>
           <span class="h-1.5 rounded-md border border-ink-200 shadow-inner" title="留白底色 #FFFFFF" style="background-color:#FFFFFF;"></span>
         </div>
-        <div class="flex items-center justify-between gap-1">
-          <span class="text-[11px] font-semibold text-ink-900 truncate">${p.name}</span>
-          <span class="text-[9px] font-mono text-ink-400 uppercase shrink-0">${p.accent}</span>
+        <div class="min-w-0">
+          <span class="block text-[10.5px] leading-snug font-semibold text-ink-900 whitespace-normal break-words" title="${p.name}">${p.name}</span>
+          <span class="block mt-0.5 text-[9px] leading-none font-mono text-ink-400 uppercase">${p.accent}</span>
         </div>
       `;
       card.addEventListener('click', () => {
