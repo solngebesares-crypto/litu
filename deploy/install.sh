@@ -145,7 +145,7 @@ write_https_conf() {
 # 排好看：http 一律跳转到 https://$DOMAIN，https 转给本机的 Node 服务
 server {
     listen 80 default_server;
-    server_name _;
+    server_name $DOMAIN;
 $ACME_BLOCK
 
     location / {
