@@ -193,10 +193,21 @@ issue_cert() {
     fi
     rm -rf "$tmp"
   fi
-  "$ACME_HOME/acme.sh" --issue -d "$DOMAIN" --webroot "$ACME_ROOT" --server letsencrypt --keylength ec-256 || rc=$?
-  # 返回 2 表示证书仍然有效，不需要重新申请
-  if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then
-    echo "⚠ 证书申请失败（常见原因：安全组没放行 80 端口、域名解析还没生效），先用 http 运行。"; return 1
+  # 国内服务器连证书机构偶尔会断线：每家试 3 次，Let's Encrypt 不行再换 ZeroSSL。
+  local ca try ok=0
+  for ca in letsencrypt zerossl; do
+    for try in 1 2 3; do
+      rc=0
+      "$ACME_HOME/acme.sh" --issue -d "$DOMAIN" --webroot "$ACME_ROOT" --server "$ca" --keylength ec-256 || rc=$?
+      # 返回 2 表示证书仍然有效，不需要重新申请
+      if [ "$rc" -eq 0 ] || [ "$rc" -eq 2 ]; then ok=1; break 2; fi
+      echo "… 第 $try 次申请没成功（$ca），稍后重试"
+      sleep $((try * 10))
+    done
+  done
+  if [ "$ok" != 1 ]; then
+    echo "⚠ 证书申请失败（常见原因：安全组没放行 80 端口、域名解析还没生效、服务器连不上证书机构），先用 http 运行。"
+    echo "  稍后重新运行本脚本即可再试。"; return 1
   fi
   "$ACME_HOME/acme.sh" --install-cert -d "$DOMAIN" --ecc \
     --key-file "$SSL_DIR/$DOMAIN.key" --fullchain-file "$SSL_DIR/$DOMAIN.pem" \
