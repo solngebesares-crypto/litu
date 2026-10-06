@@ -762,12 +762,22 @@
 </div>
 <span class="text-brand font-medium" id="fileLoadedHint"></span>
 </div>
+<div class="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+<span class="text-ink-500 mr-0.5">自动识别：</span>
+<span class="px-2 py-0.5 rounded-full bg-brand-soft text-brand">标题层级</span>
+<span class="px-2 py-0.5 rounded-full bg-brand-soft text-brand">路线 A → B</span>
+<span class="px-2 py-0.5 rounded-full bg-brand-soft text-brand">地址 / 门票信息卡</span>
+<span class="px-2 py-0.5 rounded-full bg-brand-soft text-brand">小贴士</span>
+<span class="px-2 py-0.5 rounded-full bg-brand-soft text-brand">引用</span>
+<span class="px-2 py-0.5 rounded-full bg-brand-soft text-brand">表格</span>
+<span class="px-2 py-0.5 rounded-full bg-brand-soft text-brand">图片</span>
 </div>
-<div class="px-5 py-3 bg-[#FAF9FF] border-t border-ink-100 flex items-center justify-between">
-<span class="text-[11px] text-ink-400 leading-relaxed">自动识别标题与章节层级、路线（A → B）、地址/门票等信息卡、小贴士、引用、表格与图片，并套用当前模板；当前文章会先存入历史草稿</span>
-<div class="flex space-x-2">
-<button class="px-3.5 py-1.5 text-xs text-ink-600 hover:text-ink-900 font-medium" onclick="closeImportModal()">取消</button>
-<button class="px-4 py-1.5 text-xs bg-brand hover:bg-brand-dark text-white rounded-md font-semibold transition active:scale-95 shadow-sm shadow-brand/20" id="executeImportBtn">一键智能排版</button>
+</div>
+<div class="px-5 py-3 bg-[#FAF9FF] border-t border-ink-100 flex items-center justify-between gap-4">
+<span class="min-w-0 text-[11px] text-ink-400 leading-relaxed">导入前，当前文章会自动存入「历史草稿」</span>
+<div class="flex shrink-0 items-center gap-2">
+<button class="whitespace-nowrap px-3.5 py-1.5 text-xs text-ink-600 hover:text-ink-900 font-medium" onclick="closeImportModal()">取消</button>
+<button class="whitespace-nowrap px-4 py-1.5 text-xs bg-brand hover:bg-brand-dark text-white rounded-md font-semibold transition active:scale-95 shadow-sm shadow-brand/20" id="executeImportBtn">一键智能排版</button>
 </div>
 </div>
 </div>
