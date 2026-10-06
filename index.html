@@ -451,7 +451,7 @@
 <p class="text-[11px] text-ink-500 line-clamp-1">店铺、价格、行程等对比信息</p>
 </button>
 <div class="flex items-center justify-between px-1 text-[11px] text-ink-500">
-<span>表格行数（作用于光标所在表格）</span>
+<span>增减行（作用于光标所在的表格 / 列表 / 路线 / 信息卡，也可以在行末按回车）</span>
 <span class="space-x-1"><button class="px-2 py-0.5 rounded bg-ink-100 hover:bg-brand-soft hover:text-brand" onclick="adjustTableRows(1)">+ 行</button><button class="px-2 py-0.5 rounded bg-ink-100 hover:bg-brand-soft hover:text-brand" onclick="adjustTableRows(-1)">− 行</button></span>
 </div>
 </div>
@@ -1195,29 +1195,6 @@
     commitHistoryState();
     bindImageSelection();
     triggerToast('已成功插入排版组件');
-  }
-
-  window.adjustTableRows = function adjustTableRows(delta) {
-    const anchor = savedEditorRange?.startContainer;
-    const anchorElement = anchor && (anchor.nodeType === Node.ELEMENT_NODE ? anchor : anchor.parentElement);
-    const table = anchorElement?.closest?.('#editor table') || [...editor.querySelectorAll('table')].pop();
-    if (!table) {
-      triggerToast('请先插入表格');
-      return;
-    }
-    const rows = table.querySelectorAll('tr');
-    if (delta > 0) {
-      const row = rows[rows.length - 1].cloneNode(true);
-      row.querySelectorAll('td,th').forEach(cell => { cell.innerHTML = '<br>'; });
-      rows[rows.length - 1].after(row);
-    } else if (rows.length > 2) {
-      rows[rows.length - 1].remove();
-    } else {
-      triggerToast('表格至少保留表头和一行');
-      return;
-    }
-    sync();
-    commitHistoryState();
   }
 
   function insertHtmlAtCursorOrEnd(html) {
@@ -2784,7 +2761,8 @@
     const splitStations = text => String(text || '').split(/\s*(?:→|->|➝|›)\s*/).map(name => name.trim()).filter(Boolean).map(name => ({ name, note: '' }));
     const parseRow = text => {
       const match = String(text || '').trim().match(/^([^：:]{1,6})[：:]\s*(.*)$/);
-      return match ? { key: match[1].trim(), value: match[2].trim() } : { key: '', value: String(text || '').trim() };
+      // "10:00 – 18:30" is a value, not a "10" label.
+      return match && !/^[\d\s.]+$/.test(match[1]) ? { key: match[1].trim(), value: match[2].trim() } : { key: '', value: String(text || '').trim() };
     };
     const pushHeading = parts => {
       if (!parts.label) return;
@@ -3461,6 +3439,295 @@
     commitHistoryState();
     sync();
   });
+
+  // Repeating rows inside components: table rows, list items, route stations
+  // and info-card rows. Enter adds a row (text after the caret moves with it),
+  // Enter on an empty last row leaves the component, Backspace on an empty row
+  // removes it. The browser's own Enter split rows unpredictably (cloning
+  // labels, merging fields), which re-rendering then misread.
+  function rowContext(node) {
+    const element = node && (node.nodeType === 1 ? node : node.parentElement);
+    if (!element || !editor.contains(element)) return null;
+    const tr = element.closest('tr');
+    if (tr && editor.contains(tr)) {
+      const table = tr.closest('table');
+      return { kind: 'table', host: table, row: tr, rows: () => [...table.querySelectorAll('tr')], min: 2 };
+    }
+    const kinds = [
+      ['route', '[data-part="stations"] > p', '[data-template-role="route"]'],
+      ['card', '[data-part="rows"] > p', '[data-template-role="card"]'],
+      ['list', '[data-template-role="list"] > p', '[data-template-role="list"]']
+    ];
+    for (const [kind, rowSelector, hostSelector] of kinds) {
+      const row = element.closest(rowSelector);
+      if (row && editor.contains(row)) return { kind, host: row.closest(hostSelector), row, rows: () => [...row.parentElement.children], min: 1 };
+    }
+    return null;
+  }
+
+  const LOCKED_ROW_PARTS = '[data-part="marker"],[data-part="dot"]';
+  const rowText = (ctx, row = ctx.row) => {
+    const copy = row.cloneNode(true);
+    copy.querySelectorAll(LOCKED_ROW_PARTS).forEach(el => el.remove());
+    return copy.textContent.replace(/[\s ]+/g, '');
+  };
+
+  function blankRowLike(ctx) {
+    if (ctx.kind === 'table') {
+      const rows = ctx.rows();
+      // Never clone the header row's styling into a body row.
+      const model = ctx.row === rows[0] && rows[1] ? rows[1] : ctx.row;
+      const row = model.cloneNode(true);
+      row.querySelectorAll('td,th').forEach(cell => { cell.innerHTML = '<br>'; });
+      return row;
+    }
+    const row = ctx.row.cloneNode(false);
+    const locked = ctx.row.querySelector(':scope > [data-part="marker"], :scope > [data-part="dot"]');
+    if (locked) row.appendChild(locked.cloneNode(true));
+    row.appendChild(document.createElement('br'));
+    return row;
+  }
+
+  function renumberList(host) {
+    if (!host || host.dataset.templateRole !== 'list' || host.dataset.list !== 'ol') return;
+    [...host.children].forEach((item, index) => {
+      const marker = item.querySelector(':scope > [data-part="marker"]');
+      if (marker) marker.textContent = String(index + 1).padStart(2, '0');
+    });
+  }
+
+  function placeCaret(row, cellIndex = 0) {
+    const target = row.tagName === 'TR' ? (row.children[cellIndex] || row.children[0]) : row;
+    const caret = document.createRange();
+    const br = target.lastChild?.nodeName === 'BR' ? target.lastChild : null;
+    if (br) caret.setStartBefore(br);
+    else caret.selectNodeContents(target);
+    caret.collapse(!!br);
+    const selection = getSelection();
+    selection.removeAllRanges();
+    selection.addRange(caret);
+    savedEditorRange = caret.cloneRange();
+  }
+
+  // Route stops: filled markers on the two ends, hollow ones in between.
+  function refreshRouteDots(host) {
+    if (!host || host.dataset.templateRole !== 'route') return;
+    const dots = [...host.querySelectorAll('[data-part="stations"] > p > [data-part="dot"]')];
+    if (dots.length < 2) return;
+    const endGlyph = dots[0].textContent;
+    const circled = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
+    if (endGlyph === circled[0]) {
+      dots.forEach((dot, index) => { dot.textContent = circled[index] || '○'; });
+      return;
+    }
+    const midGlyph = dots.slice(1, -1).map(dot => dot.textContent).find(glyph => glyph !== endGlyph)
+      || { '●': '○', '▶': '▷', '◆': '◇', '■': '□', '★': '☆', '⌂': '·', '❀': '✧' }[endGlyph] || endGlyph;
+    dots.forEach((dot, index) => { dot.textContent = index === 0 || index === dots.length - 1 ? endGlyph : midGlyph; });
+  }
+
+  function afterRowChange(host) {
+    renumberList(host);
+    refreshRouteDots(host);
+    sync();
+    commitHistoryState();
+    updateRowTools();
+  }
+
+  function addRowAfter(ctx, { splitAtCaret = false } = {}) {
+    const fresh = blankRowLike(ctx);
+    if (splitAtCaret && ctx.kind !== 'table') {
+      const selection = getSelection();
+      if (selection.rangeCount) {
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        const tail = document.createRange();
+        tail.setStart(range.endContainer, range.endOffset);
+        tail.setEnd(ctx.row, ctx.row.childNodes.length);
+        // Only plain text moves; a split through a label or note would scramble the fields.
+        const preview = tail.cloneContents();
+        if (!preview.querySelector('[data-part]') && preview.textContent.trim()) {
+          const moved = tail.extractContents();
+          moved.querySelectorAll?.('br').forEach(br => br.remove());
+          fresh.querySelector(':scope > br')?.remove();
+          fresh.appendChild(moved);
+          if (!rowText(ctx)) ctx.row.appendChild(document.createElement('br'));
+        }
+      }
+    }
+    ctx.row.after(fresh);
+    const cellIndex = ctx.kind === 'table' ? Math.max(0, [...ctx.row.children].findIndex(cell => cell.contains(getSelection().anchorNode))) : 0;
+    if (fresh.tagName !== 'TR' && fresh.textContent.replace(/[\s ]+/g, '') && !fresh.querySelector(':scope > br')) {
+      // Caret goes to the start of the moved text, after any marker.
+      const caret = document.createRange();
+      const locked = fresh.querySelector(':scope > [data-part="marker"], :scope > [data-part="dot"]');
+      if (locked) caret.setStartAfter(locked); else caret.setStart(fresh, 0);
+      caret.collapse(true);
+      getSelection().removeAllRanges();
+      getSelection().addRange(caret);
+      savedEditorRange = caret.cloneRange();
+    } else {
+      placeCaret(fresh, cellIndex);
+    }
+    afterRowChange(ctx.host);
+  }
+
+  function removeRow(ctx) {
+    const rows = ctx.rows();
+    if (rows.length <= ctx.min) {
+      triggerToast(ctx.kind === 'table' ? '表格至少保留表头和一行' : '至少保留一行');
+      return false;
+    }
+    const index = rows.indexOf(ctx.row);
+    const neighbour = rows[index - 1] || rows[index + 1];
+    const cellIndex = ctx.kind === 'table' ? Math.max(0, [...ctx.row.children].findIndex(cell => cell.contains(getSelection().anchorNode))) : 0;
+    ctx.row.remove();
+    if (neighbour) {
+      if (neighbour.tagName === 'TR') placeCaret(neighbour, cellIndex);
+      else {
+        const caret = document.createRange();
+        caret.selectNodeContents(neighbour);
+        caret.collapse(false);
+        const trailingBr = neighbour.lastChild?.nodeName === 'BR' ? neighbour.lastChild : null;
+        if (trailingBr) { caret.setStartBefore(trailingBr); caret.collapse(true); }
+        getSelection().removeAllRanges();
+        getSelection().addRange(caret);
+        savedEditorRange = caret.cloneRange();
+      }
+    }
+    afterRowChange(ctx.host);
+    return true;
+  }
+
+  function leaveComponent(ctx) {
+    ctx.row.remove();
+    renumberList(ctx.host);
+    refreshRouteDots(ctx.host);
+    const paragraph = document.createElement('p');
+    paragraph.setAttribute('data-template-role', 'body');
+    paragraph.setAttribute('style', bodyStyle(canonicalProfile()));
+    paragraph.appendChild(document.createElement('br'));
+    let block = ctx.host;
+    while (block.parentElement && block.parentElement !== editor) block = block.parentElement;
+    block.after(paragraph);
+    placeCaret(paragraph);
+    sync();
+    commitHistoryState();
+    updateRowTools();
+  }
+
+  editor.addEventListener('keydown', e => {
+    if (e.isComposing || e.defaultPrevented) return;
+    if (!['Enter', 'Backspace'].includes(e.key) || (e.key === 'Enter' && e.shiftKey)) return;
+    const selection = getSelection();
+    if (!selection.rangeCount) return;
+    const ctx = rowContext(selection.anchorNode);
+    if (!ctx || !ctx.host) return;
+    const rows = ctx.rows();
+    const empty = !rowText(ctx);
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const isLast = rows[rows.length - 1] === ctx.row;
+      if (empty && isLast && rows.length > ctx.min) leaveComponent(ctx);
+      else addRowAfter(ctx, { splitAtCaret: true });
+      return;
+    }
+    // Backspace
+    if (!selection.isCollapsed) return;
+    if (empty && rows.length > ctx.min) {
+      e.preventDefault();
+      removeRow(ctx);
+      return;
+    }
+    if (ctx.kind === 'table') return;
+    // At the very start of a non-empty row: join it onto the previous row
+    // (lists and routes), instead of letting the browser merge markers.
+    const range = selection.getRangeAt(0);
+    const before = document.createRange();
+    before.setStart(ctx.row, 0);
+    before.setEnd(range.startContainer, range.startOffset);
+    const beforeCopy = before.cloneContents();
+    beforeCopy.querySelectorAll?.(LOCKED_ROW_PARTS).forEach(el => el.remove());
+    if (beforeCopy.textContent.replace(/[\s ]+/g, '')) return;
+    e.preventDefault();
+    const index = rows.indexOf(ctx.row);
+    const previous = rows[index - 1];
+    if (!previous || ctx.kind === 'card' || ctx.row.querySelector('[data-part="note"]') || previous.querySelector('[data-part="note"]')) return;
+    previous.querySelectorAll(':scope > br').forEach(br => br.remove());
+    const joinPoint = document.createRange();
+    joinPoint.selectNodeContents(previous);
+    joinPoint.collapse(false);
+    [...ctx.row.childNodes].forEach(child => {
+      if (child.nodeType === 1 && child.matches(LOCKED_ROW_PARTS)) return;
+      previous.appendChild(child);
+    });
+    ctx.row.remove();
+    getSelection().removeAllRanges();
+    getSelection().addRange(joinPoint);
+    savedEditorRange = joinPoint.cloneRange();
+    afterRowChange(ctx.host);
+  });
+
+  // A small toolbar above the component the caret is in, so adding a row is
+  // discoverable without knowing the Enter shortcut.
+  const rowTools = document.createElement('div');
+  rowTools.id = 'rowTools';
+  rowTools.setAttribute('contenteditable', 'false');
+  rowTools.className = 'absolute z-20 hidden items-center gap-1 px-1.5 py-1 rounded-lg bg-white border border-ink-200 shadow-md text-[11px] text-ink-700';
+  rowTools.innerHTML = '<span class="px-1 text-ink-400" data-row-label></span><button type="button" data-row-act="add" class="px-2 py-0.5 rounded hover:bg-brand-soft hover:text-brand font-medium" title="也可以在行末按回车">＋ 加一行</button><button type="button" data-row-act="remove" class="px-2 py-0.5 rounded hover:bg-red-50 hover:text-red-600" title="也可以清空本行后按退格">－ 删本行</button>';
+  const editorScroll = document.getElementById('editorScrollContainer');
+  editorScroll.appendChild(rowTools);
+  const ROW_LABELS = { table: '表格', route: '路线站点', card: '信息卡', list: '列表' };
+  let rowToolsCtx = null;
+
+  function updateRowTools() {
+    const selection = getSelection();
+    const anchor = selection.rangeCount && editor.contains(selection.anchorNode) ? selection.anchorNode : null;
+    const ctx = anchor ? rowContext(anchor) : null;
+    rowToolsCtx = ctx && ctx.host ? ctx : null;
+    if (!rowToolsCtx) {
+      rowTools.classList.add('hidden');
+      rowTools.classList.remove('flex');
+      return;
+    }
+    rowTools.querySelector('[data-row-label]').textContent = ROW_LABELS[ctx.kind];
+    rowTools.classList.remove('hidden');
+    rowTools.classList.add('flex');
+    const hostRect = ctx.host.getBoundingClientRect();
+    const boxRect = editorScroll.getBoundingClientRect();
+    const top = hostRect.top - boxRect.top + editorScroll.scrollTop - rowTools.offsetHeight - 6;
+    const left = hostRect.right - boxRect.left + editorScroll.scrollLeft - rowTools.offsetWidth;
+    rowTools.style.top = `${Math.max(4, top)}px`;
+    rowTools.style.left = `${Math.max(4, left)}px`;
+  }
+
+  rowTools.addEventListener('mousedown', e => e.preventDefault());
+  rowTools.addEventListener('click', e => {
+    const act = e.target.closest('[data-row-act]')?.dataset.rowAct;
+    if (!act || !rowToolsCtx || !rowToolsCtx.row.isConnected) return;
+    const ctx = rowContext(getSelection().anchorNode) || rowToolsCtx;
+    if (act === 'add') addRowAfter(ctx);
+    else removeRow(ctx);
+  });
+  document.addEventListener('selectionchange', () => requestAnimationFrame(updateRowTools));
+  editor.addEventListener('input', () => requestAnimationFrame(updateRowTools));
+  window.addEventListener('resize', updateRowTools);
+
+  // Sidebar buttons: act on the component the caret was last in.
+  window.adjustTableRows = function adjustTableRows(delta) {
+    let ctx = savedEditorRange && rowContext(savedEditorRange.startContainer);
+    if (!ctx) {
+      const table = [...editor.querySelectorAll('table')].pop();
+      const lastRow = table && [...table.querySelectorAll('tr')].pop();
+      ctx = lastRow ? rowContext(lastRow.firstElementChild || lastRow) : null;
+    }
+    if (!ctx || !ctx.host) {
+      triggerToast('请先把光标放进表格、序号列表、路线或信息卡里');
+      return;
+    }
+    editor.focus();
+    if (delta > 0) addRowAfter(ctx);
+    else removeRow(ctx);
+  };
 
   // An empty canvas (new draft, or everything deleted) gets a styled body
   // paragraph to type into; otherwise the first text landed as a bare text
