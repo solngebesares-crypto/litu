@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # 排好看 一键部署脚本（阿里云 ECS：Alibaba Cloud Linux / CentOS / Ubuntu / Debian）
 #
-# 用法（以 root 运行，与 index.html、login.html、server.js 放在同一目录）：
-#   bash install.sh                 # 用服务器公网 IP 访问
-#   DOMAIN=example.com bash install.sh   # 已备案并解析好的域名
+# 用法（以 root 运行，与 index.html、login.html、admin.html、server.js 放在同一目录）：
+#   bash install.sh                        # 用服务器公网 IP 访问（http）
+#   DOMAIN=pai.example.com bash install.sh # 已备案、已解析到本机的域名：自动申请免费 HTTPS 证书并自动续期
 #
-# 再次运行即为升级：只替换程序文件，邀请码、图片和密钥都会保留。
+# 再次运行即为升级：只替换程序文件，邀请码、图片、密钥和证书都会保留；
+# 之前设置过的域名会被记住，升级时不用再写 DOMAIN=。
 set -euo pipefail
 
 APP_DIR=/opt/paihaokan
@@ -13,6 +14,14 @@ APP_USER=paihaokan
 APP_PORT=8787
 NODE_VERSION=v20.18.0
 DOMAIN="${DOMAIN:-}"
+if [ -z "$DOMAIN" ] && [ -s "$APP_DIR/.domain" ]; then DOMAIN=$(cat "$APP_DIR/.domain"); fi
+DOMAIN=$(printf '%s' "$DOMAIN" | tr 'A-Z' 'a-z' | sed 's#^https\{0,1\}://##; s#/.*$##')
+if [ -n "$DOMAIN" ] && ! printf '%s' "$DOMAIN" | grep -Eq '^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$'; then
+  printf '\n\033[1;31m✘ 域名格式不对：%s（只写域名本身，例如 pai.example.com）\033[0m\n' "$DOMAIN" >&2; exit 1
+fi
+SSL_DIR=/etc/nginx/ssl
+ACME_ROOT=/var/www/acme
+ACME_HOME=/root/.acme.sh
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 say() { printf '\n\033[1;35m▶ %s\033[0m\n' "$*"; }
@@ -101,14 +110,9 @@ systemctl enable paihaokan >/dev/null 2>&1
 systemctl restart paihaokan
 
 say "5/6 配置 nginx"
-SERVER_NAME="${DOMAIN:-_}"
 NGINX_CONF=/etc/nginx/conf.d/paihaokan.conf
-cat > "$NGINX_CONF" <<EOF
-# 排好看：nginx 接收 80 端口请求并转给本机的 Node 服务
-server {
-    listen 80 default_server;
-    server_name $SERVER_NAME;
-    client_max_body_size 12m;
+mkdir -p "$ACME_ROOT/.well-known/acme-challenge" "$SSL_DIR"
+PROXY_BLOCK="    client_max_body_size 12m;
 
     location / {
         proxy_pass http://127.0.0.1:$APP_PORT;
@@ -117,9 +121,93 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_read_timeout 60s;
-    }
+    }"
+ACME_BLOCK="    # 申请 / 续期 HTTPS 证书时的域名验证
+    location /.well-known/acme-challenge/ {
+        root $ACME_ROOT;
+    }"
+
+write_http_conf() {
+  cat > "$NGINX_CONF" <<EOF
+# 排好看：nginx 接收 80 端口请求并转给本机的 Node 服务
+server {
+    listen 80 default_server;
+    server_name ${DOMAIN:-_};
+$ACME_BLOCK
+
+$PROXY_BLOCK
 }
 EOF
+}
+
+write_https_conf() {
+  cat > "$NGINX_CONF" <<EOF
+# 排好看：http 一律跳转到 https://$DOMAIN，https 转给本机的 Node 服务
+server {
+    listen 80 default_server;
+    server_name _;
+$ACME_BLOCK
+
+    location / {
+        return 301 https://$DOMAIN\$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl default_server;
+    server_name $DOMAIN;
+    ssl_certificate     $SSL_DIR/$DOMAIN.pem;
+    ssl_certificate_key $SSL_DIR/$DOMAIN.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:paihaokan_ssl:10m;
+    ssl_session_timeout 1d;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+$PROXY_BLOCK
+}
+EOF
+}
+
+# 用 acme.sh 向 Let's Encrypt 申请免费证书（90 天有效；acme.sh 每天检查，到期前自动续期并重载 nginx）。
+issue_cert() {
+  local resolved rc=0 tmp
+  resolved=$(getent ahostsv4 "$DOMAIN" 2>/dev/null | awk 'NR==1{print $1}')
+  if [ -z "$resolved" ]; then
+    echo "⚠ 域名 $DOMAIN 还没有解析到任何 IP，先跳过 HTTPS。解析生效后重新运行本脚本即可。"; return 1
+  fi
+  if [ -n "$PUBLIC_IP" ] && [ "$resolved" != "$PUBLIC_IP" ]; then
+    echo "⚠ 域名 $DOMAIN 解析到 $resolved，但本服务器公网 IP 是 $PUBLIC_IP。"
+    echo "  请把解析记录改成 $PUBLIC_IP，生效后重新运行本脚本。先跳过 HTTPS。"; return 1
+  fi
+  if [ ! -x "$ACME_HOME/acme.sh" ]; then
+    command -v git >/dev/null 2>&1 || install_pkgs git
+    command -v crontab >/dev/null 2>&1 || install_pkgs cronie 2>/dev/null || install_pkgs cron
+    systemctl enable --now crond >/dev/null 2>&1 || systemctl enable --now cron >/dev/null 2>&1 || true
+    tmp=$(mktemp -d)
+    # 国内服务器优先用 gitee 镜像
+    if ! git clone --depth 1 -q https://gitee.com/neilpang/acme.sh.git "$tmp/acme.sh" 2>/dev/null \
+      && ! git clone --depth 1 -q https://github.com/acmesh-official/acme.sh.git "$tmp/acme.sh"; then
+      rm -rf "$tmp"; echo "⚠ 下载证书工具 acme.sh 失败，先跳过 HTTPS"; return 1
+    fi
+    if ! (cd "$tmp/acme.sh" && ./acme.sh --install --home "$ACME_HOME" -m "${EMAIL:-admin@$DOMAIN}" >/dev/null); then
+      rm -rf "$tmp"; echo "⚠ 安装 acme.sh 失败，先跳过 HTTPS"; return 1
+    fi
+    rm -rf "$tmp"
+  fi
+  "$ACME_HOME/acme.sh" --issue -d "$DOMAIN" --webroot "$ACME_ROOT" --server letsencrypt --keylength ec-256 || rc=$?
+  # 返回 2 表示证书仍然有效，不需要重新申请
+  if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then
+    echo "⚠ 证书申请失败（常见原因：安全组没放行 80 端口、域名解析还没生效），先用 http 运行。"; return 1
+  fi
+  "$ACME_HOME/acme.sh" --install-cert -d "$DOMAIN" --ecc \
+    --key-file "$SSL_DIR/$DOMAIN.key" --fullchain-file "$SSL_DIR/$DOMAIN.pem" \
+    --reloadcmd "systemctl reload nginx" >/dev/null
+}
+
+if [ -n "$DOMAIN" ] && [ -s "$SSL_DIR/$DOMAIN.pem" ] && [ -s "$SSL_DIR/$DOMAIN.key" ]; then
+  write_https_conf
+else
+  write_http_conf
+fi
 # 系统自带的默认站点也占用 80 端口，关掉它，避免访问到 nginx 欢迎页。
 rm -f /etc/nginx/sites-enabled/default
 if grep -q 'listen[[:space:]]*80 default_server' /etc/nginx/nginx.conf 2>/dev/null; then
@@ -130,9 +218,29 @@ systemctl enable nginx >/dev/null 2>&1
 systemctl restart nginx
 
 if command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
-  firewall-cmd --permanent --add-service=http >/dev/null && firewall-cmd --reload >/dev/null
+  firewall-cmd --permanent --add-service=http --add-service=https >/dev/null && firewall-cmd --reload >/dev/null
 elif command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q active; then
-  ufw allow 80/tcp >/dev/null
+  ufw allow 80/tcp >/dev/null; ufw allow 443/tcp >/dev/null
+fi
+
+PUBLIC_IP=$(curl -fsS --connect-timeout 3 http://100.100.100.200/latest/meta-data/eipv4 2>/dev/null \
+  || curl -fsS --connect-timeout 3 http://100.100.100.200/latest/meta-data/public-ipv4 2>/dev/null \
+  || curl -fsS --connect-timeout 5 https://ifconfig.me 2>/dev/null || true)
+
+HTTPS_OK=0
+if [ -n "$DOMAIN" ]; then
+  printf '%s\n' "$DOMAIN" > "$APP_DIR/.domain"
+  if [ -s "$SSL_DIR/$DOMAIN.pem" ]; then
+    HTTPS_OK=1
+  else
+    say "申请 $DOMAIN 的 HTTPS 证书"
+    if issue_cert; then
+      write_https_conf
+      nginx -t && systemctl reload nginx
+      HTTPS_OK=1
+      echo "✔ HTTPS 证书已安装，到期前会自动续期"
+    fi
+  fi
 fi
 
 say "6/6 检查服务并准备邀请码"
@@ -158,10 +266,8 @@ else
   ADMIN_NOTE="沿用原来的后台密码"
 fi
 
-PUBLIC_IP=$(curl -fsS --connect-timeout 3 http://100.100.100.200/latest/meta-data/eipv4 2>/dev/null \
-  || curl -fsS --connect-timeout 3 http://100.100.100.200/latest/meta-data/public-ipv4 2>/dev/null \
-  || curl -fsS --connect-timeout 5 https://ifconfig.me 2>/dev/null || echo "你的服务器公网IP")
-ADDRESS="http://${DOMAIN:-$PUBLIC_IP}"
+if [ "$HTTPS_OK" = 1 ]; then ADDRESS="https://$DOMAIN"
+else ADDRESS="http://${DOMAIN:-${PUBLIC_IP:-你的服务器公网IP}}"; fi
 
 cat <<EOF
 
@@ -175,7 +281,7 @@ cat <<EOF
  在后台可以生成邀请码、查看激活和使用情况、解绑或停用。
 
  如果浏览器打不开：到阿里云控制台 → 云服务器 ECS → 安全组 →
- 入方向，添加规则「允许 HTTP(80) 端口，授权对象 0.0.0.0/0」。
+ 入方向，放行 HTTP(80) 和 HTTPS(443) 端口，授权对象 0.0.0.0/0。
 
  常用命令：
    生成邀请码  cd $APP_DIR && runuser -u $APP_USER -- node server.js invite create --count 5

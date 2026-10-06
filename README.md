@@ -63,12 +63,19 @@ node server.js admin password 你的新密码
 ### 一键部署到阿里云 ECS
 
 1. 生成部署包：`bash deploy/make-bundle.sh`，得到 `dist/paihaokan-deploy.sh`（包含全部程序文件）。
-2. 阿里云控制台 → 云服务器 ECS → 安全组 → 入方向，放行 HTTP(80) 端口。
+2. 阿里云控制台 → 云服务器 ECS → 安全组 → 入方向，放行 HTTP(80) 和 HTTPS(443) 端口。
 3. 用 Workbench 远程连接服务器（root），把 `paihaokan-deploy.sh` 上传到服务器后运行：`bash paihaokan-deploy.sh`
-   已备案的域名可以这样运行：`DOMAIN=example.com bash paihaokan-deploy.sh`
-4. 脚本会安装 Node.js 和 nginx、注册开机自启服务，并打印访问地址和第一个邀请码。
+4. 脚本会安装 Node.js 和 nginx、注册开机自启服务，并打印访问地址、第一个邀请码和后台密码。
 
-升级时用新的部署包再运行一次即可，邀请码、图片和密钥都会保留。
+使用已备案的域名（推荐，对外发布时使用）：
+
+1. 在域名解析里添加一条 A 记录，指向服务器公网 IP（例如主机记录 `pai`，得到 `pai.example.com`）。
+2. 解析生效后运行：`DOMAIN=pai.example.com bash paihaokan-deploy.sh`
+3. 脚本会用 acme.sh 自动申请 Let's Encrypt 免费 HTTPS 证书，到期前自动续期；
+   之后 http 和 IP 访问都会自动跳转到 `https://pai.example.com`。
+   如果解析还没生效或证书申请失败，会先用 http 运行，稍后重新运行同一条命令即可。
+
+升级时用新的部署包再运行一次即可（不用再写 `DOMAIN=`，会沿用上次的域名），邀请码、图片、密钥和证书都会保留。
 
 ### 部署到服务器
 
