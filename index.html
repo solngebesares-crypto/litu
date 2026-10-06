@@ -1980,7 +1980,7 @@
         const last = parts[parts.length - 1] || '';
         if (parts.length > 1 && (m = last.match(/^[—–-]{1,2}\s*(.+)$/))) { cite = m[1]; parts.pop(); }
         else if ((m = last.match(/^(.*\S)\s*[—–]{2}\s*(.+)$/))) { parts[parts.length - 1] = m[1]; cite = m[2]; }
-        if (!cite && (m = (lines[end] || '').match(/^[—–]{2}\s*(.+)$/))) { cite = m[1]; end++; }
+        if (!cite && (m = (lines[end] || '').match(/^[—–]{1,2}\s*(.+)$/))) { cite = m[1]; end++; }
         add({ type: cite ? 'quote' : 'note', html: parts.filter(Boolean).map(inlineMd).join('<br/>'), cite: stripMd(cite) }, end - 1);
         continue;
       }
@@ -2018,10 +2018,13 @@
         continue;
       }
 
-      if (KV.test(t)) {
+      // "一、陶陶居：百年老字号" is a section heading, not an info row, even when
+      // address/price lines follow it.
+      const isHeadingLine = s => { const k = s.match(KV); return Boolean(headingKind(s)) && !(k && INFO_KEYS.test(k[1])); };
+      if (KV.test(t) && !isHeadingLine(t)) {
         let end = start;
         const rows = [];
-        while (end < lines.length && (m = lines[end].match(KV)) && !TIP.test(lines[end]) && !parseRoute(lines[end])) { rows.push({ key: stripMd(m[1]), value: stripMd(m[2]) }); end++; }
+        while (end < lines.length && (m = lines[end].match(KV)) && !TIP.test(lines[end]) && !parseRoute(lines[end]) && !isHeadingLine(lines[end])) { rows.push({ key: stripMd(m[1]), value: stripMd(m[2]) }); end++; }
         if (rows.length >= 2 && rows.some(row => INFO_KEYS.test(row.key))) {
           let cardTitle = '';
           if (prevLabel(true)) { tokens.pop(); cardTitle = prev.plain; }
@@ -2558,6 +2561,14 @@
       return holder.innerHTML;
     };
     const inline = node => emphasize(cleanInlineMarkup(node));
+    // Card labels: a fixed width lines values up, but a label that fills it
+    // ("开放时间") ran straight into its value. Keep the width as a minimum,
+    // never wrap, and always leave a gap.
+    const keyStyle = style => {
+      let out = style.replace(/(^|;)\s*width:/g, '$1min-width:');
+      if (!/(^|;)\s*margin(-right)?:/.test(out)) out += 'margin-right:10px;';
+      return `${out}white-space:nowrap;`;
+    };
 
     const renderTip = ({ title, bodyHtml }) => {
       if (DESIGN.tip) return DESIGN.tip({ title, bodyHtml });
@@ -2582,7 +2593,7 @@
 
     const renderCard = ({ category, title, rows }) => {
       if (DESIGN.card) return DESIGN.card({ category, title, rows });
-      const rowHtml = rows.map(row => `<p style="margin:0 0 4px 0;${textBase}color:${p.ink};font-size:${fz(13)}px;line-height:1.8;">${row.key ? `<span${part('key')} style="display:inline-block;width:4em;color:${p.accent};font-size:${fz(12)}px;">${escaped(row.key)}</span>` : ''}${escaped(row.value)}</p>`).join('');
+      const rowHtml = rows.map(row => `<p style="margin:0 0 4px 0;${textBase}color:${p.ink};font-size:${fz(13)}px;line-height:1.8;">${row.key ? `<span${part('key')} style="${keyStyle(`display:inline-block;width:4em;color:${p.accent};font-size:${fz(12)}px;`)}">${escaped(row.key)}</span>` : ''}${escaped(row.value)}</p>`).join('');
       const border = p.quote === 'frame' ? p.ink : p.line;
       return `<section${role('card')} style="margin:26px 0;padding:0;border:1px solid ${border};border-radius:${radius};"><section style="margin:0 16px;padding:14px 0 12px 0;border-bottom:1px dashed ${border};">${category ? `<p${part('category')} style="margin:0 0 4px 0;${textBase}color:${p.accent};font-size:${fz(11)}px;line-height:1.6;letter-spacing:.1em;">${escaped(category)}</p>` : ''}<p${part('title')} style="margin:0;${textBase}color:${p.title};font-size:${fz(17)}px;line-height:1.5;font-weight:700;">${escaped(title)}</p></section>${rowHtml || editorMode ? `<section${part('rows')} style="margin:0;padding:10px 16px 10px 16px;">${rowHtml || `<p style="margin:0;${textBase}font-size:${fz(13)}px;line-height:1.8;color:${p.ink};"><br/></p>`}</section>` : ''}</section>`;
     };
@@ -2671,7 +2682,7 @@
     const tipFrom = c => ({ title, bodyHtml }) => `<section${role('tip')} style="margin:26px 0;${c.box}"><p${part('title')} style="margin:0 0 6px 0;${textBase}line-height:1.7;${c.title}"><span${part('badge')}${locked} style="${c.badge}">${c.label}</span>${escaped(title)}</p>${bodyHtml || editorMode ? `<p style="margin:0;${textBase}${c.body}">${emptyEditable(bodyHtml)}</p>` : ''}</section>`;
     const quoteFrom = c => ({ bodyHtml, cite }) => `<section${role('quote')} style="margin:30px 0;${c.box}">${c.mark || ''}<p style="margin:0;${textBase}${c.body}">${emptyEditable(bodyHtml)}</p>${cite || editorMode ? `<p${part('cite')} style="margin:10px 0 0 0;${textBase}line-height:1.6;${c.cite}">—— ${escaped(cite)}</p>` : ''}</section>`;
     const cardFrom = c => ({ category, title, rows }) => {
-      const rowHtml = rows.map(row => `<p style="margin:0 0 4px 0;${textBase}${c.row}">${row.key ? `<span${part('key')} style="${c.key}">${escaped(row.key)}</span>` : ''}${escaped(row.value)}</p>`).join('');
+      const rowHtml = rows.map(row => `<p style="margin:0 0 4px 0;${textBase}${c.row}">${row.key ? `<span${part('key')} style="${keyStyle(c.key)}">${escaped(row.key)}</span>` : ''}${escaped(row.value)}</p>`).join('');
       return `<section${role('card')} style="margin:26px 0;padding:0;${c.box}"><section style="${c.head}">${category ? `<p${part('category')} style="margin:0 0 4px 0;${textBase}line-height:1.6;${c.cat}">${escaped(category)}</p>` : ''}<p${part('title')} style="margin:0;${textBase}line-height:1.5;${c.title}">${escaped(title)}</p></section>${rowHtml || editorMode ? `<section${part('rows')} style="margin:0;${c.rows}">${rowHtml || `<p style="margin:0;${textBase}${c.row}">${editorMode ? '<br/>' : ''}</p>`}</section>` : ''}</section>`;
     };
     const lockedP = style => html => `<p${role('opening')}${locked} style="padding:0;text-indent:0;${style}">${html}</p>`;
