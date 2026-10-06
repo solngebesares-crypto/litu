@@ -73,6 +73,10 @@
   ::-webkit-scrollbar-thumb { background: #E4E2ED; border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: #9B97AD; }
   #editor:focus { outline: none; }
+  /* The canvas sits in a flex row; without this it is stretched to the scroll
+     container's height (clamped to min-height) and longer articles overflow
+     past the template background, leaving a hard colour break. */
+  #editor { align-self:flex-start; height:auto; flex:0 0 auto; }
 
   /* 文章标题区：与 740px 画布对齐的文档式标题，不再是表单输入框 */
   .article-title-bar {
