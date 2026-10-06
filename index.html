@@ -78,6 +78,10 @@
      container's height (clamped to min-height) and longer articles overflow
      past the template background, leaving a hard colour break. */
   #editor { align-self:flex-start; height:auto; flex:0 0 auto; }
+  /* Empty canvas: placeholder on the first body paragraph (editor-only, never exported). */
+  #editor p.empty-hint { position:relative; }
+  #editor p.empty-hint::before { content:'从这里开始写正文…'; position:absolute; left:0; top:0; color:#B5B1C4; pointer-events:none; text-indent:0; }
+  #editorEmptyState { width:min(520px, calc(100% - 48px)); left:50%; transform:translateX(-50%); z-index:10; }
 
   /* 文章标题区：与 740px 画布对齐的文档式标题，不再是表单输入框 */
   .article-title-bar {
@@ -304,7 +308,7 @@
 </div>
 </div>
 <div class="flex items-center space-x-3 max-w-xl w-full justify-center">
-<input class="hidden" id="articleTitle" placeholder="输入文章主标题..." type="text" value="北京周末去哪玩？春日踏青与公园漫步手记"/>
+<input class="hidden" id="articleTitle" placeholder="输入文章主标题..." type="text" value=""/>
 <div class="flex items-center space-x-2 text-[11px] text-ink-500 shrink-0 bg-ink-50 px-2.5 py-1 rounded-full border border-ink-200/60">
 <span class="w-2 h-2 rounded-full bg-emerald-500 pulse-glow"></span>
 <span class="font-mono text-ink-700 tracking-tight" id="saveStatus">本地自动保存完成</span>
@@ -536,7 +540,7 @@
 <label class="article-title-eyebrow" for="articleTitleEditor"><i></i>公众号文章标题</label>
 <span class="article-title-count" id="articleTitleCount" title="公众号标题最多 64 个字">0 / 64</span>
 </div>
-<input class="article-title-input" id="articleTitleEditor" maxlength="120" placeholder="输入一个好标题，让读者愿意点开" type="text" value="北京周末去哪玩？春日踏青与公园漫步手记" />
+<input class="article-title-input" id="articleTitleEditor" maxlength="120" placeholder="输入一个好标题，让读者愿意点开" type="text" value="" />
 </div>
 </div>
 <!-- 段落排印工具栏 -->
@@ -593,6 +597,19 @@
 <!-- 画布工作区 -->
 <div class="relative flex-1 overflow-y-auto p-10 flex justify-center bg-[#FAF9FF]" id="editorScrollContainer">
 <article class="w-full max-w-[740px] min-h-[960px] px-14 py-12 text-ink-900 focus:outline-none transition-all" contenteditable="true" id="editor" spellcheck="false">
+</article>
+<div class="absolute hidden" contenteditable="false" id="editorEmptyState">
+<div class="rounded-xl border border-dashed border-ink-200 bg-white/90 px-6 py-6 text-center shadow-2xs">
+<div class="text-sm font-semibold text-ink-900">开始写一篇新文章</div>
+<p class="mt-1.5 text-xs text-ink-500 leading-relaxed">直接在上面输入正文，或者把写好的文章粘贴 / 导入进来，会按当前模板自动排版。</p>
+<div class="mt-4 flex flex-wrap justify-center gap-2">
+<button class="whitespace-nowrap px-4 py-2 text-xs bg-brand hover:bg-brand-dark text-white rounded-md font-semibold shadow-sm shadow-brand/20 transition" id="emptyImportBtn" type="button">导入文章 · 智能排版</button>
+<button class="whitespace-nowrap px-4 py-2 text-xs bg-white hover:bg-brand-soft hover:text-brand border border-ink-200 text-ink-700 rounded-md font-medium transition" id="emptySampleBtn" type="button">看看示例效果</button>
+</div>
+<p class="mt-3 text-[11px] text-ink-400">左侧可以换模板、配色，插入路线、贴士、表格等小组件</p>
+</div>
+</div>
+<template data-title="北京周末去哪玩？春日踏青与公园漫步手记" id="sampleArticle">
 <div class="article-node mb-6">
 <p class="font-serif text-[16px] leading-[1.88] text-ink-800 text-justify">春天到了，北京终于暖和起来。想找一个不用做太多复杂攻略、当天就能轻松往返的去处，这几个公园刚好适宜。既避开了人声鼎沸的打卡拥挤，又能饱览初春最具生命力的柳绿与樱粉。</p>
 </div>
@@ -640,7 +657,7 @@
 </div>
 </div>
 </section>
-</article>
+</template>
 </div>
 <footer class="h-8 bg-white border-t border-ink-200/80 px-6 flex items-center justify-between text-xs text-ink-500 shrink-0">
 <div class="flex items-center space-x-4">
@@ -3242,12 +3259,65 @@
   const scheduleDraftSave = () => { clearTimeout(draftSaveTimer); draftSaveTimer = setTimeout(saveCurrentDraft, 1200); };
   window.addEventListener('beforeunload', () => { if (draftSaveTimer) saveCurrentDraft(); });
 
+  // Empty canvas: a placeholder line plus a small guide card (import, or load
+  // the sample article). Template ornaments alone do not count as content.
+  const emptyState = document.getElementById('editorEmptyState');
+  function editorIsEmpty() {
+    const copy = editor.cloneNode(true);
+    copy.querySelectorAll('[data-template-role="opening"]').forEach(node => node.remove());
+    if (copy.querySelector('img,table,hr,[data-template-role]:not([data-template-role="body"])')) return false;
+    return !copy.textContent.replace(/[\s ​]+/g, '');
+  }
+  function updateEmptyState() {
+    const empty = editorIsEmpty();
+    editor.querySelectorAll('p.empty-hint').forEach(node => { if (!empty || node.textContent.trim()) node.classList.remove('empty-hint'); });
+    if (!empty) {
+      emptyState.classList.add('hidden');
+      return;
+    }
+    let first = editor.querySelector(':scope > p[data-template-role="body"], :scope > p:not([data-template-role])');
+    if (!first) {
+      first = document.createElement('p');
+      first.setAttribute('data-template-role', 'body');
+      first.setAttribute('style', bodyStyle(canonicalProfile()));
+      first.appendChild(document.createElement('br'));
+      editor.appendChild(first);
+    }
+    first.classList.add('empty-hint');
+    preview.innerHTML = '<p style="margin:72px 12px;text-align:center;color:#9B97AD;font-size:13px;line-height:1.9;">在左边输入或导入文章<br/>这里实时显示手机上的效果</p>';
+    emptyState.classList.remove('hidden');
+    const scroller = document.getElementById('editorScrollContainer');
+    const boxRect = scroller.getBoundingClientRect();
+    const lineRect = first.getBoundingClientRect();
+    emptyState.style.top = `${lineRect.bottom - boxRect.top + scroller.scrollTop + 36}px`;
+  }
+
+  document.getElementById('emptyImportBtn').addEventListener('click', () => importDraftBtn.click());
+  document.getElementById('emptySampleBtn').addEventListener('click', () => {
+    const sample = document.getElementById('sampleArticle');
+    editor.innerHTML = sample.innerHTML;
+    articleTitle.value = sample.dataset.title;
+    articleTitleEditor.value = sample.dataset.title;
+    materializeEditor();
+    bindImageSelection();
+    sync();
+    commitHistoryState();
+    triggerToast('已载入示例文章：换个模板看看效果，内容可以直接修改或删除');
+  });
+
   const draftBaseSync = sync;
   sync = function syncWithDraftHistory() {
     draftBaseSync();
     updateTitleCount();
+    updateEmptyState();
     scheduleDraftSave();
   };
+  editor.addEventListener('input', updateEmptyState);
+  window.addEventListener('resize', updateEmptyState);
+  window.addEventListener('load', updateEmptyState);
+  // Layout settles after styles and fonts load; keep the card below the first line.
+  if (window.ResizeObserver) new ResizeObserver(() => { if (!emptyState.classList.contains('hidden')) updateEmptyState(); }).observe(editor);
+  updateEmptyState();
 
   function showTemplateChrome(theme, accent) {
     const profile = CANONICAL_PROFILES[theme];
