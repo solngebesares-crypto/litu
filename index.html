@@ -836,13 +836,21 @@
 </div>
 <div class="p-5 space-y-4">
 <div>
-<label class="text-xs font-semibold text-ink-800 block mb-1">粘贴 Markdown 或纯文本内容</label>
-<textarea class="w-full h-44 text-xs font-mono p-3 border border-ink-200 rounded-lg focus:ring-1 focus:ring-brand focus:border-brand placeholder-ink-400" id="importTextInput" placeholder="# 你的文章主标题
+<label class="text-xs font-semibold text-ink-800 block mb-1">粘贴文章（纯文本、Markdown，或从 Word / 公众号复制的文字）</label>
+<textarea class="w-full h-52 text-xs font-mono p-3 border border-ink-200 rounded-lg focus:ring-1 focus:ring-brand focus:border-brand placeholder-ink-400" id="importTextInput" placeholder="北京周末去哪玩？春日踏青手记
 
-这是引言或导语内容...
+春天到了，北京终于暖和起来……
 
-## 第一章：章节标题
-这是正文段落，支持自动识别标题、列表与引用段落。"></textarea>
+一、玉渊潭公园
+（一）早樱怎么看
+推荐路线：东门 → 樱花园 → 湖心岛（拍倒影）
+耗时约 2 小时｜轻松
+
+地址：海淀区西三环中路
+门票：2 元
+开放时间：06:00—21:00
+
+小贴士：建议 8 点前入园，人少光线好。"></textarea>
 </div>
 <div class="flex items-center justify-between text-xs text-ink-500">
 <div class="flex items-center space-x-2">
@@ -856,7 +864,7 @@
 </div>
 </div>
 <div class="px-5 py-3 bg-[#FAF9FF] border-t border-ink-100 flex items-center justify-between">
-<span class="text-[11px] text-ink-400">自动识别标题、章节、段落、列表与引用，并套用当前模板</span>
+<span class="text-[11px] text-ink-400 leading-relaxed">自动识别标题与章节层级、路线（A → B）、地址/门票等信息卡、小贴士、引用、表格与图片，并套用当前模板；当前文章会先存入历史草稿</span>
 <div class="flex space-x-2">
 <button class="px-3.5 py-1.5 text-xs text-ink-600 hover:text-ink-900 font-medium" onclick="closeImportModal()">取消</button>
 <button class="px-4 py-1.5 text-xs bg-brand hover:bg-brand-dark text-white rounded-md font-semibold transition active:scale-95 shadow-sm shadow-brand/20" id="executeImportBtn">一键智能排版</button>
@@ -2272,107 +2280,290 @@
     reader.readAsText(file);
   });
 
+  // 智能导入：把纯文本 / Markdown 识别成文章结构，输出渲染器能直接套用模板的
+  // 组件（章节标题、小标题、路线卡、信息卡、贴士、引用、表格、分割线、图片、列表）。
+  // 纯规则识别、不依赖网络。标题层级按“编号样式的优先级”推断：文中出现的最高级
+  // 样式（如“一、”）作为章节标题，其余样式（如“1.”“（一）”）作为小标题。
   function parseMarkdownToEditorialHtml(raw) {
-    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#9e794f';
-    const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
-    const lines = raw.split(/\r?\n/).map(line => line.replace(/[ \t]+$/g, ''));
-    let html = '';
-    let secIndex = 1;
-    let paragraph = [];
-    let listType = '';
-    let listItems = [];
-    let sawContent = false;
+    const esc = value => String(value).replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
+    const BOLD = /\*\*(.+?)\*\*|__(.+?)__/g;
+    const inlineMd = value => esc(value).replace(BOLD, (m, a, b) => `<strong>${a || b}</strong>`);
+    const stripMd = value => String(value).replace(BOLD, (m, a, b) => a || b).trim();
+    const chars = value => [...stripMd(value)].length;
+    const lines = String(raw).replace(/\r\n?/g, '\n').split('\n').map(line => line.replace(/^[\s　]+|[\s　]+$/g, ''));
 
-    const numberText = value => {
-      const match = String(value).match(/^(\d{1,2}|[一二三四五六七八九十百]+)[、.．)]\s*/);
-      return match ? match[1] : '';
-    };
-    const stripMarker = value => value.replace(/^(?:[-*+•]\s+|\d{1,2}[、.．)]\s+|[一二三四五六七八九十百]+[、.．)]\s+)/, '').trim();
-    const isShortHeading = value => {
-      const text = value.replace(/^第[一二三四五六七八九十百]+[章节篇]\s*/u, '').trim();
-      return text.length >= 2 && text.length <= 32 && !/[。！？；]$/.test(text) && !/^https?:\/\//i.test(text);
-    };
-    const addParagraph = () => {
-      if (!paragraph.length) return;
-      const text = paragraph.join(' ').replace(/\s+/g, ' ').trim();
-      if (text) {
-        html += `<div class="article-node mb-5"><p class="font-serif text-[16px] leading-[1.88] text-ink-800 text-justify">${escapeHtml(text)}</p></div>`;
-        sawContent = true;
-      }
-      paragraph = [];
-    };
-    const addList = () => {
-      if (!listItems.length) return;
-      const tag = listType || 'ul';
-      html += `<${tag} class="article-node mb-5 pl-6 text-ink-800 leading-[1.88]">${listItems.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</${tag}>`;
-      listItems = [];
-      listType = '';
-      sawContent = true;
-    };
-    const addHeading = (text, level = 2) => {
-      addParagraph();
-      addList();
-      const clean = text.replace(/^第[一二三四五六七八九十百]+[章节篇]\s*/u, '').replace(/^[一二三四五六七八九十百]+[、.．)]\s*/, '').trim();
-      if (level === 1) {
-        articleTitle.value = clean;
-        return;
-      }
-      const numStr = secIndex < 10 ? `0${secIndex}` : `${secIndex}`;
-      secIndex++;
-      const tag = level === 3 ? 'h3' : 'h2';
-      html += `<div class="article-node mb-4 border-b border-ink-200 pb-2.5 mt-8"><div class="flex items-baseline space-x-2.5"><span class="theme-accent-text font-mono text-base font-bold" style="color: ${accent};">${numStr}</span><${tag} class="text-xl font-serif font-bold text-ink-950 tracking-wide">${escapeHtml(clean)}</${tag}></div></div>`;
-      sawContent = true;
+    const NUM = '[0-9一二三四五六七八九十百零〇两]+';
+    const ORDERED = /^(?:\d{1,2}(?:[、)）]|[.．](?!\d))|[①-⑳])\s*(.+)$/;
+    const BULLET = /^[-*+•·]\s+(.+)$/;
+    const ROUTE_SPLIT = /\s*(?:→|⇒|➝|➜|➔|⟶|—>|－>|->|=>|＞|>)\s*/;
+    const ROUTE_WORDS = /路线|线路|行程|路书|动线|攻略|route|day\s*\d|第[0-9一二三四五六七八九十]+天/i;
+    const KV = /^([^\s：:|｜]{1,6})\s*[：:]\s*(\S.*)$/;
+    const INFO_KEYS = /地址|位置|营业|开放|时间|门票|票价|价格|人均|费用|电话|交通|地铁|公交|自驾|停车|预约|推荐|招牌|必点|入住|退房|房价|房型|早餐|适合|难度|耗时|时长|距离|海拔|季节|官网|评分|网址|店名|名称/;
+    const TIP = /^[【\[]?(小贴士|贴士|温馨提示|提示|注意事项|注意|避坑指南|避坑|Tips?|TIPS|建议|提醒|划重点)[】\]]?\s*(?:[：:]\s*(.*))?$/i;
+    const SENTENCE_END = /[。！!…”"』」]$/;
+
+    const isShort = value => {
+      const n = chars(value);
+      return n >= 2 && n <= 30 && !/[。；;，,：:、]$/.test(value) && !/。/.test(value.slice(0, -1));
     };
 
-    for (let index = 0; index < lines.length; index++) {
-      const line = lines[index];
-      const t = line.trim();
-      if (!t) { addParagraph(); addList(); continue; }
-      if (/^#\s+/.test(t)) { addHeading(t.replace(/^#\s+/, ''), 1); continue; }
-      if (/^##\s+/.test(t)) { addHeading(t.replace(/^##\s+/, ''), 2); continue; }
-      if (/^###\s+/.test(t)) { addHeading(t.replace(/^###\s+/, ''), 3); continue; }
-      if (/^>\s+/.test(t)) {
-        addParagraph(); addList();
-        html += `<blockquote class="article-node my-6 text-center px-8 font-serif italic text-[15px] text-ink-700 leading-loose">${escapeHtml(t.replace(/^>\s+/, ''))}</blockquote>`;
-        sawContent = true;
+    const headingKind = t => {
+      let m;
+      if ((m = t.match(/^##\s+(.+)$/))) return { kind: 'md2', text: stripMd(m[1]), full: stripMd(m[1]) };
+      if ((m = t.match(/^#{3,6}\s+(.+)$/))) return { kind: 'md3', text: stripMd(m[1]), full: stripMd(m[1]) };
+      const rules = [
+        ['chapter', new RegExp(`^第${NUM}[章节篇部站天日]\\s*[：:、.．·|｜\\-—]?\\s*(.*)$`)],
+        ['day', /^(?:Day|DAY|D)\s*\d{1,2}(?!\d)\s*[：:·|｜\-—]?\s*(.*)$/],
+        ['cn', /^[一二三四五六七八九十]+\s*[、.．]\s*(.+)$/],
+        ['twoDigit', /^0\d\s*(?:[.、．|｜/:：]\s*|\s+)(.+)$/],
+        ['cnParen', /^[（(][一二三四五六七八九十]+[)）]\s*(.+)$/],
+        ['num', /^\d{1,2}(?:[、)）]|[.．](?!\d))\s*(.+)$/],
+        ['numDot', /^\d{1,2}\.\d{1,2}\.?\s*(.+)$/],
+        ['bracket', /^【([^】]+)】$/],
+        ['bold', /^(?:\*\*([^*]+)\*\*|__([^_]+)__)$/]
+      ];
+      for (const [kind, re] of rules) {
+        m = t.match(re);
+        if (!m) continue;
+        const rest = stripMd(m.slice(1).find(Boolean) || '');
+        const full = kind === 'bracket' || kind === 'bold' ? rest : stripMd(t);
+        if (!isShort(full)) return null;
+        return { kind, text: kind === 'day' ? full : (rest || full), full };
+      }
+      return null;
+    };
+
+    const parseRoute = t => {
+      if (!t || /^>/.test(t) || !ROUTE_SPLIT.test(t)) return null;
+      let head = '';
+      let body = t;
+      const m = t.match(/^([^：:]{1,14})[：:]\s*(.+)$/);
+      if (m) { head = m[1]; body = m[2]; }
+      const parts = body.split(ROUTE_SPLIT).map(part => part.trim()).filter(Boolean);
+      if (parts.length < 2 || parts.some(part => chars(part) > 24)) return null;
+      if (parts.length < 3 && !ROUTE_WORDS.test(t)) return null;
+      const stations = parts.map(part => {
+        const n = part.match(/^(.+?)\s*[（(]([^()（）]+)[)）]$/);
+        return n ? { name: stripMd(n[1]), note: stripMd(n[2]) } : { name: stripMd(part), note: '' };
+      });
+      return { title: stripMd(head), stations };
+    };
+
+    const isInfoLine = s => { const m = s.match(KV); return Boolean(m && INFO_KEYS.test(m[1])); };
+    const isBlockStart = k => {
+      const s = lines[k] || '';
+      return /^(?:#{1,6}\s|>|\|.*\||!\[|【)/.test(s) || ORDERED.test(s) || BULLET.test(s) || TIP.test(s) || Boolean(parseRoute(s)) || isInfoLine(s) || Boolean(headingKind(s) && headingKind(s).kind !== 'num');
+    };
+    const joinLines = (a, b) => /[⺀-鿿＀-￯　-〿]$/.test(a) || /^[⺀-鿿＀-￯　-〿]/.test(b) ? a + b : `${a} ${b}`;
+
+    const tokens = [];
+    let title = '';
+    const hasH1 = lines.some(line => /^#\s+/.test(line));
+    const firstContent = lines.findIndex(Boolean);
+    let i = 0;
+    while (i < lines.length) {
+      const t = lines[i];
+      if (!t) { i++; continue; }
+      const start = i;
+      const add = (token, end = start) => { tokens.push({ ...token, start, end }); i = end + 1; };
+      const prev = tokens[tokens.length - 1];
+      const prevLabel = adjacentOnly => prev && prev.plain && (adjacentOnly ? prev.end === start - 1 : prev.end >= start - 2) && (prev.type === 'para' || ['plain', 'bold', 'bracket', 'md3'].includes(prev.kind));
+      let m;
+
+      if ((m = t.match(/^#\s+(.+)$/))) { title = stripMd(m[1]); i++; continue; }
+      if (!hasH1 && !title && start === firstContent && !headingKind(t) && isShort(t) && !SENTENCE_END.test(t) && lines.slice(start + 1).some(Boolean) && !KV.test(t) && !parseRoute(t)) {
+        title = stripMd(t); i++; continue;
+      }
+
+      if ((m = t.match(/^!\[([^\]]*)\]\(\s*([^)\s]+)(?:\s+["'][^"']*["'])?\s*\)$/))) {
+        if (/^(?:https?:|data:image\/)/i.test(m[2])) add({ type: 'image', alt: m[1], src: m[2] }); else i++;
         continue;
       }
-      const unordered = /^[-*+•]\s+/.test(t);
-      const ordered = /^(?:\d{1,2}|[一二三四五六七八九十百]+)[、.．)]\s+/.test(t);
-      if (unordered || ordered) {
-        addParagraph();
-        const nextType = ordered ? 'ol' : 'ul';
-        if (listType && listType !== nextType) addList();
-        listType = nextType;
-        listItems.push(stripMarker(t));
+      if (/^(?:[-*_＊—–=]\s*){3,}$|^(?:[·•◆◇❖✦★☆~～]\s*){3,}$/.test(t)) { add({ type: 'hr' }); continue; }
+
+      if (/^\|.*\|$/.test(t) && (t.match(/\|/g) || []).length >= 3) {
+        let end = start;
+        const rows = [];
+        while (end < lines.length && /^\|.*\|$/.test(lines[end])) {
+          if (!/^[\s|:\-]+$/.test(lines[end])) rows.push(lines[end].replace(/^\||\|$/g, '').split('|').map(cell => stripMd(cell)));
+          end++;
+        }
+        add({ type: 'table', rows }, end - 1);
         continue;
       }
-      const explicitHeading = /^(?:第[一二三四五六七八九十百]+[章节篇]|[一二三四五六七八九十百]+[、.．)])\s*/u.test(t);
-      const plainHeading = !sawContent && index === lines.findIndex(item => item.trim()) || (isShortHeading(t) && (index === 0 || !lines[index - 1].trim()));
-      if (explicitHeading || plainHeading) { addHeading(t, explicitHeading && /^第/u.test(t) ? 2 : 2); continue; }
-      paragraph.push(t);
+
+      if (/^>/.test(t)) {
+        let end = start;
+        const parts = [];
+        while (end < lines.length && /^>/.test(lines[end])) { parts.push(lines[end].replace(/^>\s?/, '').trim()); end++; }
+        let cite = '';
+        const last = parts[parts.length - 1] || '';
+        if (parts.length > 1 && (m = last.match(/^[—–-]{1,2}\s*(.+)$/))) { cite = m[1]; parts.pop(); }
+        else if ((m = last.match(/^(.*\S)\s*[—–]{2}\s*(.+)$/))) { parts[parts.length - 1] = m[1]; cite = m[2]; }
+        if (!cite && (m = (lines[end] || '').match(/^[—–]{2}\s*(.+)$/))) { cite = m[1]; end++; }
+        add({ type: cite ? 'quote' : 'note', html: parts.filter(Boolean).map(inlineMd).join('<br/>'), cite: stripMd(cite) }, end - 1);
+        continue;
+      }
+      if ((m = t.match(/^[“"「『](.{4,120})[”"」』]$/))) {
+        const c = (lines[start + 1] || '').match(/^[—–-]{2}\s*(.+)$/);
+        add({ type: 'quote', html: inlineMd(m[1]), cite: c ? stripMd(c[1]) : '' }, c ? start + 1 : start);
+        continue;
+      }
+
+      if ((m = stripMd(t).match(TIP))) {
+        const body = m[2] ? [m[2]] : [];
+        let end = start;
+        if (!body.length && !lines[end + 1] && lines[end + 2]) end++;
+        while (end + 1 < lines.length && lines[end + 1] && !(body.length && isBlockStart(end + 1) && !BULLET.test(lines[end + 1]) && !ORDERED.test(lines[end + 1]))) { body.push(lines[end + 1]); end++; }
+        if (body.length) {
+          const bodyHtml = body.map(line => inlineMd(line.replace(/^[-*+•·]\s+/, ''))).join('<br/>');
+          add({ type: 'tip', title: m[1], html: bodyHtml }, end);
+          continue;
+        }
+      }
+
+      const route = parseRoute(t);
+      if (route) {
+        let end = start;
+        let tags = [];
+        const next = lines[start + 1] || '';
+        if (next && chars(next) <= 24 && !/[。！？!?，,]/.test(next) && !parseRoute(next) && /耗时|时长|全程|公里|km|小时|分钟|难度|步行|骑行|自驾|适合|强度/i.test(next)) {
+          tags = next.split(/\s*[|｜/·、，,；;]\s*/).map(stripMd).filter(Boolean).slice(0, 4);
+          end = start + 1;
+        }
+        let routeTitle = route.title;
+        if ((!routeTitle || /^路线|^线路|^行程/.test(routeTitle)) && prevLabel(false) && ROUTE_WORDS.test(prev.plain)) { tokens.pop(); routeTitle = prev.plain; }
+        if (/^(?:路线|线路|行程|路书|route)$/i.test(routeTitle)) routeTitle = '';
+        add({ type: 'route', title: routeTitle || '推荐路线', stations: route.stations, tags }, end);
+        continue;
+      }
+
+      if (KV.test(t)) {
+        let end = start;
+        const rows = [];
+        while (end < lines.length && (m = lines[end].match(KV)) && !TIP.test(lines[end]) && !parseRoute(lines[end])) { rows.push({ key: stripMd(m[1]), value: stripMd(m[2]) }); end++; }
+        if (rows.length >= 2 && rows.some(row => INFO_KEYS.test(row.key))) {
+          let cardTitle = '';
+          if (prevLabel(true)) { tokens.pop(); cardTitle = prev.plain; }
+          add({ type: 'card', title: cardTitle, rows }, end - 1);
+          continue;
+        }
+      }
+
+      let hk = headingKind(t);
+      if (hk && hk.kind === 'num') {
+        // "1. xxx" directly followed by another numbered line is a list item.
+        const next = lines[start + 1] || '';
+        if ((start > 0 && lines[start - 1]) || !lines.slice(start + 1).some(Boolean) || ORDERED.test(next)) hk = null;
+      }
+      if (hk) { add({ type: 'heading', kind: hk.kind, text: hk.text, full: hk.full, plain: hk.text }); continue; }
+
+      const ordered = ORDERED.test(t);
+      if (ordered || BULLET.test(t)) {
+        let end = start;
+        const items = [];
+        const sameKind = s => (ordered ? ORDERED : BULLET).test(s || '');
+        while (end < lines.length) {
+          if (sameKind(lines[end])) { items.push(inlineMd(lines[end].match(ordered ? ORDERED : BULLET)[1])); end++; continue; }
+          if (!lines[end] && sameKind(lines[end + 1])) { end++; continue; }
+          break;
+        }
+        add({ type: 'list', ordered, items }, end - 1);
+        continue;
+      }
+
+      const next = lines[start + 1];
+      const nextNonBlank = lines.slice(start + 1).some(Boolean);
+      if (isShort(t) && chars(t) <= 22 && !SENTENCE_END.test(t) && (start === 0 || !lines[start - 1]) && nextNonBlank && (!next || chars(next) > 30 || SENTENCE_END.test(next) || /。/.test(next))) {
+        add({ type: 'heading', kind: 'plain', text: stripMd(t), full: stripMd(t), plain: stripMd(t) });
+        continue;
+      }
+
+      let end = start;
+      let text = t;
+      while (end + 1 < lines.length && lines[end + 1] && !/[。！？!?…”」』）)]$/.test(lines[end]) && !isBlockStart(end + 1)) { text = joinLines(text, lines[end + 1]); end++; }
+      add({ type: 'para', html: inlineMd(text), plain: end === start && isShort(t) && !SENTENCE_END.test(t) ? stripMd(t) : '' }, end);
     }
-    addParagraph();
-    addList();
-    return html;
+
+    // Heading levels: the highest-priority numbering style present becomes the
+    // section heading (h2); every other style becomes a subheading (h3).
+    const PRIORITY = ['chapter', 'day', 'cn', 'twoDigit', 'cnParen', 'num', 'numDot', 'bracket', 'bold'];
+    const headings = tokens.filter(tk => tk.type === 'heading');
+    const has = kind => headings.some(tk => tk.kind === kind);
+    const explicit = PRIORITY.filter(has);
+    const topKind = has('md2') ? 'md2' : explicit[0] || (has('md3') ? 'md3' : 'plain');
+    const levelOf = tk => tk.kind === 'md2' ? 2 : tk.kind === topKind ? 2 : 3;
+    const sectionLabel = text => text.replace(new RegExp(`^(?:第${NUM}[章节篇部站]|[一二三四五六七八九十]+\\s*[、.．]|0?\\d{1,2}\\s*[、.．|｜/:：]|[（(][一二三四五六七八九十]+[)）])\\s*`), '').trim() || text;
+
+    const stats = { h2: 0, h3: 0, route: 0, card: 0, tip: 0, quote: 0, table: 0, image: 0 };
+    const cardCategory = rows => {
+      const keys = rows.map(row => row.key).join(' ');
+      if (/入住|退房|房价|房型|早餐/.test(keys)) return '住宿 · STAY';
+      if (/人均|招牌|必点|推荐菜/.test(keys)) return '美食 · FOOD';
+      if (/难度|海拔|距离|耗时/.test(keys)) return '徒步 · TRAIL';
+      if (/门票|开放|预约|景区/.test(keys)) return '景点 · SIGHT';
+      return '实用信息 · INFO';
+    };
+    const html = tokens.map(tk => {
+      switch (tk.type) {
+        case 'heading':
+          if (levelOf(tk) === 2) { stats.h2++; return `<h2>${esc(sectionLabel(tk.text))}</h2>`; }
+          stats.h3++;
+          return `<h3>${esc(tk.full)}</h3>`;
+        case 'list': return `<${tk.ordered ? 'ol' : 'ul'}>${tk.items.map(item => `<li>${item}</li>`).join('')}</${tk.ordered ? 'ol' : 'ul'}>`;
+        case 'note': return `<blockquote>${tk.html}</blockquote>`;
+        case 'quote':
+          stats.quote++;
+          return `<section data-template-role="quote"><p>${tk.html}</p>${tk.cite ? `<p data-part="cite">${esc(tk.cite)}</p>` : ''}</section>`;
+        case 'tip':
+          stats.tip++;
+          return `<section data-template-role="tip"><p data-part="title">${esc(tk.title)}</p><p>${tk.html}</p></section>`;
+        case 'route': {
+          stats.route++;
+          const tags = tk.tags.length ? `<p data-part="tags">${tk.tags.map(tag => `<span>${esc(tag)}</span>`).join('')}</p>` : '';
+          const stations = tk.stations.map(s => `<p>${esc(s.name)}${s.note ? `<span data-part="note">${esc(s.note)}</span>` : ''}</p>`).join('');
+          return `<section data-template-role="route"><p data-part="label">ROUTE ${String(stats.route).padStart(2, '0')}</p><p data-part="title">${esc(tk.title)}</p>${tags}<section data-part="stations">${stations}</section></section>`;
+        }
+        case 'card': {
+          stats.card++;
+          const category = cardCategory(tk.rows);
+          const rows = tk.rows.map(row => `<p><span data-part="key">${esc(row.key)}</span>${esc(row.value)}</p>`).join('');
+          return `<section data-template-role="card"><p data-part="category">${category}</p><p data-part="title">${esc(tk.title || `${category.split(' · ')[0].replace('实用信息', '实用')}信息`)}</p><section data-part="rows">${rows}</section></section>`;
+        }
+        case 'table':
+          stats.table++;
+          return `<table><tbody>${tk.rows.map(row => `<tr>${row.map(cell => `<td>${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+        case 'hr': return '<hr/>';
+        case 'image':
+          stats.image++;
+          return `<figure class="editable-img-wrap" data-width="100%" data-align="center" data-frame="none"><img src="${esc(tk.src)}" alt="${esc(tk.alt)}"/>${tk.alt ? `<figcaption>${esc(tk.alt)}</figcaption>` : ''}</figure>`;
+        default: return `<p>${tk.html}</p>`;
+      }
+    }).join('');
+    return { html, title, stats };
   }
 
-  executeImportBtn.addEventListener('click', () => {
+  executeImportBtn.addEventListener('click', async () => {
     const text = importTextInput.value.trim();
     if (!text) {
       triggerToast('请先粘贴文章或选择文件');
       return;
     }
+    // Keep the article being replaced in 历史草稿 instead of overwriting it.
+    if (typeof startImportDraft === 'function') await startImportDraft();
     const parsed = parseMarkdownToEditorialHtml(text);
-    editor.innerHTML = parsed;
+    if (parsed.title) articleTitle.value = parsed.title;
+    editor.innerHTML = parsed.html;
     removeDefaultTemplateImages();
-    normalizeLegacyOpening();
     closeImportModal();
     materializeEditor();
     sync();
     bindImageSelection();
     commitHistoryState();
-    triggerToast('文章已智能转换并完成杂志排版！');
+    const s = parsed.stats;
+    const found = [[s.h2, '个章节'], [s.h3, '个小标题'], [s.route, '条路线'], [s.card, '张信息卡'], [s.tip, '条贴士'], [s.quote, '段引用'], [s.table, '张表格'], [s.image, '张图片']]
+      .filter(([n]) => n).map(([n, label]) => `${n} ${label}`);
+    triggerToast(found.length ? `已识别 ${found.join('、')}，并套用当前模板` : '文章已导入并完成排版');
   });
 
   // 10. 读取缓存草稿或首次初始化
@@ -3465,6 +3656,15 @@
     historyState = readHistoryState();
     clearTimeout(draftSaveTimer);
     draftSaveTimer = null;
+  }
+
+  // Called by 导入文章: an import starts a new draft so the current one stays in history.
+  async function startImportDraft() {
+    if (!editor.innerText.replace(/\s/g, '').length) return;
+    await saveCurrentDraft();
+    currentDraftId = newDraftId();
+    draftCreatedAt = null;
+    rememberDraftId();
   }
 
   const draftModal = document.getElementById('draftHistoryModal');
