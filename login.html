@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="robots" content="noindex"/>
+<title>排好看 · 邀请码登录</title>
+<style>
+  :root {
+    --brand:#6D4AFF; --brand-dark:#4931A8; --brand-soft:#F4F1FF;
+    --ink:#13111E; --ink-2:#4E4962; --ink-3:#9B97AD; --line:#E4E2ED; --bg:#FAF9FF;
+    --danger:#C2410C;
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; min-height:100%; }
+  body {
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px 16px;
+    background:radial-gradient(1200px 600px at 50% -10%, #EDE8FF 0%, var(--bg) 60%);
+    color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei UI","Microsoft YaHei",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .card {
+    width:100%; max-width:400px;
+    padding:36px 32px 28px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:0 12px 36px -8px rgba(109,74,255,.16);
+  }
+  .brand { display:flex; align-items:center; gap:10px; margin-bottom:28px; }
+  .logo {
+    width:34px; height:34px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--brand); color:#fff;
+    font-family:"Songti SC",STSong,SimSun,serif; font-weight:700; font-size:17px;
+  }
+  .brand b { font-family:"Songti SC",STSong,SimSun,serif; font-size:19px; letter-spacing:.04em; }
+  .brand span { display:block; color:var(--ink-3); font-size:11px; margin-top:2px; }
+  h1 { margin:0 0 6px; font-size:20px; font-weight:700; }
+  p.lead { margin:0 0 24px; color:var(--ink-2); font-size:13px; line-height:1.7; }
+  label { display:block; font-size:12px; font-weight:600; color:var(--ink-2); margin-bottom:8px; }
+  input {
+    width:100%; padding:12px 14px;
+    border:1px solid var(--line); border-radius:10px;
+    font:600 18px/1.3 ui-monospace,Menlo,Monaco,Consolas,monospace;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--ink);
+    outline:none; transition:border-color .15s, box-shadow .15s;
+  }
+  input::placeholder { color:#C4C0D0; letter-spacing:.08em; font-weight:500; }
+  input:focus { border-color:#8066E8; box-shadow:0 0 0 3px rgba(109,74,255,.12); }
+  input[aria-invalid="true"] { border-color:var(--danger); }
+  .error { min-height:20px; margin:8px 0 14px; color:var(--danger); font-size:12px; }
+  button {
+    width:100%; padding:12px; border:0; border-radius:10px;
+    background:var(--brand); color:#fff; font-size:14px; font-weight:700; letter-spacing:.06em;
+    cursor:pointer; transition:background .15s, transform .05s;
+  }
+  button:hover { background:var(--brand-dark); }
+  button:active { transform:scale(.99); }
+  button:disabled { opacity:.6; cursor:default; }
+  .foot { margin-top:22px; padding-top:16px; border-top:1px solid #F0EFF6; color:var(--ink-3); font-size:11px; line-height:1.7; text-align:center; }
+  @media (max-width:420px) { .card { padding:28px 20px 22px; } }
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="brand">
+    <div class="logo">排</div>
+    <div><b>排好看</b><span>微信公众号文章排版工具 · 一排就好看</span></div>
+  </div>
+  <h1>输入邀请码</h1>
+  <p class="lead">排好看目前为邀请制，输入邀请码即可进入编辑器。登录后 30 天内无需重复输入。</p>
+  <form id="loginForm" novalidate>
+    <label for="code">邀请码</label>
+    <input id="code" name="code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX" maxlength="24" required autofocus/>
+    <div class="error" id="error" role="alert"></div>
+    <button type="submit" id="submit">进入排好看</button>
+  </form>
+  <div class="foot">没有邀请码？请联系管理员获取。</div>
+</main>
+<script>
+  const form = document.getElementById('loginForm');
+  const input = document.getElementById('code');
+  const error = document.getElementById('error');
+  const submit = document.getElementById('submit');
+  input.addEventListener('input', () => { error.textContent = ''; input.removeAttribute('aria-invalid'); });
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const code = input.value.trim();
+    if (!code) { error.textContent = '请输入邀请码'; input.setAttribute('aria-invalid', 'true'); input.focus(); return; }
+    submit.disabled = true;
+    submit.textContent = '验证中…';
+    try {
+      const response = await fetch('/api/invite/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) throw new Error(result.error || '验证失败，请稍后再试');
+      submit.textContent = '验证成功，正在进入…';
+      location.replace('/');
+    } catch (err) {
+      error.textContent = err.message === 'Failed to fetch' ? '无法连接服务，请检查网络后重试' : err.message;
+      input.setAttribute('aria-invalid', 'true');
+      input.select();
+      submit.disabled = false;
+      submit.textContent = '进入排好看';
+    }
+  });
+</script>
+</body>
+</html>

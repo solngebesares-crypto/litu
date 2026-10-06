@@ -6,6 +6,15 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <meta content="排好看是一款让微信公众号文章一排就好看的高颜值排版工具" name="description"/>
 <title>排好看｜微信公众号文章排版工具 · 一排就好看</title>
+<script>document.documentElement.classList.add('invite-pending');</script>
+<style>
+  /* 邀请码门禁：会话确认前不显示编辑器 */
+  html.invite-pending body > header, html.invite-pending #workspaceRoot { visibility:hidden; }
+  #inviteGate { display:none; }
+  body > header button, body > header span { white-space:nowrap; }
+  html.invite-locked #inviteGate { display:flex; }
+  html.invite-locked body > header, html.invite-locked #workspaceRoot { display:none !important; }
+</style>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script>
   tailwind.config = {
@@ -281,6 +290,14 @@
 
 </head>
 <body class="bg-[#FAF9FF] text-ink-900 antialiased font-sans h-screen flex flex-col overflow-hidden select-none" data-theme="magazine">
+<div class="fixed inset-0 z-[100] items-center justify-center bg-[#FAF9FF] px-4" id="inviteGate" role="dialog" aria-modal="true" aria-labelledby="inviteGateTitle">
+<div class="w-full max-w-[400px] bg-white border border-ink-200 rounded-2xl shadow-pop p-8 text-center">
+<div class="w-10 h-10 mx-auto mb-4 rounded-lg bg-brand text-white flex items-center justify-center font-serif font-bold">排</div>
+<h1 class="font-serif text-lg font-bold text-ink-950 mb-2" id="inviteGateTitle">需要邀请码才能使用</h1>
+<p class="text-xs text-ink-500 leading-relaxed mb-5" id="inviteGateText">请通过排好看的服务地址打开，并输入邀请码登录。</p>
+<a class="inline-block px-5 py-2 text-xs font-semibold bg-brand hover:bg-brand-dark text-white rounded-md" href="/login" id="inviteGateLink">去输入邀请码</a>
+</div>
+</div>
 <!-- 顶栏 (48px) -->
 <header class="h-12 bg-white border-b border-ink-200/80 px-4 flex items-center justify-between z-30 shrink-0 shadow-xs">
 <div class="flex items-center space-x-3">
@@ -310,6 +327,9 @@
 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </button>
 </div>
+<button class="hidden w-8 h-8 text-ink-400 hover:text-red-600 hover:bg-red-50 rounded-md transition items-center justify-center active:scale-95" id="logoutBtn" title="退出登录" aria-label="退出登录">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 17l5-5-5-5M20 12H9M12 21H6a2 2 0 01-2-2V5a2 2 0 012-2h6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path></svg>
+</button>
 <button class="px-3 py-1.5 text-xs font-medium text-ink-700 hover:text-brand hover:border-brand/40 hover:bg-brand-soft/40 border border-ink-200 rounded-md transition flex items-center space-x-1.5 active:scale-95" id="draftHistoryBtn" title="查看和恢复历史作品">
 <svg class="w-3.5 h-3.5 text-ink-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 8v4l2.5 2.5M3.05 11a9 9 0 1 1 .5 4M3 4v5h5" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path></svg>
 <span>历史草稿</span>
@@ -3824,6 +3844,40 @@
 
   updateTitleCount();
   scheduleDraftSave();
+</script>
+<script>
+  // 邀请码门禁（页面侧）：真正的校验在 server.js —— 没有有效会话时服务端根本不会返回本页面。
+  // 这里负责：确认会话后显示编辑器；会话失效时跳回登录页；直接打开本地文件时拦截。
+  (function inviteGuard() {
+    const root = document.documentElement;
+    const lock = (text, linkVisible) => {
+      root.classList.remove('invite-pending');
+      root.classList.add('invite-locked');
+      if (text) document.getElementById('inviteGateText').textContent = text;
+      document.getElementById('inviteGateLink').style.display = linkVisible ? '' : 'none';
+    };
+    if (!/^https?:$/.test(location.protocol)) {
+      lock('请先运行 node server.js 启动服务，再在浏览器打开它显示的地址，输入邀请码后使用。', false);
+      return;
+    }
+    fetch('/api/invite/session', { credentials: 'same-origin', cache: 'no-store' })
+      .then(response => {
+        if (response.status === 401) { location.replace('/login'); return; }
+        if (!response.ok) throw new Error(String(response.status));
+        root.classList.remove('invite-pending');
+        const logout = document.getElementById('logoutBtn');
+        logout.classList.remove('hidden');
+        logout.classList.add('flex');
+        logout.addEventListener('click', async () => {
+          if (!confirm('确定退出登录吗？退出后需要重新输入邀请码。草稿仍保存在本机浏览器中。')) return;
+          await fetch('/api/invite/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+          location.replace('/login');
+        });
+        const apiBase = document.getElementById('wechatApiBase');
+        if (apiBase && !localStorage.getItem('wechat-api-base')) apiBase.value = location.origin;
+      })
+      .catch(() => lock('无法连接排好看服务，请确认服务已启动后刷新页面。', false));
+  })();
 </script>
 </body>
 </html>

@@ -2,21 +2,145 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { URL } = require('url');
 
-const PORT = Number(process.env.WECHAT_PORT || 8787);
+const PORT = Number(process.env.WECHAT_PORT || process.env.PORT || 8787);
+// Loopback by default. Set HOST=0.0.0.0 only behind an HTTPS reverse proxy:
+// every page and API below then requires a valid invite session.
+const HOST = process.env.HOST || '127.0.0.1';
+const INVITE_FILE = process.env.INVITE_FILE || path.join(__dirname, 'invite-codes.json');
+const SECRET_FILE = path.join(__dirname, '.invite-secret');
+const SESSION_DAYS = Number(process.env.INVITE_SESSION_DAYS || 30);
+const SESSION_COOKIE = 'phk_session';
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const MAX_BODY = 8 * 1024 * 1024;
 const state = { appId: '', appSecret: '', token: '', tokenExpiresAt: 0 };
 const fallbackImage = path.join(__dirname, 'aurora-cover.png');
 
-function json(res, status, body) {
-  const payload = JSON.stringify(body);
-  res.writeHead(status, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
+/* ------------------------------------------------------------------ */
+/* Invite codes                                                        */
+/* ------------------------------------------------------------------ */
+
+function loadInvites() {
+  try {
+    const data = JSON.parse(fs.readFileSync(INVITE_FILE, 'utf8'));
+    return Array.isArray(data.codes) ? data : { codes: [] };
+  } catch (error) {
+    if (error.code !== 'ENOENT') console.error(`无法读取 ${INVITE_FILE}：${error.message}`);
+    return { codes: [] };
+  }
+}
+
+function saveInvites(data) {
+  const tmp = `${INVITE_FILE}.tmp`;
+  fs.writeFileSync(tmp, `${JSON.stringify(data, null, 2)}\n`, { mode: 0o600 });
+  fs.renameSync(tmp, INVITE_FILE);
+}
+
+function normalizeCode(code) {
+  return String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+function formatCode(raw) {
+  return raw.replace(/(.{4})(?=.)/g, '$1-');
+}
+
+function generateCode() {
+  let raw = '';
+  for (let i = 0; i < 8; i++) raw += CODE_ALPHABET[crypto.randomInt(CODE_ALPHABET.length)];
+  return formatCode(raw);
+}
+
+function findInvite(data, code) {
+  const wanted = normalizeCode(code);
+  return wanted ? data.codes.find(item => normalizeCode(item.code) === wanted) : null;
+}
+
+// Returns null when the code may be used, otherwise the reason it may not.
+function inviteProblem(invite, { forNewLogin } = {}) {
+  if (!invite) return '邀请码无效，请检查后重新输入';
+  if (invite.disabled) return '该邀请码已停用';
+  if (invite.expiresAt && Date.now() > Date.parse(invite.expiresAt)) return '该邀请码已过期';
+  if (forNewLogin && invite.maxUses > 0 && invite.uses >= invite.maxUses) return '该邀请码的使用次数已用完';
+  return null;
+}
+
+function sessionSecret() {
+  if (process.env.INVITE_SECRET) return process.env.INVITE_SECRET;
+  try { return fs.readFileSync(SECRET_FILE, 'utf8').trim(); } catch (error) { /* first run */ }
+  const secret = crypto.randomBytes(32).toString('hex');
+  fs.writeFileSync(SECRET_FILE, secret, { mode: 0o600 });
+  return secret;
+}
+const SESSION_SECRET = sessionSecret();
+
+function sign(value) {
+  return crypto.createHmac('sha256', SESSION_SECRET).update(value).digest('base64url');
+}
+
+function createSessionToken(code) {
+  const payload = Buffer.from(JSON.stringify({ c: normalizeCode(code), e: Date.now() + SESSION_DAYS * 86400e3 })).toString('base64url');
+  return `${payload}.${sign(payload)}`;
+}
+
+function parseCookies(req) {
+  return Object.fromEntries(String(req.headers.cookie || '').split(';').map(part => part.trim().split('=')).filter(([key]) => key).map(([key, ...rest]) => [key, decodeURIComponent(rest.join('='))]));
+}
+
+// A session is valid while its signature checks out, it has not expired and
+// its invite code is still usable, so disabling a code signs its users out.
+function currentSession(req) {
+  const token = parseCookies(req)[SESSION_COOKIE];
+  if (!token || !token.includes('.')) return null;
+  const [payload, signature] = token.split('.');
+  const expected = sign(payload);
+  if (signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
+  let session;
+  try { session = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')); } catch (error) { return null; }
+  if (!session || Date.now() > session.e) return null;
+  const invite = findInvite(loadInvites(), session.c);
+  if (inviteProblem(invite)) return null;
+  return { code: invite.code, expiresAt: new Date(session.e).toISOString() };
+}
+
+function sessionCookie(req, value, maxAgeSeconds) {
+  const secure = process.env.COOKIE_SECURE === '1' || (TRUST_PROXY && req.headers['x-forwarded-proto'] === 'https');
+  return `${SESSION_COOKIE}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}${secure ? '; Secure' : ''}`;
+}
+
+// Brute-force protection: at most 10 failed attempts per client per 15 minutes.
+const failedLogins = new Map();
+// X-Forwarded-* headers can be forged by any client, so they are only trusted
+// when TRUST_PROXY=1 (behind nginx etc.); the proxy appends the real client
+// address as the last X-Forwarded-For entry.
+const TRUST_PROXY = process.env.TRUST_PROXY === '1';
+function clientKey(req) {
+  const forwarded = TRUST_PROXY ? String(req.headers['x-forwarded-for'] || '').split(',').map(part => part.trim()).filter(Boolean).pop() : '';
+  return forwarded || req.socket.remoteAddress || '';
+}
+function loginBlocked(req) {
+  const entry = failedLogins.get(clientKey(req));
+  return Boolean(entry && entry.count >= 10 && Date.now() - entry.since < 15 * 60e3);
+}
+function recordFailedLogin(req) {
+  const key = clientKey(req);
+  const entry = failedLogins.get(key);
+  if (!entry || Date.now() - entry.since >= 15 * 60e3) failedLogins.set(key, { count: 1, since: Date.now() });
+  else entry.count += 1;
+}
+
+function sendFile(res, file, status = 200) {
+  fs.readFile(path.join(__dirname, file), (error, content) => {
+    if (error) return json(res, 404, { ok: false, error: 'Not found' });
+    res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Frame-Options': 'DENY' });
+    res.end(content);
   });
+}
+
+function json(res, status, body, headers = {}) {
+  const payload = JSON.stringify(body);
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...headers });
   res.end(payload);
 }
 
@@ -196,10 +320,47 @@ async function createDraft(payload) {
 }
 
 const server = http.createServer(async (req, res) => {
-  if (req.method === 'OPTIONS') return json(res, 204, {});
+  const pathname = new URL(req.url, 'http://localhost').pathname;
   try {
-    if (req.method === 'GET' && req.url === '/api/health') return json(res, 200, { ok: true, configured: Boolean(state.appId && state.appSecret) });
-    if (req.method === 'POST' && req.url === '/api/wechat/config') {
+    if (req.method === 'GET' && pathname === '/api/health') return json(res, 200, { ok: true });
+
+    if (req.method === 'POST' && pathname === '/api/invite/login') {
+      if (loginBlocked(req)) return json(res, 429, { ok: false, error: '尝试次数过多，请 15 分钟后再试' });
+      const payload = await readJson(req);
+      const data = loadInvites();
+      const invite = findInvite(data, payload.code);
+      const problem = inviteProblem(invite, { forNewLogin: true });
+      if (problem) {
+        recordFailedLogin(req);
+        return json(res, 401, { ok: false, error: problem });
+      }
+      invite.uses = (invite.uses || 0) + 1;
+      invite.lastUsedAt = new Date().toISOString();
+      saveInvites(data);
+      failedLogins.delete(clientKey(req));
+      return json(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(req, createSessionToken(invite.code), SESSION_DAYS * 86400) });
+    }
+    if (req.method === 'POST' && pathname === '/api/invite/logout') {
+      return json(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(req, '', 0) });
+    }
+
+    const session = currentSession(req);
+    if (req.method === 'GET' && pathname === '/api/invite/session') {
+      return session ? json(res, 200, { ok: true, ...session }) : json(res, 401, { ok: false, error: '请先输入邀请码' });
+    }
+
+    // Pages: the editor is only ever sent to holders of a valid invite session.
+    if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
+      return session ? sendFile(res, 'index.html') : sendFile(res, 'login.html', 401);
+    }
+    if (req.method === 'GET' && pathname === '/login') {
+      if (session) { res.writeHead(302, { Location: '/' }); return res.end(); }
+      return sendFile(res, 'login.html');
+    }
+
+    if (pathname.startsWith('/api/') && !session) return json(res, 401, { ok: false, error: '请先输入邀请码' });
+
+    if (req.method === 'POST' && pathname === '/api/wechat/config') {
       const payload = await readJson(req);
       if (!payload.appId || !payload.appSecret) return json(res, 400, { ok: false, error: 'AppID 和 AppSecret 不能为空' });
       state.appId = String(payload.appId).trim();
@@ -209,7 +370,7 @@ const server = http.createServer(async (req, res) => {
       await getAccessToken();
       return json(res, 200, { ok: true, message: '公众号连接成功，密钥仅保存在本服务进程内存中' });
     }
-    if (req.method === 'POST' && req.url === '/api/wechat/draft') {
+    if (req.method === 'POST' && pathname === '/api/wechat/draft') {
       const payload = await readJson(req);
       const result = await createDraft(payload);
       return json(res, 200, { ok: true, mediaId: result.media_id });
@@ -220,6 +381,67 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-// The draft service receives AppSecret from the local editor. Keep it bound to
-// loopback so another device on the network cannot call this endpoint.
-server.listen(PORT, '127.0.0.1', () => console.log(`WeChat draft server listening on http://127.0.0.1:${PORT}`));
+/* ------------------------------------------------------------------ */
+/* Admin CLI: node server.js invite <create|list|disable|enable|delete> */
+/* ------------------------------------------------------------------ */
+
+function runInviteCli(args) {
+  const [command, ...rest] = args;
+  const option = (name, fallback) => {
+    const index = rest.indexOf(`--${name}`);
+    return index >= 0 && rest[index + 1] !== undefined ? rest[index + 1] : fallback;
+  };
+  const data = loadInvites();
+  if (command === 'create') {
+    const count = Math.max(1, Math.min(500, Number(option('count', 1)) || 1));
+    const maxUses = Math.max(0, Number(option('uses', 0)) || 0);
+    const days = Number(option('days', 0)) || 0;
+    const note = String(option('note', ''));
+    const created = [];
+    while (created.length < count) {
+      const code = generateCode();
+      if (findInvite(data, code)) continue;
+      const invite = { code, note, maxUses, uses: 0, createdAt: new Date().toISOString(), expiresAt: days > 0 ? new Date(Date.now() + days * 86400e3).toISOString() : null, disabled: false };
+      data.codes.push(invite);
+      created.push(invite);
+    }
+    saveInvites(data);
+    console.log(`已生成 ${created.length} 个邀请码（${maxUses ? `每个最多登录 ${maxUses} 次` : '登录次数不限'}，${days > 0 ? `${days} 天后过期` : '长期有效'}）：`);
+    created.forEach(invite => console.log(`  ${invite.code}`));
+    return;
+  }
+  if (command === 'list') {
+    if (!data.codes.length) return console.log('还没有邀请码。用 node server.js invite create 生成。');
+    data.codes.forEach(invite => {
+      const status = inviteProblem(invite, { forNewLogin: true }) ? `不可用（${inviteProblem(invite, { forNewLogin: true })}）` : '可用';
+      const uses = `${invite.uses || 0}/${invite.maxUses || '∞'}`;
+      const expires = invite.expiresAt ? invite.expiresAt.slice(0, 10) : '长期';
+      console.log(`${invite.code}  ${status}  已登录 ${uses}  到期 ${expires}${invite.note ? `  备注：${invite.note}` : ''}`);
+    });
+    return;
+  }
+  if (['disable', 'enable', 'delete'].includes(command)) {
+    const invite = findInvite(data, rest[0]);
+    if (!invite) { console.error(`找不到邀请码 ${rest[0] || ''}`); process.exitCode = 1; return; }
+    if (command === 'delete') data.codes.splice(data.codes.indexOf(invite), 1);
+    else invite.disabled = command === 'disable';
+    saveInvites(data);
+    console.log(`${invite.code} 已${{ disable: '停用（已登录的用户会被立即退出）', enable: '重新启用', delete: '删除' }[command]}`);
+    return;
+  }
+  console.log(`用法：
+  node server.js invite create [--count 10] [--uses 3] [--days 30] [--note 备注]
+  node server.js invite list
+  node server.js invite disable <邀请码>
+  node server.js invite enable <邀请码>
+  node server.js invite delete <邀请码>`);
+}
+
+if (process.argv[2] === 'invite') {
+  runInviteCli(process.argv.slice(3));
+} else {
+  server.listen(PORT, HOST, () => {
+    console.log(`排好看已启动：http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
+    if (!loadInvites().codes.length) console.log('提示：还没有邀请码，先运行 node server.js invite create 生成一个。');
+  });
+}
