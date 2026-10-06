@@ -1672,6 +1672,7 @@
   function setArticleLineHeight(value) {
     typographyState.lineHeight = clampTypographyValue(value, 1.5, 2.4, 1.88);
     typographyState.lineHeight = Math.round(typographyState.lineHeight * 100) / 100;
+    updateTypographyControls();
     refreshTypographySurface();
   }
 
@@ -3766,6 +3767,60 @@
     closeDraftHistory();
     triggerToast(`已打开「${record.title.trim() || '未命名文章'}」`);
   });
+
+
+  // Enter inside a section heading or subheading starts a new body paragraph.
+  // The browser default split the heading's label span, and the next re-render
+  // kept only the first label, silently dropping what was typed after Enter.
+  editor.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || e.shiftKey || e.isComposing) return;
+    const selection = getSelection();
+    if (!selection.rangeCount) return;
+    const anchor = selection.anchorNode;
+    const element = anchor && (anchor.nodeType === 1 ? anchor : anchor.parentElement);
+    const block = element?.closest('#editor > [data-template-role="heading"], #editor > [data-template-role="subheading"]');
+    if (!block) return;
+    e.preventDefault();
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    // Text after the caret moves into the new paragraph, as a normal Enter would.
+    const textHost = block.dataset.templateRole === 'heading' ? element.closest('[data-part="label"]') : block;
+    let tail = '';
+    if (textHost && textHost.contains(range.endContainer)) {
+      const after = document.createRange();
+      after.setStart(range.endContainer, range.endOffset);
+      after.setEnd(textHost, textHost.childNodes.length);
+      tail = after.toString();
+      after.deleteContents();
+    }
+    const paragraph = document.createElement('p');
+    paragraph.setAttribute('data-template-role', 'body');
+    paragraph.setAttribute('style', bodyStyle(canonicalProfile()));
+    if (tail) paragraph.textContent = tail; else paragraph.appendChild(document.createElement('br'));
+    block.after(paragraph);
+    const caret = document.createRange();
+    caret.setStart(paragraph, 0);
+    caret.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(caret);
+    commitHistoryState();
+    sync();
+  });
+
+  // An empty canvas (new draft, or everything deleted) gets a styled body
+  // paragraph to type into; otherwise the first text landed as a bare text
+  // node that showed without template styling.
+  function ensureEditableParagraph() {
+    if (editor.textContent.trim() || editor.querySelector('p,h2,h3,figure,img,table,section,ul,ol,blockquote,hr')) return;
+    editor.innerHTML = `<p data-template-role="body" style="${bodyStyle(canonicalProfile())}"><br/></p>`;
+    const caret = document.createRange();
+    caret.setStart(editor.firstChild, 0);
+    caret.collapse(true);
+    getSelection().removeAllRanges();
+    getSelection().addRange(caret);
+  }
+  editor.addEventListener('focus', ensureEditableParagraph);
+  editor.addEventListener('beforeinput', ensureEditableParagraph);
 
   updateTitleCount();
   scheduleDraftSave();
