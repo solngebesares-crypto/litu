@@ -39,6 +39,16 @@ node server.js invite delete XXXX-XXXX
 - 在本机地址（127.0.0.1）运行时，微信读取不到图片，粘贴后图片会缺失；部署到公网服务器后即可正常显示。
 - 备份时记得一并备份 `uploads/` 目录。
 
+### 一键部署到阿里云 ECS
+
+1. 生成部署包：`bash deploy/make-bundle.sh`，得到 `dist/paihaokan-deploy.sh`（包含全部程序文件）。
+2. 阿里云控制台 → 云服务器 ECS → 安全组 → 入方向，放行 HTTP(80) 端口。
+3. 用 Workbench 远程连接服务器（root），把 `paihaokan-deploy.sh` 上传到服务器后运行：`bash paihaokan-deploy.sh`
+   已备案的域名可以这样运行：`DOMAIN=example.com bash paihaokan-deploy.sh`
+4. 脚本会安装 Node.js 和 nginx、注册开机自启服务，并打印访问地址和第一个邀请码。
+
+升级时用新的部署包再运行一次即可，邀请码、图片和密钥都会保留。
+
 ### 部署到服务器
 
 默认只监听本机 `127.0.0.1`。对外提供服务时，请放在 HTTPS 反向代理（如 nginx）后面：

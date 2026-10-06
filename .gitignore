@@ -3,3 +3,4 @@ invite-codes.json.tmp
 .invite-secret
 node_modules/
 uploads/
+dist/
