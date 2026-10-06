@@ -15,6 +15,8 @@ const SESSION_DAYS = Number(process.env.INVITE_SESSION_DAYS || 30);
 const SESSION_COOKIE = 'phk_session';
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const MAX_BODY = 8 * 1024 * 1024;
+const MAX_IMAGE = 10 * 1024 * 1024;
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
 const state = { appId: '', appSecret: '', token: '', tokenExpiresAt: 0 };
 const fallbackImage = path.join(__dirname, 'aurora-cover.png');
 
@@ -142,6 +144,66 @@ function json(res, status, body, headers = {}) {
   const payload = JSON.stringify(body);
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...headers });
   res.end(payload);
+}
+
+/* ------------------------------------------------------------------ */
+/* Article images                                                      */
+/* ------------------------------------------------------------------ */
+// Images are stored on this server and served from public, unguessable URLs.
+// When an article is pasted into the WeChat editor, WeChat fetches these URLs
+// and re-hosts the images itself, so users never need WeChat API credentials.
+// Uploading needs an invite session; reading does not (WeChat must fetch them).
+const IMAGE_TYPES = [
+  { ext: 'jpg', type: 'image/jpeg', test: b => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  { ext: 'png', type: 'image/png', test: b => b.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) },
+  { ext: 'gif', type: 'image/gif', test: b => b.slice(0, 4).toString('latin1') === 'GIF8' },
+  { ext: 'webp', type: 'image/webp', test: b => b.slice(0, 4).toString('latin1') === 'RIFF' && b.slice(8, 12).toString('latin1') === 'WEBP' }
+];
+
+function readBody(req, limit) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on('data', chunk => {
+      size += chunk.length;
+      if (size > limit) {
+        reject(new Error(`图片超过 ${Math.round(limit / 1024 / 1024)}MB 限制`));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
+async function saveUploadedImage(req) {
+  const buffer = await readBody(req, MAX_IMAGE);
+  // Detect the type from the file's own bytes, never from the client's header;
+  // SVG and anything else are refused because they could carry scripts.
+  const kind = IMAGE_TYPES.find(item => buffer.length > 12 && item.test(buffer));
+  if (!kind) throw new Error('只支持 JPG、PNG、GIF、WEBP 图片');
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  const name = `${crypto.randomBytes(16).toString('hex')}.${kind.ext}`;
+  fs.writeFileSync(path.join(UPLOAD_DIR, name), buffer);
+  return `/uploads/${name}`;
+}
+
+function sendUploadedImage(res, name) {
+  if (!/^[a-f0-9]{32}\.(?:jpg|png|gif|webp)$/.test(name)) return json(res, 404, { ok: false, error: 'Not found' });
+  const kind = IMAGE_TYPES.find(item => name.endsWith(`.${item.ext}`));
+  fs.readFile(path.join(UPLOAD_DIR, name), (error, content) => {
+    if (error) return json(res, 404, { ok: false, error: 'Not found' });
+    res.writeHead(200, {
+      'Content-Type': kind.type,
+      'Content-Length': content.length,
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'X-Content-Type-Options': 'nosniff',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(content);
+  });
 }
 
 function readJson(req) {
@@ -323,6 +385,7 @@ const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
   try {
     if (req.method === 'GET' && pathname === '/api/health') return json(res, 200, { ok: true });
+    if (req.method === 'GET' && pathname.startsWith('/uploads/')) return sendUploadedImage(res, pathname.slice('/uploads/'.length));
 
     if (req.method === 'POST' && pathname === '/api/invite/login') {
       if (loginBlocked(req)) return json(res, 429, { ok: false, error: '尝试次数过多，请 15 分钟后再试' });
@@ -359,6 +422,11 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname.startsWith('/api/') && !session) return json(res, 401, { ok: false, error: '请先输入邀请码' });
+
+    if (req.method === 'POST' && pathname === '/api/images') {
+      const url = await saveUploadedImage(req);
+      return json(res, 200, { ok: true, url });
+    }
 
     if (req.method === 'POST' && pathname === '/api/wechat/config') {
       const payload = await readJson(req);

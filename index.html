@@ -11,6 +11,7 @@
   /* 邀请码门禁：会话确认前不显示编辑器 */
   html.invite-pending body > header, html.invite-pending #workspaceRoot { visibility:hidden; }
   #inviteGate { display:none; }
+  .template-card[hidden] { display:none !important; }
   body > header button, body > header span { white-space:nowrap; }
   html.invite-locked #inviteGate { display:flex; }
   html.invite-locked body > header, html.invite-locked #workspaceRoot { display:none !important; }
@@ -61,15 +62,6 @@
     --font-size: 16px;
     --line-height: 1.88;
   }
-  body[data-theme="magazine"] { --accent: #9e794f; --accent-soft: #fbf7f1; --accent-deep: #775531; }
-  body[data-theme="travel"]   { --accent: #2e6951; --accent-soft: #eff6f2; --accent-deep: #1e4b39; }
-  body[data-theme="city"]     { --accent: #3d5a80; --accent-soft: #edf2f8; --accent-deep: #253b56; }
-  body[data-theme="minimal"]  { --accent: #232326; --accent-soft: #f4f4f6; --accent-deep: #111113; }
-  body[data-theme="tech"]     { --accent: #596BFF; --accent-soft: #EEF1FF; --accent-deep: #263B9A; }
-  body[data-theme="zen"]      { --accent: #786c5f; --accent-soft: #f7f5f2; --accent-deep: #544a40; }
-  body[data-theme="stay"]     { --accent: #b4654a; --accent-soft: #fdf3ef; --accent-deep: #8a452e; }
-  body[data-theme="photo"]    { --accent: #297373; --accent-soft: #edf8f8; --accent-deep: #1b4e4e; }
-  body[data-theme="road"]     { --accent: #d97706; --accent-soft: #fffbeb; --accent-deep: #92400e; }
 
   .paper-texture {
     background-color: #faf8f5 !important;
@@ -361,123 +353,11 @@
 <span>精选排版模板 (28套)</span>
 <span class="text-brand font-mono text-[10px]">点击实时应用</span>
 </div>
-<div class="template-card p-3 rounded-lg border-2 border-brand bg-brand-soft shadow-subtle-purple cursor-pointer transition flex space-x-3 items-center" data-accent="#9e794f" data-accent-soft="#fbf7f1" data-color-name="暖金麦浪" data-font="思源宋体" data-name="01 经典杂志" data-theme="magazine">
-<div class="w-12 h-16 bg-white rounded border border-brand/30 shadow-2xs shrink-0 p-1 flex flex-col justify-between">
-<div><div class="w-5 h-0.5 bg-[#9e794f] mx-auto mb-1"></div><div class="w-full h-1 bg-ink-950/70 mb-1"></div><div class="space-y-0.5"><div class="w-full h-0.5 bg-ink-200"></div><div class="w-3/4 h-0.5 bg-ink-200"></div></div></div>
-<div class="w-full py-0.5 bg-[#9e794f]/15 border-l border-[#9e794f]"><div class="w-2/3 h-0.5 bg-[#9e794f]"></div></div>
+<div class="space-y-1.5 pb-1" id="templateTools">
+<input class="w-full text-xs px-2.5 py-1.5 bg-white border border-ink-200 rounded-md focus:ring-1 focus:ring-brand focus:border-brand placeholder-ink-400" id="templateSearch" placeholder="搜索模板（如：美食、婚礼、科技）" type="search" aria-label="搜索模板"/>
+<div class="flex space-x-1 overflow-x-auto pb-1 text-[11px]" id="templateFilters" role="tablist" aria-label="模板分类"></div>
 </div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-1">
-<span class="font-serif text-sm font-bold text-ink-950 truncate">01 经典杂志</span>
-<span class="w-4 h-4 rounded-full bg-brand text-white flex items-center justify-center shrink-0 text-[10px]">✓</span>
-</div>
-<div class="text-[11px] text-ink-600 truncate"><span class="text-brand font-medium">双线衬线</span> · 暖金细节</div>
-</div>
-</div>
-<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#2e6951" data-accent-soft="#eff6f2" data-color-name="冷杉墨绿" data-font="思源宋体" data-name="02 旷野纪实" data-theme="travel">
-<div class="w-12 h-16 bg-[#f8fbf9] rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
-<div><div class="w-3 h-3 rounded-full bg-emerald-900 text-white text-[7px] flex items-center justify-center font-bold mb-1">02</div><div class="w-full h-1 bg-[#2e6951] mb-1"></div><div class="w-full h-0.5 bg-ink-200"></div></div>
-<div class="border-t border-[#2e6951]/40 pt-0.5 flex justify-between"><div class="w-2 h-0.5 bg-[#2e6951]"></div><div class="w-2 h-0.5 bg-ink-300"></div></div>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-1">
-<span class="font-serif text-sm font-bold text-ink-900 truncate">02 旷野纪实</span>
-<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
-</div>
-<div class="text-[11px] text-ink-600 truncate">时间轴标尺 · <span class="text-emerald-700 font-medium">冷杉墨绿</span></div>
-</div>
-</div>
-<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#3d5a80" data-accent-soft="#edf2f8" data-color-name="海雾灰蓝" data-font="标准黑体" data-name="03 城市漫步" data-theme="city">
-<div class="w-12 h-16 bg-[#f8fafd] rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
-<div><div class="w-full h-3 bg-slate-200 mb-1"></div><div class="w-3/4 h-1 bg-[#3d5a80] mb-1"></div><div class="w-full h-0.5 bg-ink-200"></div></div>
-<div class="w-full py-0.5 bg-[#3d5a80]/10 rounded"><div class="w-3 h-0.5 bg-[#3d5a80] mx-auto"></div></div>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-1">
-<span class="font-serif text-sm font-bold text-ink-900 truncate">03 城市漫步</span>
-<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
-</div>
-<div class="text-[11px] text-ink-600 truncate">留白胶片 · <span class="text-sky-800 font-medium">海雾灰蓝</span></div>
-</div>
-</div>
-<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#232326" data-accent-soft="#f4f4f6" data-color-name="纯黑单色" data-font="思源宋体" data-name="04 极简随笔" data-theme="minimal">
-<div class="w-12 h-16 bg-white rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
-<div><div class="w-full h-0.5 bg-ink-950 mb-1.5"></div><div class="w-full h-1 bg-ink-950 mb-1"></div><div class="w-4/5 h-0.5 bg-ink-200"></div></div>
-<div class="w-3 h-0.5 bg-ink-950"></div>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-1">
-<span class="font-serif text-sm font-bold text-ink-900 truncate">04 极简随笔</span>
-<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
-</div>
-<div class="text-[11px] text-ink-600 truncate">打字机韵律 · 极简黑白</div>
-</div>
-</div>
-<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#596BFF" data-accent-soft="#EEF1FF" data-color-name="蓝紫未来感" data-font="标准黑体" data-name="05 科技随笔" data-theme="tech">
-<div class="w-12 h-16 bg-[#FAF9FF] rounded border border-brand/30 shrink-0 p-1 flex flex-col justify-between">
-<div><div class="w-full h-1 bg-brand mb-1"></div><div class="w-full h-0.5 bg-brand/30"></div></div>
-<div class="w-full py-0.5 bg-brand/10 text-center rounded"><div class="w-3 h-0.5 bg-brand mx-auto"></div></div>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-1">
-<span class="font-serif text-sm font-bold text-ink-900 truncate">05 科技随笔</span>
-<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
-</div>
-<div class="text-[11px] text-ink-600 truncate"><span class="text-brand font-medium">蓝紫未来感</span> · 梦幻科技</div>
-</div>
-</div>
-<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#786c5f" data-accent-soft="#f7f5f2" data-color-name="素雅松烟" data-font="思源宋体" data-name="06 留白禅意" data-theme="zen">
-<div class="w-12 h-16 bg-[#faf8f5] rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
-<div class="w-3 h-3 mx-auto border border-[#786c5f] rounded-full mb-1"></div>
-<div class="w-2 h-0.5 bg-[#786c5f] mx-auto"></div>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-1">
-<span class="font-serif text-sm font-bold text-ink-900 truncate">06 留白禅意</span>
-<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
-</div>
-<div class="text-[11px] text-ink-600 truncate">大量呼吸感 · 素朴文气</div>
-</div>
-</div>
-<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#b4654a" data-accent-soft="#fdf3ef" data-color-name="暖砖陶土" data-font="思源宋体" data-name="07 旅居生活" data-theme="stay">
-<div class="w-12 h-16 bg-[#fffaf8] rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
-<div class="w-full h-1 bg-[#b4654a] mb-1"></div>
-<div class="w-3 h-0.5 bg-[#b4654a]"></div>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-1">
-<span class="font-serif text-sm font-bold text-ink-900 truncate">07 旅居生活</span>
-<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
-</div>
-<div class="text-[11px] text-ink-600 truncate">慢调叙事 · <span class="text-[#b4654a] font-medium">暖砖陶土</span></div>
-</div>
-</div>
-<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#297373" data-accent-soft="#edf8f8" data-color-name="幽蓝海青" data-font="标准黑体" data-name="08 摄影旅记" data-theme="photo">
-<div class="w-12 h-16 bg-slate-900 rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
-<div class="w-full h-5 bg-slate-700 rounded-xs mb-1 flex items-center justify-center text-[7px] text-white">PHOTO</div>
-<div class="w-full h-0.5 bg-emerald-400"></div>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-1">
-<span class="font-serif text-sm font-bold text-ink-900 truncate">08 摄影旅记</span>
-<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
-</div>
-<div class="text-[11px] text-ink-600 truncate">大图展示 · <span class="text-[#297373] font-medium">幽蓝海青</span></div>
-</div>
-</div>
-<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#d97706" data-accent-soft="#fffbeb" data-color-name="夕阳落日橙" data-font="标准黑体" data-name="09 公路旅行" data-theme="road">
-<div class="w-12 h-16 bg-[#fffdfa] rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
-<div class="w-full h-1 bg-[#d97706] mb-1"></div>
-<div class="w-4 h-0.5 bg-[#d97706]"></div>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-1">
-<span class="font-serif text-sm font-bold text-ink-900 truncate">09 公路旅行</span>
-<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
-</div>
-<div class="text-[11px] text-ink-600 truncate">路书卡片 · <span class="text-amber-600 font-medium">夕阳落日橙</span></div>
-</div>
-</div>
+<p class="hidden px-1 py-6 text-center text-xs text-ink-400" id="templateEmpty">没有找到匹配的模板，换个关键词试试</p>
 </div>
 <!-- 面板 2: 文章配色 (67套真实旅行与自然意象调色库) -->
 <div class="tab-panel flex-1 overflow-y-auto p-3 space-y-3 hidden" id="panel-palette">
@@ -507,8 +387,8 @@
 <div class="flex items-center space-x-2">
 <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <div>
-<div class="text-xs font-semibold text-ink-900">纸张素笺质感</div>
-<div class="text-[10px] text-ink-500">模拟微粒棉纸印刷底色</div>
+<div class="text-xs font-semibold text-ink-900">编辑区纸张底纹</div>
+<div class="text-[10px] text-ink-500">仅编辑时护眼，不会复制到公众号</div>
 </div>
 </div>
 <button class="px-2.5 py-1 text-[11px] rounded bg-ink-100 hover:bg-brand-soft text-ink-700 hover:text-brand font-medium transition" id="togglePaperTexture">开 / 关</button>
@@ -892,39 +772,6 @@
 </div>
 </div>
 </div>
-<!-- 公众号草稿推送弹窗 -->
-<div class="fixed inset-0 bg-ink-950/60 backdrop-blur-xs z-50 flex items-center justify-center hidden" id="wechatConfigModal">
-<div class="bg-white rounded-xl shadow-pop w-[560px] max-w-[90vw] overflow-hidden border border-ink-200">
-<div class="px-5 py-3.5 border-b border-ink-100 flex items-center justify-between">
-<div class="flex items-center space-x-2">
-<div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">微</div>
-<h3 class="font-serif font-bold text-sm text-ink-950">推送到微信公众号草稿箱</h3>
-</div>
-<button aria-label="关闭公众号配置" class="p-1 text-ink-400 hover:text-ink-700 rounded" id="closeWechatConfigBtn">
-<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</button>
-</div>
-<div class="p-5 space-y-4">
-<div class="grid grid-cols-2 gap-3">
-<label class="text-xs font-semibold text-ink-800">AppID<input class="mt-1 w-full text-xs border border-ink-200 rounded-md px-2.5 py-2" id="wechatAppId" autocomplete="off" placeholder="wx..."/></label>
-<label class="text-xs font-semibold text-ink-800">AppSecret<input class="mt-1 w-full text-xs border border-ink-200 rounded-md px-2.5 py-2" id="wechatAppSecret" autocomplete="new-password" type="password" placeholder="不会保存到浏览器"/></label>
-</div>
-<div class="grid grid-cols-2 gap-3">
-<label class="text-xs font-semibold text-ink-800">服务端地址<input class="mt-1 w-full text-xs border border-ink-200 rounded-md px-2.5 py-2" id="wechatApiBase" value="http://127.0.0.1:8787"/></label>
-<label class="text-xs font-semibold text-ink-800">作者<input class="mt-1 w-full text-xs border border-ink-200 rounded-md px-2.5 py-2" id="wechatAuthor" placeholder="Aurora"/></label>
-</div>
-<label class="text-xs font-semibold text-ink-800 block">文章摘要<input class="mt-1 w-full text-xs border border-ink-200 rounded-md px-2.5 py-2" id="wechatDigest" placeholder="不填写则由公众号后台处理"/></label>
-<p class="text-[11px] leading-relaxed text-ink-500 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">服务端会上传文章内的图片，并将第一张图片作为封面。AppSecret 只发送给你配置的服务端，不会写入本地草稿。</p>
-</div>
-<div class="px-5 py-3 bg-[#FAF9FF] border-t border-ink-100 flex items-center justify-between">
-<span class="text-[11px] text-ink-400" id="wechatConfigStatus">尚未连接公众号</span>
-<div class="flex space-x-2">
-<button class="px-3.5 py-1.5 text-xs text-ink-600 hover:text-ink-900 font-medium" id="cancelWechatConfigBtn">取消</button>
-<button class="px-4 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-semibold transition" id="pushWechatConfirmBtn">连接并创建草稿</button>
-</div>
-</div>
-</div>
-</div>
 <!-- Toast -->
 <div class="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none hidden transition-all duration-200" id="toast">
 <div class="bg-ink-950/90 text-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-pop flex items-center space-x-2 text-xs font-medium border border-white/10">
@@ -1021,8 +868,6 @@
   const imgWidthRange = document.getElementById('imgWidthRange');
   const imgWidthValue = document.getElementById('imgWidthValue');
   const imgSelectedHint = document.getElementById('imgSelectedHint');
-  const wechatCompatibilityStatus = document.getElementById('wechatCompatibilityStatus');
-  const wechatCompatibilityDetail = document.getElementById('wechatCompatibilityDetail');
 
   let currentSelectedImg = null;
 
@@ -1035,15 +880,6 @@
   }
 
   // 1. 同步与实时存储
-  function getPreviewHtml() {
-    const previewClone = editor.cloneNode(true);
-    previewClone.removeAttribute('contenteditable');
-    previewClone.removeAttribute('id');
-    previewClone.querySelectorAll('.img-resize-handle').forEach(handle => handle.remove());
-    previewClone.querySelectorAll('.img-selected').forEach(el => el.classList.remove('img-selected'));
-    return previewClone.innerHTML;
-  }
-
   function normalizeLegacyOpening() {
     const topLevelNodes = [...editor.children];
     topLevelNodes.forEach(node => {
@@ -1075,53 +911,8 @@
     });
   }
 
-  function sync() {
-    // Keep the in-app preview on the same conservative HTML path used by the
-    // WeChat API. This makes the preview an honest representation of the draft.
-    const content = generateWechatRichHtml();
-    const title = articleTitle.value.trim() || '未命名文章';
-    if (articleTitleEditor && articleTitleEditor.value !== articleTitle.value) articleTitleEditor.value = articleTitle.value;
-
-    const compatibilityIssues = [
-      [/<style\b/i, '发现样式块'],
-      [/\bclass=/i, '发现 class 样式'],
-      [/background-image\s*:/i, '发现背景图样式'],
-      [/filter\s*:/i, '发现滤镜样式'],
-      [/transform\s*:/i, '发现变换样式'],
-      [/display\s*:\s*(?:flex|grid)/i, '发现高级布局'],
-      [/\bgap\s*:/i, '发现 gap 间距']
-    ].filter(([pattern]) => pattern.test(content)).map(([, label]) => label);
-    if (wechatCompatibilityStatus && wechatCompatibilityDetail) {
-      const clean = compatibilityIssues.length === 0;
-      wechatCompatibilityStatus.className = `mt-2 px-2 py-1.5 rounded border flex items-center justify-between text-[10px] ${clean ? 'bg-emerald-50 border-emerald-100' : 'bg-amber-50 border-amber-100'}`;
-      wechatCompatibilityDetail.className = clean ? 'text-emerald-600' : 'text-amber-700';
-      wechatCompatibilityDetail.textContent = clean ? '已使用内联样式' : compatibilityIssues.join('、');
-    }
-
-    preview.innerHTML = content;
-    previewTitle.textContent = title.length > 14 ? title.substring(0, 14) + '...' : title;
-
-    const count = editor.innerText.replace(/\s+/g, '').length;
-    charCount.textContent = count;
-    const minutes = Math.max(1, Math.ceil(count / 380));
-    readTime.textContent = `${minutes} 分钟`;
-    const phoneReadTime = document.getElementById('miniPhoneReadTime');
-    if (phoneReadTime) phoneReadTime.textContent = `约 ${minutes} 分钟`;
-
-    saveStatus.textContent = '本地保存中...';
-    clearTimeout(window.saveTimer);
-    window.saveTimer = setTimeout(() => {
-      try {
-        localStorage.setItem('gzh-draft', JSON.stringify({
-          title: articleTitle.value,
-          content: editor.innerHTML,
-          theme: document.body.getAttribute('data-theme') || 'magazine',
-          accent: getComputedStyle(document.documentElement).getPropertyValue('--accent')
-        }));
-      } catch (e) {}
-      saveStatus.textContent = '本地自动保存完成';
-    }, 350);
-  }
+  // Defined for real further down (canonicalSync); this binding is reassigned there.
+  let sync = () => {};
 
   let historyState = null;
   const undoHistory = [];
@@ -1152,7 +943,7 @@
     }
     if (sameHistoryState(historyState, current)) return;
     undoHistory.push(historyState);
-    if (undoHistory.length > 40) undoHistory.shift();
+    if (undoHistory.length > 100) undoHistory.shift();
     historyState = current;
     redoHistory.length = 0;
   }
@@ -1173,15 +964,42 @@
     sync();
   }
 
-  editor.addEventListener('input', () => { commitHistoryState(); sync(); });
-  articleTitle.addEventListener('input', () => { commitHistoryState(); sync(); });
+  // Typing is grouped into one undo step per pause (~0.8s), so one undo takes
+  // back a whole burst of input instead of a single character. Toolbar and
+  // template actions still commit immediately.
+  let typingCommitTimer = null;
+  function scheduleTypingCommit() {
+    clearTimeout(typingCommitTimer);
+    typingCommitTimer = setTimeout(() => { typingCommitTimer = null; commitHistoryState(); }, 800);
+  }
+  function flushTypingCommit() {
+    if (!typingCommitTimer) return;
+    clearTimeout(typingCommitTimer);
+    typingCommitTimer = null;
+    commitHistoryState();
+  }
+  editor.addEventListener('input', () => { scheduleTypingCommit(); sync(); });
+  articleTitle.addEventListener('input', () => { scheduleTypingCommit(); sync(); });
   articleTitleEditor?.addEventListener('input', () => {
     articleTitle.value = articleTitleEditor.value;
-    commitHistoryState();
+    scheduleTypingCommit();
     sync();
   });
 
+  // Ctrl/⌘+Z and Ctrl+Y / ⌘+Shift+Z use the same history as the toolbar buttons.
+  // The browser's own undo cannot follow template re-renders and would scramble the article.
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const key = e.key.toLowerCase();
+    const inArticle = editor.contains(e.target) || e.target === articleTitleEditor;
+    if (!inArticle || (key !== 'z' && key !== 'y')) return;
+    e.preventDefault();
+    if (key === 'y' || (key === 'z' && e.shiftKey)) document.getElementById('redoBtn').click();
+    else document.getElementById('undoBtn').click();
+  });
+
   document.getElementById('undoBtn').addEventListener('click', () => {
+    flushTypingCommit();
     if (!undoHistory.length) return;
     const current = readHistoryState();
     redoHistory.push(current);
@@ -1216,49 +1034,13 @@
 
   tabBtns.forEach(btn => btn.addEventListener('click', () => switchToTab(btn.getAttribute('data-tab'))));
 
-  // 补充旅行模板：保留原有 13 套模板规模
-  const extraTemplateList = [
-    {theme:'nature',name:'05 山野自然',color:'森林苔绿',accent:'#647b54',soft:'#eef2e8',deep:'#405235',desc:'徒步、森林与露营记录'},
-    {theme:'olive',name:'06 橄榄手记',color:'橄榄灰绿',accent:'#6c735e',soft:'#f1f0e8',deep:'#4c513f',desc:'慢生活与旅行随笔'},
-    {theme:'wood',name:'07 木质美学',color:'木色暖棕',accent:'#849d52',soft:'#f5f6ee',deep:'#5a6b37',desc:'民宿、气味与生活方式'},
-    {theme:'journal',name:'08 紫色手账',color:'紫藤旅笺',accent:'#7953a6',soft:'#f1edf6',deep:'#533579',desc:'书影音与人文旅行记录'}
-  ];
-  // The exported Stitch markup names this panel `panel-templates`; keep a host fallback
-  // so the additional templates are actually rendered in the live UI.
-  const templateListHost = document.getElementById('templateList') || document.getElementById('panel-templates');
-  if (templateListHost) {
-    templateListHost.insertAdjacentHTML('beforeend', extraTemplateList.map(t => `
-      <div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-theme="${t.theme}" data-name="${t.name}" data-color-name="${t.color}" data-accent="${t.accent}" data-accent-soft="${t.soft}" data-accent-deep="${t.deep}">
-        <div class="w-[54px] h-[72px] bg-white rounded border border-ink-200 shadow-2xs shrink-0 overflow-hidden p-1.5 flex flex-col justify-between">
-          <div><div class="w-full h-1 rounded mb-2" style="background:${t.accent}"></div><div class="w-full h-0.5 bg-ink-300 mb-1"></div><div class="space-y-0.5"><div class="w-full h-0.5 bg-ink-200"></div><div class="w-4/5 h-0.5 bg-ink-200"></div></div></div><div class="w-3/4 h-2 rounded-sm" style="background:${t.soft};border-left:2px solid ${t.accent}"></div>
-        </div>
-        <div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-1.5"><span class="font-serif text-[15px] font-bold text-ink-900 tracking-tight truncate">${t.name}</span><span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span></div><div class="text-[11px] text-ink-600 font-sans truncate">${t.desc} · ${t.color}</div></div>
-      </div>`).join(''));
-  }  // 3. 模板套用
+  const templateListHost = document.getElementById('panel-templates');
+  // 3. 模板套用
   const currentSpecimenName = document.getElementById('currentSpecimenName');
   const currentSpecimenColor = document.getElementById('currentSpecimenColor');
   const miniPhoneTheme = document.getElementById('miniPhoneTheme');
   const miniPhoneColor = document.getElementById('miniPhoneColor');
   const accentDot = document.getElementById('accentDot');
-
-  function applyThemeColorsToEditor(accent, soft) {
-    editor.querySelectorAll('.theme-eyebrow').forEach(el => { el.style.color = accent; el.style.borderColor = accent; });
-    editor.querySelectorAll('.theme-accent-text').forEach(el => { el.style.color = accent; });
-    editor.querySelectorAll('.theme-tip-card').forEach(el => {
-      el.style.borderLeftColor = accent;
-      const dot = el.querySelector('span:first-child');
-      if (dot) { dot.style.backgroundColor = soft; dot.style.color = accent; }
-      const title = el.querySelector('span:last-child');
-      if (title) title.style.color = accent;
-    });
-    editor.querySelectorAll('.theme-route-card').forEach(el => {
-      el.style.borderColor = accent + '33';
-      const icon = el.querySelector('svg');
-      if (icon) icon.style.color = accent;
-      const tag = el.querySelector('span:last-child');
-      if (tag) { tag.style.backgroundColor = soft; tag.style.color = accent; }
-    });
-  }
 
   // 4. 配色网格渲染
   const paletteGrid = document.getElementById('paletteGrid');
@@ -1334,9 +1116,10 @@
 
   // 纸张质感切换
   document.getElementById('togglePaperTexture').addEventListener('click', () => {
+    // Editing aid only: WeChat cannot show background textures, so the phone
+    // preview and the copied article stay exactly as they will be published.
     editor.classList.toggle('paper-texture');
-    preview.classList.toggle('paper-texture');
-    triggerToast(editor.classList.contains('paper-texture') ? '已开启棉纸颗粒质感' : '已恢复纯白画布');
+    triggerToast(editor.classList.contains('paper-texture') ? '已开启编辑区底纹（仅编辑时显示，不影响发布效果）' : '已关闭编辑区底纹');
   });
 
   // 5. 插入旅行组件
@@ -1459,25 +1242,115 @@
   // 6. 图片 Inspector 与操作
   const imgUploadInput = document.getElementById('imgUploadInput');
 
-  imgUploadInput.addEventListener('change', e => {
+  // 图片：先在浏览器里压缩，再上传到排好看服务器，文章里只保存图片网址。粘贴到
+  // 公众号后台时，微信会自动转存这些网址上的图片，用户不需要任何公众号配置。
+  // 没有服务器时（直接打开文件或在线预览版）退回到内嵌图片，复制时会提示。
+  const IMAGE_MAX_EDGE = 1600;
+  const canUploadImages = () => /^https?:$/.test(location.protocol) && !window.PHK_NO_SERVER;
+
+  function readFileAsDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function dataUrlToBlob(dataUrl) {
+    const [head, body] = String(dataUrl).split(',');
+    const type = head.match(/^data:([^;,]+)/)?.[1] || 'image/png';
+    const binary = atob(body || '');
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type });
+  }
+
+  // Phone photos are often 5–10MB; shrink them to a long edge of 1600px.
+  // GIFs are left alone so their animation survives.
+  async function compressImage(blob) {
+    if (!/^image\/(?:jpeg|png|webp)$/.test(blob.type) || !window.createImageBitmap) return blob;
+    const bitmap = await createImageBitmap(blob).catch(() => null);
+    if (!bitmap) return blob;
+    const scale = Math.min(1, IMAGE_MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+    if (scale === 1 && blob.size < 1.5 * 1024 * 1024) return blob;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const type = blob.type === 'image/png' ? 'image/png' : 'image/jpeg';
+    const output = await new Promise(resolve => canvas.toBlob(resolve, type, 0.86));
+    return output && output.size < blob.size ? output : blob;
+  }
+
+  async function uploadImageBlob(blob) {
+    const response = await fetch('/api/images', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': blob.type || 'application/octet-stream' }, body: blob });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) throw new Error(result.error || '图片上传失败');
+    return new URL(result.url, location.origin).href;
+  }
+
+  // Images still embedded in the article (pasted, imported, or added before the
+  // server was available) are uploaded before copying.
+  async function uploadInlineImages() {
+    const inline = [...editor.querySelectorAll('img')].filter(img => /^data:image\//i.test(img.getAttribute('src') || ''));
+    if (!inline.length) return { uploaded: 0, failed: 0 };
+    if (!canUploadImages()) return { uploaded: 0, failed: inline.length };
+    const done = new Map();
+    let failed = 0;
+    for (const img of inline) {
+      const src = img.getAttribute('src');
+      try {
+        if (!done.has(src)) done.set(src, await uploadImageBlob(await compressImage(dataUrlToBlob(src))));
+        img.setAttribute('src', done.get(src));
+      } catch (e) {
+        failed += 1;
+      }
+    }
+    if (done.size) { sync(); commitHistoryState(); }
+    return { uploaded: done.size, failed };
+  }
+
+  function countLocalAddressImages() {
+    return [...editor.querySelectorAll('img')].filter(img => {
+      try { return /^(?:localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1\])$/.test(new URL(img.getAttribute('src'), location.href).hostname); } catch (e) { return false; }
+    }).length;
+  }
+
+  imgUploadInput.addEventListener('change', async e => {
     const file = e.target.files[0];
     // Reset so choosing the same file again still fires `change`.
     e.target.value = '';
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const newImgHtml = `
-        <figure class="editable-img-wrap my-6 max-w-full" data-width="100%" data-align="center" data-frame="none">
-          <img src="${ev.target.result}" alt="用户上传照片" class="w-full h-auto rounded object-cover shadow-xs" />
-        </figure>
-      `;
-      insertHtmlAtCursorOrEnd(newImgHtml);
-      sync();
-      commitHistoryState();
-      bindImageSelection();
-      triggerToast('图片已上传并插入文章！');
-    };
-    reader.readAsDataURL(file);
+    if (!/^image\//.test(file.type)) { triggerToast('请选择 JPG、PNG、GIF 或 WEBP 图片'); return; }
+    triggerToast(canUploadImages() ? '图片压缩上传中…' : '图片处理中…');
+    let src = '';
+    let note = '图片已插入文章';
+    try {
+      const blob = await compressImage(file);
+      src = canUploadImages() ? await uploadImageBlob(blob) : await readFileAsDataUrl(blob);
+    } catch (err) {
+      // Never lose the user's image: keep it inline and retry when copying.
+      src = await readFileAsDataUrl(file).catch(() => '');
+      note = `图片上传失败（${err.message}），已先放入文章，复制时会再次上传`;
+    }
+    if (!src) { triggerToast('图片读取失败，请换一张图片试试'); return; }
+    const figure = document.createElement('figure');
+    figure.className = 'editable-img-wrap my-6 max-w-full';
+    figure.setAttribute('data-width', '100%');
+    figure.setAttribute('data-align', 'center');
+    figure.setAttribute('data-frame', 'none');
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = file.name.replace(/\.[^.]+$/, '') || '文章图片';
+    img.className = 'w-full h-auto rounded object-cover shadow-xs';
+    figure.appendChild(img);
+    insertHtmlAtCursorOrEnd(figure.outerHTML);
+    materializeEditor();
+    sync();
+    commitHistoryState();
+    bindImageSelection();
+    triggerToast(note);
   });
 
   function bindImageSelection() {
@@ -1881,265 +1754,9 @@
     applyFontToSelection(fontStacks[e.target.value] || fontStacks.default);
   });
 
-  function safeWechatFont(fontFamily) {
-    const value = String(fontFamily || '').toLowerCase();
-    if (/songti|stsong|simsun|serif/.test(value)) return '"Songti SC",STSong,SimSun,serif';
-    if (/mono|menlo|monaco|consolas|courier/.test(value)) return 'ui-monospace,Menlo,Monaco,Consolas,"Courier New",monospace';
-    return '"PingFang SC","Microsoft YaHei",Arial,sans-serif';
-  }
-
-  // 8. Generate a conservative inline-style HTML payload for WeChat's editor.
+  // Clipboard and preview share one exporter: the canonical inline-style article.
   function generateWechatRichHtml() {
-    const clone = editor.cloneNode(true);
-    // Keep the editor id while styles are computed. Template rules are scoped to
-    // #editor, so removing it before mounting makes the exported copy lose them.
-    clone.removeAttribute('contenteditable');
-    clone.querySelectorAll('.img-resize-handle').forEach(handle => handle.remove());
-    clone.querySelectorAll('.img-selected').forEach(el => el.classList.remove('img-selected'));
-
-    // Mount the clone briefly so getComputedStyle sees the active template rules.
-    // Computing styles on a detached clone silently falls back to browser defaults.
-    const staging = document.createElement('div');
-    staging.style.cssText = `position:absolute;left:-100000px;top:0;width:${editor.getBoundingClientRect().width}px;visibility:hidden;pointer-events:none;`;
-    staging.appendChild(clone);
-    document.body.appendChild(staging);
-
-    const computed = window.getComputedStyle(editor);
-    const defaultWechatFont = safeWechatFont(computed.fontFamily);
-    const bodyColor = computed.color || '#252238';
-    const themeSoft = computed.getPropertyValue('--soft').trim() || '#ffffff';
-
-    const props = [
-      'fontSize', 'fontWeight', 'fontStyle', 'fontFamily', 'lineHeight', 'color', 'textAlign',
-      'letterSpacing', 'textIndent', 'display', 'verticalAlign', 'margin', 'padding',
-      'backgroundColor', 'backgroundImage', 'backgroundSize', 'backgroundPosition',
-      'backgroundRepeat', 'border', 'borderTop', 'borderRight', 'borderBottom', 'borderLeft',
-      'borderRadius', 'boxShadow', 'textDecoration',
-      'listStyleType', 'listStylePosition', 'whiteSpace', 'overflowWrap', 'wordBreak'
-    ];
-
-    const styleText = (computedStyle, includeDisplay = true) => {
-      const hasBackgroundImage = computedStyle.backgroundImage && computedStyle.backgroundImage !== 'none';
-      return props
-      .filter(prop => (includeDisplay || prop !== 'display') && !(
-        hasBackgroundImage && ['backgroundImage', 'backgroundSize', 'backgroundPosition', 'backgroundRepeat'].includes(prop)
-      ))
-      .map(prop => {
-        const value = computedStyle[prop];
-        if (!value || value === 'none' || value === 'normal' || value === 'auto' || value === 'rgba(0, 0, 0, 0)') return '';
-        const safeValue = prop === 'fontFamily' ? safeWechatFont(value) : value;
-        return `${prop.replace(/[A-Z]/g, m => `-${m.toLowerCase()}`)}:${safeValue};`;
-      })
-      .filter(Boolean)
-      .join('') + (hasBackgroundImage && (!computedStyle.backgroundColor || computedStyle.backgroundColor === 'rgba(0, 0, 0, 0)')
-        ? `background-color:${themeSoft};`
-        : '');
-    };
-
-    // CSS pseudo-elements are visible in the editor but do not exist in copied
-    // HTML. Materialize their text so labels such as TRAVEL NOTES and quote marks
-    // survive both clipboard paste and the draft API.
-    const materializePseudo = (element, pseudo) => {
-      const computedStyle = window.getComputedStyle(element, pseudo);
-      const content = computedStyle.content;
-      if (!content || content === 'none' || content === 'normal' || content === 'open-quote' || content === 'close-quote') return;
-      const text = content.replace(/^(['"])(.*)\1$/, '$2');
-      if (!text) return;
-      const marker = document.createElement('span');
-      marker.textContent = text;
-      marker.setAttribute('style', styleText(computedStyle));
-      if (pseudo === '::before') element.insertBefore(marker, element.firstChild);
-      else element.appendChild(marker);
-    };
-    clone.querySelectorAll('*').forEach(el => {
-      materializePseudo(el, '::before');
-      materializePseudo(el, '::after');
-    });
-
-    const blockedTags = new Set(['SCRIPT', 'STYLE', 'LINK', 'IFRAME', 'OBJECT', 'EMBED', 'VIDEO', 'AUDIO', 'FORM', 'INPUT', 'BUTTON']);
-    clone.querySelectorAll('*').forEach(el => {
-      if (blockedTags.has(el.tagName)) {
-        el.remove();
-        return;
-      }
-      if (el.tagName === 'SVG') {
-        el.remove();
-        return;
-      }
-      const cs = window.getComputedStyle(el);
-      el.setAttribute('style', styleText(cs));
-      [...el.attributes].forEach(attr => {
-        const keep = (el.tagName === 'IMG' && ['src', 'alt', 'width', 'height', 'style'].includes(attr.name))
-          || (el.tagName === 'A' && ['href', 'style'].includes(attr.name))
-          || attr.name === 'style' || attr.name === 'class';
-        if (!keep) el.removeAttribute(attr.name);
-      });
-    });
-
-    // WeChat strips flex and gap declarations. Convert the small layout rows used by
-    // the templates into block + inline-block rows before removing class names.
-    clone.querySelectorAll('.flex').forEach(el => {
-      const classes = new Set((el.getAttribute('class') || '').split(/\s+/));
-      let style = el.getAttribute('style') || '';
-      style = style.replace(/display:flex;/g, 'display:block;');
-      style += classes.has('justify-center') ? 'text-align:center;' : '';
-      el.setAttribute('style', style);
-      [...el.children].forEach((child, index, children) => {
-        let childStyle = child.getAttribute('style') || '';
-        childStyle += 'display:inline-block;vertical-align:middle;';
-        if (index < children.length - 1) childStyle += 'margin-right:8px;';
-        child.setAttribute('style', childStyle);
-      });
-    });
-
-    // Semantic h2 elements and div borders are rewritten by WeChat. Use a
-    // borderless table with a dedicated one-pixel separator row: table borders
-    // become full boxes in WeChat's editor, while a colored cell stays a line.
-    clone.querySelectorAll('.flex.items-baseline').forEach(row => {
-      const number = row.children[0];
-      const heading = row.querySelector('h2, h3');
-      if (!number || !heading) return;
-      const wrapper = row.parentElement;
-      const wrapperStyle = wrapper ? window.getComputedStyle(wrapper) : null;
-      const dividerColor = wrapperStyle && wrapperStyle.borderBottomWidth !== '0px'
-        ? wrapperStyle.borderBottomColor
-        : '#e9e2d8';
-      const table = document.createElement('table');
-      table.setAttribute('cellpadding', '0');
-      table.setAttribute('cellspacing', '0');
-      table.setAttribute('width', '100%');
-      table.setAttribute('style', 'width:100%;margin:0 0 16px;border-collapse:collapse;');
-      const tbody = document.createElement('tbody');
-      const tableRow = document.createElement('tr');
-      const cell = document.createElement('td');
-      cell.setAttribute('style', `padding:${wrapperStyle?.padding || '10px 0'};`);
-      const line = document.createElement('p');
-      line.setAttribute('style', 'display:block;margin:0;padding:0;line-height:1.75;white-space:normal;');
-      const numberSpan = document.createElement('span');
-      numberSpan.setAttribute('style', 'display:inline;font-size:16px;font-weight:700;line-height:1.75;color:inherit;margin-right:10px;');
-      numberSpan.innerHTML = number.innerHTML;
-      const titleSpan = document.createElement('span');
-      const headingStyle = heading.getAttribute('style') || '';
-      const safeHeadingStyle = headingStyle
-        .replace(/(?:display|margin|padding|border(?:-top|-right|-bottom|-left)?|vertical-align):[^;]+;?/gi, '')
-        .replace(/;+/g, ';');
-      titleSpan.setAttribute('style', `${safeHeadingStyle}display:inline;font-size:20px;font-weight:700;line-height:1.75;`);
-      titleSpan.innerHTML = heading.innerHTML;
-      line.append(numberSpan, titleSpan);
-      cell.appendChild(line);
-      tableRow.appendChild(cell);
-      tbody.appendChild(tableRow);
-      const dividerRow = document.createElement('tr');
-      const dividerCell = document.createElement('td');
-      dividerCell.setAttribute('height', '1');
-      dividerCell.setAttribute('style', `height:1px;line-height:1px;font-size:1px;padding:0;background-color:${dividerColor};`);
-      dividerCell.innerHTML = '&nbsp;';
-      dividerRow.appendChild(dividerCell);
-      tbody.appendChild(dividerRow);
-      table.appendChild(tbody);
-      if (wrapper) wrapper.replaceWith(table);
-      else row.replaceWith(table);
-    });
-
-    // Export reusable components as tables. WeChat preserves table cell borders
-    // and backgrounds far more reliably than styled div/span component trees.
-    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#9e794f';
-    const accentSoft = getComputedStyle(document.documentElement).getPropertyValue('--accent-soft').trim() || '#fbf7f1';
-    clone.querySelectorAll('.theme-tip-card').forEach(card => {
-      const wrapper = card.parentElement;
-      const header = card.firstElementChild;
-      const title = header?.lastElementChild?.textContent.trim() || '提示';
-      const body = card.querySelector('p')?.textContent.trim() || '';
-      const frame = document.createElement('table');
-      frame.setAttribute('cellpadding', '0');
-      frame.setAttribute('cellspacing', '0');
-      frame.setAttribute('width', '100%');
-      frame.setAttribute('style', `width:100%;margin:24px 0;border-collapse:collapse;background-color:${accentSoft};`);
-      const row = document.createElement('tbody');
-      const cell = document.createElement('td');
-      cell.setAttribute('style', `padding:16px 18px;background-color:${accentSoft};border:1px solid #e9e2d8;border-left:3px solid ${accent};`);
-      const heading = document.createElement('p');
-      heading.setAttribute('style', `display:block;margin:0 0 8px;padding:0;color:${accent};font-family:${defaultWechatFont};font-size:14px;font-weight:700;line-height:1.6;`);
-      heading.textContent = `!  ${title}`;
-      const copy = document.createElement('p');
-      copy.setAttribute('style', `display:block;margin:0;padding:0;color:#4e4962;font-family:${defaultWechatFont};font-size:14px;font-weight:400;line-height:1.8;`);
-      copy.textContent = body;
-      cell.append(heading, copy);
-      const tr = document.createElement('tr');
-      tr.appendChild(cell);
-      row.appendChild(tr);
-      frame.append(row);
-      if (wrapper) wrapper.setAttribute('style', 'display:block;margin:0;padding:0;border:0;background:transparent;box-shadow:none;');
-      card.replaceWith(frame);
-    });
-    clone.querySelectorAll('.theme-route-card').forEach(card => {
-      const wrapper = card.parentElement;
-      const header = card.firstElementChild;
-      const labels = [...(header?.querySelectorAll('span') || [])].map(el => el.textContent.trim()).filter(Boolean);
-      const title = labels[0] || '路线推荐';
-      const meta = labels.slice(1).join('  ');
-      const body = card.querySelector('p')?.textContent.trim() || '';
-      const frame = document.createElement('table');
-      frame.setAttribute('cellpadding', '0');
-      frame.setAttribute('cellspacing', '0');
-      frame.setAttribute('width', '100%');
-      frame.setAttribute('style', 'width:100%;margin:24px 0;border-collapse:collapse;background-color:#ffffff;');
-      const row = document.createElement('tbody');
-      const cell = document.createElement('td');
-      cell.setAttribute('style', 'padding:16px 18px;background-color:#ffffff;border:1px solid #e9e2d8;');
-      const heading = document.createElement('p');
-      heading.setAttribute('style', `display:block;margin:0 0 10px;padding:0;color:#252238;font-family:${defaultWechatFont};font-size:15px;font-weight:700;line-height:1.6;`);
-      heading.textContent = title;
-      const badge = document.createElement('p');
-      badge.setAttribute('style', `display:block;margin:0 0 10px;padding:0;color:${accent};font-family:${defaultWechatFont};font-size:13px;font-weight:400;line-height:1.6;`);
-      badge.textContent = meta;
-      const copy = document.createElement('p');
-      copy.setAttribute('style', `display:block;margin:0;padding:0;color:#4e4962;font-family:${defaultWechatFont};font-size:14px;font-weight:400;line-height:1.8;`);
-      copy.textContent = body;
-      cell.append(heading, badge, copy);
-      const tr = document.createElement('tr');
-      tr.appendChild(cell);
-      row.appendChild(tr);
-      frame.append(row);
-      if (wrapper) wrapper.setAttribute('style', 'display:block;margin:0;padding:0;border:0;background:transparent;box-shadow:none;');
-      card.replaceWith(frame);
-    });
-    clone.querySelectorAll('[class]').forEach(el => el.removeAttribute('class'));
-
-    // WeChat's editor is more reliable with div/p than figure/section elements.
-    const replaceBlock = (node, tagName = 'div') => {
-      const block = document.createElement(tagName);
-      block.setAttribute('style', node.getAttribute('style') || '');
-      while (node.firstChild) block.appendChild(node.firstChild);
-      node.replaceWith(block);
-      return block;
-    };
-    clone.querySelectorAll('figure').forEach(figure => {
-      const block = document.createElement('div');
-      block.setAttribute('style', figure.getAttribute('style') || '');
-      while (figure.firstChild) block.appendChild(figure.firstChild);
-      const caption = block.querySelector('figcaption');
-      if (caption) {
-        const p = document.createElement('p');
-        p.setAttribute('style', caption.getAttribute('style') || '');
-        p.innerHTML = caption.innerHTML;
-        caption.replaceWith(p);
-      }
-      figure.replaceWith(block);
-    });
-    clone.querySelectorAll('section, article, header, footer').forEach(section => replaceBlock(section));
-    clone.querySelectorAll('img').forEach(img => {
-      const style = img.getAttribute('style') || '';
-      img.setAttribute('style', `${style}width:100%;max-width:100%;height:auto;display:block;`);
-    });
-    // Keep #editor until after computed styles are captured. Template rules target this id.
-    clone.removeAttribute('id');
-    const rootBackground = 'transparent';
-    const rootStyle = `box-sizing:border-box;width:100%;font-family:${defaultWechatFont};font-size:16px;line-height:1.88;color:${bodyColor};background-color:${rootBackground};padding:12px 6px;word-break:break-word;`;
-    const escapedRootStyle = rootStyle.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-    const output = `<div style="${escapedRootStyle}">${clone.innerHTML}</div>`;
-    staging.remove();
-    return output;
+    return canonicalRootHtml();
   }
 
   function copyRichHtmlWithSelection(htmlData) {
@@ -2187,95 +1804,31 @@
     copyBtn.disabled = true;
     copyBtn.setAttribute('aria-busy', 'true');
     const originalMarkup = copyBtn.innerHTML;
+    const restore = () => {
+      copyBtn.innerHTML = originalMarkup;
+      copyBtn.disabled = false;
+      copyBtn.removeAttribute('aria-busy');
+    };
+    let images = { uploaded: 0, failed: 0 };
     try {
+      if (editor.querySelector('img[src^="data:"]')) {
+        copyBtn.innerHTML = '<span>图片上传中…</span>';
+        images = await uploadInlineImages();
+      }
       const htmlData = generateWechatRichHtml();
       const plainText = editor.innerText;
       await writeRichClipboard(htmlData, plainText);
       copyBtn.classList.add('bg-emerald-600');
       copyBtn.innerHTML = '<span>✓ 已成功复制到剪贴板</span>';
-      setTimeout(() => {
-        copyBtn.classList.remove('bg-emerald-600');
-        copyBtn.innerHTML = originalMarkup;
-        copyBtn.disabled = false;
-        copyBtn.removeAttribute('aria-busy');
-      }, 2000);
-      triggerToast('内容已复制，请打开公众号后台草稿箱并 Ctrl+V 粘贴');
+      setTimeout(() => { copyBtn.classList.remove('bg-emerald-600'); restore(); }, 2000);
+      const localImages = countLocalAddressImages();
+      if (images.failed) triggerToast(`已复制。${images.failed} 张图片没能上传，粘贴后请在公众号后台重新插入这些图片`);
+      else if (localImages) triggerToast('已复制。当前是本机地址，公众号读取不到图片；部署到服务器后粘贴即可显示');
+      else triggerToast('内容已复制，请打开公众号后台草稿箱并 Ctrl+V 粘贴');
     } catch (err) {
-      copyBtn.innerHTML = originalMarkup;
-      copyBtn.disabled = false;
-      copyBtn.removeAttribute('aria-busy');
-      triggerToast('复制失败，请手动选择内容后 Ctrl+C');
-    }
-  });
-
-  // 9. Push the same exported HTML to a server-side WeChat draft endpoint.
-  const pushWechatBtn = document.getElementById('pushWechatBtn');
-  const wechatConfigModal = document.getElementById('wechatConfigModal');
-  const closeWechatConfigBtn = document.getElementById('closeWechatConfigBtn');
-  const cancelWechatConfigBtn = document.getElementById('cancelWechatConfigBtn');
-  const pushWechatConfirmBtn = document.getElementById('pushWechatConfirmBtn');
-  const wechatConfigStatus = document.getElementById('wechatConfigStatus');
-
-  function closeWechatConfig() { wechatConfigModal.classList.add('hidden'); }
-  function openWechatConfig() {
-    const savedEndpoint = localStorage.getItem('wechat-api-base');
-    if (savedEndpoint) document.getElementById('wechatApiBase').value = savedEndpoint;
-    wechatConfigModal.classList.remove('hidden');
-  }
-  // 草稿箱直推已下线，保留配置代码仅用于兼容旧草稿，不再暴露入口。
-  if (pushWechatBtn) pushWechatBtn.addEventListener('click', openWechatConfig);
-  closeWechatConfigBtn.addEventListener('click', closeWechatConfig);
-  cancelWechatConfigBtn.addEventListener('click', closeWechatConfig);
-
-  pushWechatConfirmBtn.addEventListener('click', async () => {
-    if (pushWechatConfirmBtn.disabled) return;
-    const apiBase = document.getElementById('wechatApiBase').value.trim().replace(/\/$/, '');
-    const appId = document.getElementById('wechatAppId').value.trim();
-    const appSecret = document.getElementById('wechatAppSecret').value.trim();
-    const coverSrc = editor.querySelector('img')?.getAttribute('src') || '';
-    if (!apiBase || !appId || !appSecret) {
-      wechatConfigStatus.textContent = '请填写服务端地址、AppID 和 AppSecret';
-      triggerToast('公众号配置不完整');
-      return;
-    }
-    if (!coverSrc) {
-      wechatConfigStatus.textContent = '请先插入一张图片，第一张图片将作为封面';
-      triggerToast('请先插入文章图片');
-      return;
-    }
-    pushWechatConfirmBtn.disabled = true;
-    pushWechatConfirmBtn.textContent = '正在上传并创建草稿...';
-    wechatConfigStatus.textContent = '正在连接公众号服务端';
-    try {
-      const connect = await fetch(`${apiBase}/api/wechat/config`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appId, appSecret })
-      });
-      const connectResult = await connect.json();
-      if (!connect.ok || !connectResult.ok) throw new Error(connectResult.error || '公众号连接失败');
-      localStorage.setItem('wechat-api-base', apiBase);
-      wechatConfigStatus.textContent = '连接成功，正在提交当前文章';
-      const draft = await fetch(`${apiBase}/api/wechat/draft`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: articleTitle.value.trim() || '未命名文章',
-          author: document.getElementById('wechatAuthor').value.trim(),
-          digest: document.getElementById('wechatDigest').value.trim(),
-          content: generateWechatRichHtml(),
-          coverSrc
-        })
-      });
-      const result = await draft.json();
-      if (!draft.ok || !result.ok) throw new Error(result.error || '创建草稿失败');
-      wechatConfigStatus.textContent = '草稿已创建，请到公众号后台预览';
-      triggerToast('已推送到公众号草稿箱');
-      setTimeout(closeWechatConfig, 1600);
-    } catch (error) {
-      wechatConfigStatus.textContent = error.message;
-      triggerToast(`推送失败：${error.message}`);
-    } finally {
-      pushWechatConfirmBtn.disabled = false;
-      pushWechatConfirmBtn.textContent = '连接并创建草稿';
+      restore();
+      // Uploading can outlast the click's clipboard permission; the second click is instant.
+      triggerToast(images.uploaded ? '图片已上传完成，请再点一次「一键复制」' : '复制失败，请手动选择内容后 Ctrl+C');
     }
   });
 
@@ -2605,25 +2158,7 @@
   removeTemplateEyebrows();
   normalizeLegacyOpening();
 
-  /*
-   * Template system v2
-   * One token set drives the writing canvas, phone preview and exported HTML.
-   * The exported markup remains conservative: inline styles only, no template
-   * decoration is allowed to create a fixed-width or white article card.
-   */
-  const TEMPLATE_PROFILES = {
-    magazine: { name: '01 明窗', family: 'serif', bg: '#FFFFFF', ink: '#333333', title: '#252525', accent: '#9B8064', soft: '#FAF8F5', line: '#D8D0C7', intro: '#666666', radius: '0', label: '克制留白 · 细线层次' },
-    travel: { name: '02 素笺', family: 'serif', bg: '#FCF8F3', ink: '#514744', title: '#765C57', accent: '#C49A83', soft: '#F6EEE8', line: '#E7D7CC', intro: '#8D7972', radius: '8px', label: '柔和衬线 · 文艺手记' },
-    minimal: { name: '03 海图', family: 'sans', bg: '#FFFFFF', ink: '#1F2937', title: '#111827', accent: '#1E40AF', soft: '#EFF6FF', line: '#BFDBFE', intro: '#1E3A8A', radius: '6px', label: '商务蓝调 · 信息清晰' },
-    tech: { name: '04 深空信号', family: 'sans', bg: '#101426', ink: '#D7DCF5', title: '#FFFFFF', accent: '#7C83FF', soft: '#191E3A', line: '#3B467D', intro: '#B9C5FF', radius: '6px', label: '蓝紫未来 · 梦幻科技' },
-    zen: { name: '05 禅庭', family: 'serif', bg: '#F8F6F0', ink: '#55534B', title: '#5D6257', accent: '#9A8F7B', soft: '#EEEADF', line: '#D8D2C5', intro: '#7A776D', radius: '0', label: '东方留白 · 安静阅读' },
-    stay: { name: '06 薄荷波', family: 'sans', bg: '#FFFFFF', ink: '#334155', title: '#0F172A', accent: '#087F8C', soft: '#E6F7F5', line: '#F4B942', intro: '#087F8C', radius: '10px', label: '清新明亮 · 生活方式' }
-  };
-
-  function currentTemplateProfile() {
-    return TEMPLATE_PROFILES[document.body.getAttribute('data-theme')] || TEMPLATE_PROFILES.magazine;
-  }
-
+  // Old drafts may still carry placeholder images and eyebrow labels from retired templates.
   function removeLegacyTemplateDecoration() {
     editor.querySelectorAll('img').forEach(img => {
       const src = img.getAttribute('src') || '';
@@ -2640,118 +2175,13 @@
     });
   }
 
-  function styleTemplateContent() {
-    const p = currentTemplateProfile();
-    const font = p.family === 'serif' ? "'Songti SC','STSong','SimSun',serif" : "-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif";
-    editor.style.backgroundColor = 'transparent';
-    editor.style.backgroundImage = 'none';
-    editor.style.color = p.ink;
-    editor.style.fontFamily = font;
-    editor.querySelectorAll('h1').forEach(el => {
-      el.style.cssText = `margin:0 0 24px 0;color:${p.title};font-family:${font};font-size:30px;line-height:1.45;font-weight:700;letter-spacing:.02em;background-color:transparent;padding:0;border:0;`;
-    });
-    editor.querySelectorAll('h2').forEach(el => {
-      el.style.cssText = `margin:34px 0 16px 0;color:${p.title};font-family:${font};font-size:21px;line-height:1.55;font-weight:700;letter-spacing:.01em;border-left:3px solid ${p.accent};border-bottom:1px solid ${p.line};padding:10px 12px;background-color:${p.soft};`;
-    });
-    editor.querySelectorAll('h3').forEach(el => {
-      el.style.cssText = `margin:26px 0 12px 0;color:${p.title};font-family:${font};font-size:17px;line-height:1.6;font-weight:700;`;
-    });
-    editor.querySelectorAll('p').forEach(el => {
-      if (el.classList.contains('photo-caption') || el.classList.contains('artboard-caption')) return;
-      if (el.closest('.theme-tip-card,.theme-route-card,.route-card,.stay-card')) return;
-      el.style.fontFamily = font;
-      el.style.color = p.ink;
-      el.style.fontSize = '16px';
-      el.style.lineHeight = p.family === 'serif' ? '2' : '1.9';
-      el.style.margin = '0 0 24px 0';
-      el.style.textIndent = '2em';
-      el.style.textAlign = 'justify';
-      el.style.backgroundColor = 'transparent';
-    });
-    editor.querySelectorAll('blockquote').forEach(el => {
-      el.style.cssText = `margin:28px 0 24px 0;padding:16px 18px;border-left:3px solid ${p.accent};background-color:${p.soft};color:${p.intro};font-family:${font};font-size:15px;line-height:1.9;`;
-    });
-    editor.querySelectorAll('ul,ol').forEach(el => {
-      el.style.cssText = `margin:0 0 24px 0;padding:0 0 0 24px;color:${p.ink};font-family:${font};font-size:15px;line-height:2;`;
-    });
-    editor.querySelectorAll('li').forEach(el => { el.style.margin = '0 0 6px 0'; });
-    editor.querySelectorAll('img').forEach(img => {
-      img.style.maxWidth = '100%';
-      img.style.width = img.style.width || '100%';
-      img.style.height = 'auto';
-      img.style.display = 'block';
-      img.style.margin = '28px auto 8px auto';
-    });
-    editor.querySelectorAll('figcaption').forEach(el => {
-      el.style.cssText = `display:block;margin:0 0 28px 0;color:${p.intro};font-size:12px;line-height:1.7;text-align:center;`;
-    });
-    editor.querySelectorAll('.theme-tip-card,.theme-route-card,.route-card,.stay-card').forEach(el => {
-      el.style.backgroundColor = p.soft;
-      el.style.borderColor = p.line;
-      el.style.borderLeftColor = p.accent;
-      el.style.borderRadius = p.radius;
-      el.style.boxShadow = p.family === 'sans' ? `0 6px 18px ${p.accent}18` : 'none';
-    });
-    document.documentElement.style.setProperty('--accent', p.accent);
-    document.documentElement.style.setProperty('--accent-soft', p.soft);
-    document.documentElement.style.setProperty('--accent-deep', p.title);
-  }
-
-  function applyTemplateProfile(theme) {
-    if (!TEMPLATE_PROFILES[theme]) return;
-    document.body.setAttribute('data-theme', theme);
-    styleTemplateContent();
-    const p = TEMPLATE_PROFILES[theme];
-    const selected = document.querySelector(`.template-card[data-theme="${theme}"]`);
-    if (selected) {
-      document.querySelectorAll('.template-card').forEach(card => card.classList.remove('selected'));
-      selected.classList.add('selected');
-      const name = selected.querySelector('[data-template-name]') || selected.querySelector('.font-serif');
-      if (activeThemeBadge) activeThemeBadge.textContent = p.name;
-      if (currentSpecimenName) currentSpecimenName.textContent = p.name;
-      if (currentSpecimenColor) currentSpecimenColor.textContent = p.label;
-      if (miniPhoneTheme) miniPhoneTheme.textContent = p.name;
-      if (miniPhoneColor) miniPhoneColor.textContent = p.label;
-      if (accentDot) accentDot.style.backgroundColor = p.accent;
-      if (name) name.textContent = p.name;
-    }
-  }
-
-  Object.entries(TEMPLATE_PROFILES).forEach(([theme, profile]) => {
-    const card = document.querySelector(`.template-card[data-theme="${theme}"]`);
-    if (!card) return;
-    const nameNode = card.querySelector('.flex-1 .flex span');
-    const descNode = card.querySelector('.flex-1 > div:last-child');
-    if (nameNode) nameNode.textContent = profile.name;
-    if (descNode) descNode.textContent = profile.label;
-  });
-  document.querySelectorAll('.template-card').forEach(card => {
-    if (!TEMPLATE_PROFILES[card.getAttribute('data-theme')]) {
-      card.hidden = true;
-      card.style.display = 'none';
-    }
-  });
-
-  // Keep the visible phone preview and the copied HTML on exactly the same path.
-  const legacySync = sync;
-  sync = function upgradedSync() {
-    removeLegacyTemplateDecoration();
-    styleTemplateContent();
-    legacySync();
-    const root = preview.firstElementChild;
-    if (root && currentTemplateProfile().bg !== '#FFFFFF') root.style.backgroundColor = currentTemplateProfile().bg;
-  };
-
   removeLegacyTemplateDecoration();
-  applyTemplateProfile(document.body.getAttribute('data-theme') || 'magazine');
 
   /*
    * Canonical rendering v3
    * The editor is materialized into the exact inline markup used for preview,
    * clipboard and the WeChat draft API. There is no second preview-only layout.
    */
-  Object.keys(TEMPLATE_PROFILES).forEach(key => delete TEMPLATE_PROFILES[key]);
-
   const SERIF = "'Songti SC','STSong','SimSun',serif";
   const SANS = "'PingFang SC','Microsoft YaHei',Arial,sans-serif";
   const MONO = "ui-monospace,Menlo,Monaco,Consolas,monospace";
@@ -3559,28 +2989,6 @@
     editor.style.cssText = `background-color:${p.bg};background-image:none;color:${p.ink};font-family:${p.font};`;
   }
 
-  function updateWechatCompatibility(content) {
-    if (!wechatCompatibilityStatus || !wechatCompatibilityDetail) return;
-    const compatibilityIssues = [
-      [/<style\b/i, '发现样式块'],
-      [/\bclass=/i, '发现 class 样式'],
-      [/\b(?:data|aria)-[\w-]+=/i, '发现扩展属性'],
-      [/background-image\s*:/i, '发现背景图样式'],
-      [/filter\s*:/i, '发现滤镜样式'],
-      [/transform\s*:/i, '发现变换样式'],
-      [/display\s*:\s*(?:flex|grid)/i, '发现高级布局'],
-      [/\bgap\s*:/i, '发现 gap 间距'],
-      [/<(?:div|article|main|header|footer)\b/i, '发现非基础标签'],
-      [/<svg\b/i, '发现 SVG'],
-      [/(?:^|[;"\s])(?:position|float)\s*:/i, '发现定位或浮动']
-    ].filter(([pattern]) => pattern.test(content)).map(([, label]) => label);
-    const clean = compatibilityIssues.length === 0;
-    wechatCompatibilityStatus.className = `mt-2 px-2 py-1.5 rounded border flex items-center justify-between text-[10px] ${clean ? 'bg-emerald-50 border-emerald-100' : 'bg-amber-50 border-amber-100'}`;
-    wechatCompatibilityDetail.className = clean ? 'text-emerald-600' : 'text-amber-700';
-    wechatCompatibilityDetail.textContent = clean ? '已使用可复制的内联样式' : compatibilityIssues.join('、');
-  }
-
-  generateWechatRichHtml = canonicalRootHtml;
   sync = function canonicalSync() {
     const activeTheme = document.body.getAttribute('data-theme') || 'magazine';
     if (editor.getAttribute('data-rendered-theme') !== activeTheme) {
@@ -3589,7 +2997,6 @@
     }
     const content = canonicalRootHtml();
     preview.innerHTML = content;
-    updateWechatCompatibility(content);
     const displayTitle = articleTitle.value.trim() || '未命名文章';
     if (articleTitleEditor && articleTitleEditor.value !== articleTitle.value) articleTitleEditor.value = articleTitle.value;
     previewTitle.textContent = displayTitle.length > 14 ? `${displayTitle.slice(0, 14)}...` : displayTitle;
@@ -3600,28 +3007,26 @@
     clearTimeout(window.saveTimer);
     window.saveTimer = setTimeout(() => {
       const rootStyle = document.documentElement.style;
+      const prefs = {
+        title: articleTitle.value,
+        theme: document.body.getAttribute('data-theme'),
+        templateVersion: TEMPLATE_VERSION,
+        accent: rootStyle.getPropertyValue('--accent').trim(),
+        accentSoft: rootStyle.getPropertyValue('--accent-soft').trim(),
+        accentDeep: rootStyle.getPropertyValue('--accent-deep').trim(),
+        fontSize: typographyState.fontSize,
+        lineHeight: typographyState.lineHeight,
+        savedAt: Date.now()
+      };
       try {
-        localStorage.setItem('gzh-draft', JSON.stringify({
-          title: articleTitle.value,
-          content: editor.innerHTML,
-          theme: document.body.getAttribute('data-theme'),
-          templateVersion: TEMPLATE_VERSION,
-          accent: rootStyle.getPropertyValue('--accent').trim(),
-          accentSoft: rootStyle.getPropertyValue('--accent-soft').trim(),
-          accentDeep: rootStyle.getPropertyValue('--accent-deep').trim(),
-          fontSize: typographyState.fontSize,
-          lineHeight: typographyState.lineHeight
-        }));
-        saveStatus.textContent = '本地自动保存完成';
-        window.saveFailureNotified = false;
+        localStorage.setItem('gzh-draft', JSON.stringify({ ...prefs, content: editor.innerHTML }));
       } catch (e) {
-        // Usually the ~5MB localStorage quota, hit by embedded base64 images.
-        saveStatus.textContent = '本地保存失败：内容过大';
-        if (!window.saveFailureNotified) {
-          window.saveFailureNotified = true;
-          triggerToast('草稿过大（多为图片），本地保存失败，刷新会丢失最新修改');
-        }
+        // localStorage holds only ~5MB. The article itself is also kept in the
+        // history draft store (IndexedDB, much larger), so keep just the
+        // preferences here and restore the content from there on reload.
+        try { localStorage.setItem('gzh-draft', JSON.stringify({ ...prefs, content: '', contentInHistory: true })); } catch (err) {}
       }
+      saveStatus.textContent = '本地自动保存完成';
     }, 250);
   };
 
@@ -3690,6 +3095,53 @@
     card.addEventListener('click', () => renderCanonicalTemplate(theme));
     templateListHost.appendChild(card);
   });
+
+  // Template categories, search and filter: 28 templates are too many to scroll.
+  const TEMPLATE_CATEGORIES = {
+    旅行: ['city', 'lingnan', 'road', 'photo', 'nature'],
+    生活: ['food', 'kids', 'health', 'emotion', 'fashion', 'home', 'pet'],
+    文艺: ['magazine', 'reading', 'cinnabar', 'gazette', 'journal', 'zen', 'film', 'art'],
+    科技商业: ['tech', 'gaming', 'finance', 'career', 'sale', 'notice'],
+    节庆: ['festival', 'wedding']
+  };
+  const templateCategoryOf = theme => Object.keys(TEMPLATE_CATEGORIES).find(cat => TEMPLATE_CATEGORIES[cat].includes(theme)) || '文艺';
+  const templateSearch = document.getElementById('templateSearch');
+  const templateFilters = document.getElementById('templateFilters');
+  const templateEmpty = document.getElementById('templateEmpty');
+  let templateFilter = 'all';
+  const filterButtonClass = active => `template-filter px-2 py-0.5 rounded whitespace-nowrap ${active ? 'bg-brand text-white font-medium' : 'bg-ink-100 text-ink-600 hover:text-ink-900'}`;
+  function applyTemplateFilter() {
+    const query = templateSearch.value.trim().toLowerCase();
+    let shown = 0;
+    document.querySelectorAll('.template-card').forEach(card => {
+      const theme = card.getAttribute('data-theme');
+      const profile = CANONICAL_PROFILES[theme];
+      const category = templateCategoryOf(theme);
+      const text = `${profile.name} ${profile.note} ${category}`.toLowerCase();
+      const visible = (templateFilter === 'all' || category === templateFilter) && (!query || text.includes(query));
+      card.hidden = !visible;
+      if (visible) shown += 1;
+    });
+    templateEmpty.classList.toggle('hidden', shown > 0);
+    templateFilters.querySelectorAll('.template-filter').forEach(btn => {
+      const active = btn.dataset.cat === templateFilter;
+      btn.className = filterButtonClass(active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+  }
+  templateFilters.innerHTML = ['all', ...Object.keys(TEMPLATE_CATEGORIES)].map(cat => `<button type="button" role="tab" class="${filterButtonClass(cat === 'all')}" data-cat="${cat}">${cat === 'all' ? '全部' : cat}</button>`).join('');
+  templateFilters.addEventListener('click', e => {
+    const btn = e.target.closest('.template-filter');
+    if (!btn) return;
+    templateFilter = btn.dataset.cat;
+    applyTemplateFilter();
+  });
+  templateSearch.addEventListener('input', applyTemplateFilter);
+  document.querySelectorAll('.template-card').forEach(card => {
+    const note = card.querySelector('.flex-1 > div:last-child');
+    if (note) note.textContent = `${templateCategoryOf(card.getAttribute('data-theme'))} · ${note.textContent}`;
+  });
+  applyTemplateFilter();
 
   const templateLabel = document.querySelector('#panel-templates > div:first-child span:first-child');
   if (templateLabel) templateLabel.textContent = `精选排版模板 (${Object.keys(CANONICAL_PROFILES).length}套)`;
@@ -3791,6 +3243,11 @@
       await Promise.all(all.slice(MAX_DRAFTS).map(item => DraftStore.remove(item.id)));
     } catch (e) {
       console.warn('历史草稿保存失败', e);
+      if (!window.draftSaveFailureNotified) {
+        window.draftSaveFailureNotified = true;
+        saveStatus.textContent = '本地保存失败';
+        triggerToast('草稿没能保存到本机：浏览器存储空间不足或被禁用');
+      }
     }
   }
   const scheduleDraftSave = () => { clearTimeout(draftSaveTimer); draftSaveTimer = setTimeout(saveCurrentDraft, 1200); };
@@ -3846,6 +3303,17 @@
     draftCreatedAt = null;
     rememberDraftId();
   }
+
+  // On load, open the newer of the two saved copies of the current article
+  // (the quick localStorage copy may have been saved without its content).
+  (async function restoreCurrentDraft() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('gzh-draft') || 'null'); } catch (e) {}
+    try {
+      const record = await DraftStore.get(currentDraftId);
+      if (record && (saved?.contentInHistory || record.updatedAt > (saved?.savedAt || 0) + 1000)) loadDraftIntoEditor(record);
+    } catch (e) {}
+  })();
 
   const draftModal = document.getElementById('draftHistoryModal');
   const draftList = document.getElementById('draftHistoryList');
@@ -3925,7 +3393,14 @@
     const action = e.target.closest('[data-action]')?.getAttribute('data-action') || (id === currentDraftId ? '' : 'open');
     if (!action) return;
     if (action === 'delete') {
-      if (!confirm('确定删除这篇历史草稿吗？删除后无法恢复。')) return;
+      // Confirm in place: a second click deletes (no browser pop-up).
+      const deleteBtn = e.target.closest('[data-action="delete"]');
+      if (deleteBtn.dataset.armed !== '1') {
+        deleteBtn.dataset.armed = '1';
+        deleteBtn.textContent = '再点一次删除';
+        deleteBtn.className = 'px-2 py-1 rounded text-white bg-red-500 hover:bg-red-600 font-medium';
+        return;
+      }
       await DraftStore.remove(id);
       renderDraftList();
       triggerToast('已删除历史草稿');
@@ -4037,8 +3512,6 @@
           await fetch('/api/invite/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
           location.replace('/login');
         });
-        const apiBase = document.getElementById('wechatApiBase');
-        if (apiBase && !localStorage.getItem('wechat-api-base')) apiBase.value = location.origin;
       })
       .catch(() => lock('无法连接排好看服务，请确认服务已启动后刷新页面。', false));
   })();
