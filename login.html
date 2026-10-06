@@ -72,14 +72,14 @@
     <div><b>排好看</b><span>微信公众号文章排版工具 · 一排就好看</span></div>
   </div>
   <h1>输入邀请码</h1>
-  <p class="lead">排好看目前为邀请制，输入邀请码即可进入编辑器。登录后 30 天内无需重复输入。</p>
+  <p class="lead">排好看目前为邀请制。首次输入邀请码后，这台设备会长期保持登录，不用重复输入。一个邀请码只能在一台设备上使用。</p>
   <form id="loginForm" novalidate>
     <label for="code">邀请码</label>
     <input id="code" name="code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX" maxlength="24" required autofocus/>
     <div class="error" id="error" role="alert"></div>
     <button type="submit" id="submit">进入排好看</button>
   </form>
-  <div class="foot">没有邀请码？请联系管理员获取。</div>
+  <div class="foot">没有邀请码，或需要更换设备？请联系管理员。</div>
 </main>
 <script>
   const form = document.getElementById('loginForm');

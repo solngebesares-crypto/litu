@@ -12,19 +12,22 @@ node server.js invite create        # 第一次使用：先生成一个邀请码
 node server.js                      # 启动服务，浏览器打开终端里显示的地址
 ```
 
-打开后输入邀请码即可进入编辑器，登录状态保留 30 天。直接双击 `index.html` 打开会被拦截，必须通过服务地址访问。
+打开后输入邀请码即可进入编辑器；激活后这台设备长期免登录，一个邀请码只能在一台设备上使用。直接双击 `index.html` 打开会被拦截，必须通过服务地址访问。
 
 ### 邀请码管理
 
 ```bash
-node server.js invite create --count 10 --uses 3 --days 30 --note 第一批用户
-node server.js invite list            # 查看所有邀请码、登录次数和状态
+node server.js invite create --count 10 --days 365 --note 第一批用户
+node server.js invite list            # 查看所有邀请码、激活设备和状态
+node server.js invite unbind XXXX-XXXX    # 用户换手机/电脑或清了浏览器数据时解绑，可在新设备上重新激活
 node server.js invite disable XXXX-XXXX   # 停用，已登录的用户会被立即退出
 node server.js invite enable XXXX-XXXX
 node server.js invite delete XXXX-XXXX
 ```
 
-- `--uses`：每个邀请码最多可登录几次（每台设备/浏览器登录算一次），不填为不限。
+- **一码一设备**：邀请码在第一次输入的设备（浏览器）上激活并绑定，之后这台设备长期免登录（默认 365 天，可用 `INVITE_SESSION_DAYS` 调整）；把码发给别人，在其他设备上输入会被拒绝。退出登录后，同一台设备仍可用原码重新登录。
+- `--devices`：一个邀请码最多可以绑定几台设备，默认 1。
+- 用户换设备、换浏览器或清除了浏览器数据后无法自动识别原设备，需要管理员用 `invite unbind` 解绑后重新激活。
 - `--days`：几天后过期，不填为长期有效。
 - 邀请码保存在 `invite-codes.json`，会话签名密钥保存在 `.invite-secret`，两者都已加入 `.gitignore`，不要提交到仓库。
 - 同一来源 15 分钟内输错 10 次会被暂时锁定。

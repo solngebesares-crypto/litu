@@ -3508,7 +3508,7 @@
         logout.classList.remove('hidden');
         logout.classList.add('flex');
         logout.addEventListener('click', async () => {
-          if (!confirm('确定退出登录吗？退出后需要重新输入邀请码。草稿仍保存在本机浏览器中。')) return;
+          if (!confirm('确定退出登录吗？之后在这台设备上重新输入原邀请码即可回来，草稿仍保存在本机浏览器中。')) return;
           await fetch('/api/invite/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
           location.replace('/login');
         });

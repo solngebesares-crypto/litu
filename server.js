@@ -11,7 +11,9 @@ const PORT = Number(process.env.WECHAT_PORT || process.env.PORT || 8787);
 const HOST = process.env.HOST || '127.0.0.1';
 const INVITE_FILE = process.env.INVITE_FILE || path.join(__dirname, 'invite-codes.json');
 const SECRET_FILE = path.join(__dirname, '.invite-secret');
-const SESSION_DAYS = Number(process.env.INVITE_SESSION_DAYS || 30);
+// Activated devices stay signed in for a year; the code itself can expire sooner.
+const SESSION_DAYS = Number(process.env.INVITE_SESSION_DAYS || 365);
+const DEVICE_COOKIE = 'phk_device';
 const SESSION_COOKIE = 'phk_session';
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const MAX_BODY = 8 * 1024 * 1024;
@@ -81,8 +83,23 @@ function sign(value) {
   return crypto.createHmac('sha256', SESSION_SECRET).update(value).digest('base64url');
 }
 
-function createSessionToken(code) {
-  const payload = Buffer.from(JSON.stringify({ c: normalizeCode(code), e: Date.now() + SESSION_DAYS * 86400e3 })).toString('base64url');
+/*
+ * Device binding: an invite code is bound to the first device (browser) that
+ * activates it, up to invite.maxDevices (default 1). Each browser carries a
+ * random, long-lived device id; a code already bound elsewhere is refused, so
+ * a code passed on to someone else does not work for them. The same device can
+ * always log in again, and `invite unbind` frees a code for a new device.
+ */
+const maxDevicesOf = invite => Math.max(1, Number(invite.maxDevices) || 1);
+const boundDevices = invite => (Array.isArray(invite.devices) ? invite.devices : []);
+
+function deviceIdFrom(req) {
+  const id = parseCookies(req)[DEVICE_COOKIE];
+  return /^[a-f0-9]{32}$/.test(id || '') ? id : null;
+}
+
+function createSessionToken(code, deviceId) {
+  const payload = Buffer.from(JSON.stringify({ c: normalizeCode(code), d: deviceId, e: Date.now() + SESSION_DAYS * 86400e3 })).toString('base64url');
   return `${payload}.${sign(payload)}`;
 }
 
@@ -103,12 +120,14 @@ function currentSession(req) {
   if (!session || Date.now() > session.e) return null;
   const invite = findInvite(loadInvites(), session.c);
   if (inviteProblem(invite)) return null;
+  // Unbinding a device (or an old pre-binding session) signs that device out.
+  if (!session.d || !boundDevices(invite).some(device => device.id === session.d)) return null;
   return { code: invite.code, expiresAt: new Date(session.e).toISOString() };
 }
 
-function sessionCookie(req, value, maxAgeSeconds) {
+function sessionCookie(req, value, maxAgeSeconds, name = SESSION_COOKIE) {
   const secure = process.env.COOKIE_SECURE === '1' || (TRUST_PROXY && req.headers['x-forwarded-proto'] === 'https');
-  return `${SESSION_COOKIE}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}${secure ? '; Secure' : ''}`;
+  return `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}${secure ? '; Secure' : ''}`;
 }
 
 // Brute-force protection: at most 10 failed attempts per client per 15 minutes.
@@ -397,11 +416,27 @@ const server = http.createServer(async (req, res) => {
         recordFailedLogin(req);
         return json(res, 401, { ok: false, error: problem });
       }
+      const deviceId = deviceIdFrom(req) || crypto.randomBytes(16).toString('hex');
+      const devices = boundDevices(invite);
+      const now = new Date().toISOString();
+      const known = devices.find(device => device.id === deviceId);
+      if (known) {
+        known.lastLoginAt = now;
+      } else if (devices.length >= maxDevicesOf(invite)) {
+        const limit = maxDevicesOf(invite);
+        return json(res, 403, { ok: false, error: `该邀请码已在${limit > 1 ? ` ${limit} 台` : '另一台'}设备上激活，不能在这台设备上使用。如需更换设备，请联系卖家解绑。` });
+      } else {
+        devices.push({ id: deviceId, boundAt: now, lastLoginAt: now, userAgent: String(req.headers['user-agent'] || '').slice(0, 160) });
+        invite.devices = devices;
+      }
       invite.uses = (invite.uses || 0) + 1;
-      invite.lastUsedAt = new Date().toISOString();
+      invite.lastUsedAt = now;
       saveInvites(data);
       failedLogins.delete(clientKey(req));
-      return json(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(req, createSessionToken(invite.code), SESSION_DAYS * 86400) });
+      return json(res, 200, { ok: true }, { 'Set-Cookie': [
+        sessionCookie(req, createSessionToken(invite.code, deviceId), SESSION_DAYS * 86400),
+        sessionCookie(req, deviceId, 5 * 365 * 86400, DEVICE_COOKIE)
+      ] });
     }
     if (req.method === 'POST' && pathname === '/api/invite/logout') {
       return json(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(req, '', 0) });
@@ -450,7 +485,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
-/* Admin CLI: node server.js invite <create|list|disable|enable|delete> */
+/* Admin CLI: node server.js invite <create|list|unbind|disable|enable|delete> */
 /* ------------------------------------------------------------------ */
 
 function runInviteCli(args) {
@@ -463,18 +498,19 @@ function runInviteCli(args) {
   if (command === 'create') {
     const count = Math.max(1, Math.min(500, Number(option('count', 1)) || 1));
     const maxUses = Math.max(0, Number(option('uses', 0)) || 0);
+    const maxDevices = Math.max(1, Number(option('devices', 1)) || 1);
     const days = Number(option('days', 0)) || 0;
     const note = String(option('note', ''));
     const created = [];
     while (created.length < count) {
       const code = generateCode();
       if (findInvite(data, code)) continue;
-      const invite = { code, note, maxUses, uses: 0, createdAt: new Date().toISOString(), expiresAt: days > 0 ? new Date(Date.now() + days * 86400e3).toISOString() : null, disabled: false };
+      const invite = { code, note, maxDevices, devices: [], maxUses, uses: 0, createdAt: new Date().toISOString(), expiresAt: days > 0 ? new Date(Date.now() + days * 86400e3).toISOString() : null, disabled: false };
       data.codes.push(invite);
       created.push(invite);
     }
     saveInvites(data);
-    console.log(`已生成 ${created.length} 个邀请码（${maxUses ? `每个最多登录 ${maxUses} 次` : '登录次数不限'}，${days > 0 ? `${days} 天后过期` : '长期有效'}）：`);
+    console.log(`已生成 ${created.length} 个邀请码（每个限 ${maxDevices} 台设备使用，${days > 0 ? `${days} 天后过期` : '长期有效'}）：`);
     created.forEach(invite => console.log(`  ${invite.code}`));
     return;
   }
@@ -482,15 +518,23 @@ function runInviteCli(args) {
     if (!data.codes.length) return console.log('还没有邀请码。用 node server.js invite create 生成。');
     data.codes.forEach(invite => {
       const status = inviteProblem(invite, { forNewLogin: true }) ? `不可用（${inviteProblem(invite, { forNewLogin: true })}）` : '可用';
-      const uses = `${invite.uses || 0}/${invite.maxUses || '∞'}`;
+      const devices = boundDevices(invite);
+      const bound = devices.length ? `已激活 ${devices.length}/${maxDevicesOf(invite)} 台（${devices.map(device => device.boundAt.slice(0, 10)).join('、')}）` : `未激活 0/${maxDevicesOf(invite)} 台`;
       const expires = invite.expiresAt ? invite.expiresAt.slice(0, 10) : '长期';
-      console.log(`${invite.code}  ${status}  已登录 ${uses}  到期 ${expires}${invite.note ? `  备注：${invite.note}` : ''}`);
+      console.log(`${invite.code}  ${status}  ${bound}  到期 ${expires}${invite.note ? `  备注：${invite.note}` : ''}`);
     });
     return;
   }
-  if (['disable', 'enable', 'delete'].includes(command)) {
+  if (['disable', 'enable', 'delete', 'unbind'].includes(command)) {
     const invite = findInvite(data, rest[0]);
     if (!invite) { console.error(`找不到邀请码 ${rest[0] || ''}`); process.exitCode = 1; return; }
+    if (command === 'unbind') {
+      const count = boundDevices(invite).length;
+      invite.devices = [];
+      saveInvites(data);
+      console.log(`${invite.code} 已解绑 ${count} 台设备：原设备会被退出，可以在新设备上重新输入激活`);
+      return;
+    }
     if (command === 'delete') data.codes.splice(data.codes.indexOf(invite), 1);
     else invite.disabled = command === 'disable';
     saveInvites(data);
@@ -498,8 +542,9 @@ function runInviteCli(args) {
     return;
   }
   console.log(`用法：
-  node server.js invite create [--count 10] [--uses 3] [--days 30] [--note 备注]
+  node server.js invite create [--count 10] [--devices 1] [--days 30] [--note 备注]
   node server.js invite list
+  node server.js invite unbind <邀请码>     （用户换设备时解绑，原设备会被退出）
   node server.js invite disable <邀请码>
   node server.js invite enable <邀请码>
   node server.js invite delete <邀请码>`);
