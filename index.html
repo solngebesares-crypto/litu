@@ -1,0 +1,3313 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="排好看是一款让微信公众号文章一排就好看的高颜值排版工具" name="description"/>
+<title>排好看｜微信公众号文章排版工具 · 一排就好看</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            DEFAULT: '#6D4AFF',
+            dark: '#4931A8',
+            light: '#8B73FF',
+            soft: '#F4F1FF',
+            surface: '#FAF9FF',
+          },
+          ink: {
+            950: '#13111E',
+            900: '#252238',
+            700: '#4E4962',
+            500: '#716D82',
+            400: '#9B97AD',
+            200: '#E4E2ED',
+            100: '#F0EFF6',
+            50: '#FAF9FF',
+          }
+        },
+        fontFamily: {
+          serif: ['"Songti SC"', 'STSong', 'SimSun', 'serif'],
+          sans: ['"PingFang SC"', '"Microsoft YaHei UI"', '"Microsoft YaHei"', 'Arial', 'sans-serif'],
+          mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+        },
+        boxShadow: {
+          'subtle-purple': '0 4px 20px -2px rgba(109, 74, 255, 0.08)',
+          'canvas': '0 2px 20px rgba(37, 34, 56, 0.05)',
+          'pop': '0 12px 36px -4px rgba(109, 74, 255, 0.16)',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    --accent: #9e794f;
+    --accent-soft: #fbf7f1;
+    --accent-deep: #775531;
+    --font-size: 16px;
+    --line-height: 1.88;
+  }
+  body[data-theme="magazine"] { --accent: #9e794f; --accent-soft: #fbf7f1; --accent-deep: #775531; }
+  body[data-theme="travel"]   { --accent: #2e6951; --accent-soft: #eff6f2; --accent-deep: #1e4b39; }
+  body[data-theme="city"]     { --accent: #3d5a80; --accent-soft: #edf2f8; --accent-deep: #253b56; }
+  body[data-theme="minimal"]  { --accent: #232326; --accent-soft: #f4f4f6; --accent-deep: #111113; }
+  body[data-theme="tech"]     { --accent: #596BFF; --accent-soft: #EEF1FF; --accent-deep: #263B9A; }
+  body[data-theme="zen"]      { --accent: #786c5f; --accent-soft: #f7f5f2; --accent-deep: #544a40; }
+  body[data-theme="stay"]     { --accent: #b4654a; --accent-soft: #fdf3ef; --accent-deep: #8a452e; }
+  body[data-theme="photo"]    { --accent: #297373; --accent-soft: #edf8f8; --accent-deep: #1b4e4e; }
+  body[data-theme="road"]     { --accent: #d97706; --accent-soft: #fffbeb; --accent-deep: #92400e; }
+
+  .paper-texture {
+    background-color: #faf8f5 !important;
+    background-image: radial-gradient(#dfd7cc 0.65px, transparent 0.65px), radial-gradient(#dfd7cc 0.65px, #faf8f5 0.65px) !important;
+    background-size: 20px 20px !important;
+  }
+
+  ::selection { background: var(--accent); color: #fff; }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-thumb { background: #E4E2ED; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #9B97AD; }
+  #editor:focus { outline: none; }
+
+  .article-title-bar {
+    display:flex;
+    align-items:center;
+    gap:14px;
+    min-height:78px;
+    padding:12px 20px;
+    background:#F8F7FC;
+    border-bottom:1px solid #E4E1ED;
+    box-shadow:0 2px 8px rgba(37,34,56,.035);
+    flex:0 0 auto;
+    z-index:9;
+  }
+  .article-title-label {
+    flex:0 0 auto;
+    color:#5B43C6;
+    background:#EEE9FF;
+    border:1px solid #D8CEFF;
+    border-radius:6px;
+    padding:6px 9px;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.04em;
+    white-space:nowrap;
+  }
+  .article-title-field {
+    min-width:0;
+    flex:1 1 auto;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:0 12px 0 14px;
+    background:#fff;
+    border:1px solid #D8D5E4;
+    border-radius:9px;
+    box-shadow:0 1px 2px rgba(37,34,56,.04);
+    transition:border-color 160ms ease, box-shadow 160ms ease;
+  }
+  .article-title-field:focus-within { border-color:#8066E8; box-shadow:0 0 0 2px rgba(109,74,255,.10); }
+  .article-title-field input {
+    min-width:0;
+    width:100%;
+    padding:8px 0;
+    border:0;
+    outline:0;
+    background:transparent;
+    color:#252238;
+    font-family:"Songti SC",STSong,SimSun,serif;
+    font-size:18px;
+    font-weight:600;
+    line-height:1.4;
+    letter-spacing:.01em;
+  }
+  .article-title-field input::placeholder { color:#B0ACBB; font-weight:500; }
+  .article-title-hint {
+    flex:0 0 auto;
+    color:#8C889B;
+    font-size:10px;
+    font-weight:500;
+    white-space:nowrap;
+    padding-left:12px;
+    border-left:1px solid #E6E2EF;
+  }
+  @media (max-width: 860px) {
+    .article-title-bar { gap:10px; padding:10px 16px; }
+    .article-title-field input { font-size:17px; }
+    .article-title-hint { display:none; }
+  }
+
+  .editor-toolbar {
+    min-height:52px;
+    height:auto !important;
+    padding:5px 10px;
+    justify-content:flex-start;
+    overflow:hidden;
+    flex-wrap:nowrap;
+    align-content:center;
+    white-space:nowrap;
+    font-size:11px;
+  }
+  .editor-toolbar-controls { flex:1 1 auto; min-width:0; max-width:100%; gap:5px; flex-wrap:nowrap; align-items:center; white-space:nowrap; }
+  .editor-toolbar-controls > div { flex:0 1 auto; min-width:0; }
+  .editor-toolbar select { font-size:11px; }
+  .editor-toolbar button { font-size:11px; }
+  .editor-toolbar input { font-size:11px; }
+  .editor-toolbar #formatBlockSelect { width:132px; }
+  .editor-toolbar #fontSizeSelect { width:126px; min-width:126px; flex:0 0 126px; }
+  .editor-toolbar #alignSelect { width:92px; }
+  .editor-toolbar #fontFamilySelect { width:138px; }
+  .editor-toolbar .toolbar-compact-label { display:none; }
+  .editor-toolbar .toolbar-color-label { display:none; }
+  .editor-toolbar .toolbar-divider { margin:0 2px; }
+
+  /* Reserve the center column for editing while keeping the phone preview readable. */
+  #workspaceRoot > aside:last-child { width:350px; }
+  @media (max-width: 1400px) {
+    #workspaceRoot > aside:last-child { width:330px; }
+    .editor-toolbar { padding-left:10px; padding-right:10px; }
+    .editor-toolbar-controls { gap:5px; }
+    .editor-toolbar #formatBlockSelect { width:122px; }
+    .editor-toolbar #fontSizeSelect { width:120px; min-width:120px; flex:0 0 120px; }
+    .editor-toolbar #alignSelect { width:86px; }
+    .editor-toolbar #fontFamilySelect { width:128px; }
+  }
+  @media (max-width: 1180px) {
+    .editor-toolbar { padding-left:8px; padding-right:8px; }
+    .editor-toolbar-controls { gap:4px; }
+    .editor-toolbar #formatBlockSelect { width:112px; }
+    .editor-toolbar #fontSizeSelect { width:116px; min-width:116px; flex:0 0 116px; }
+    .editor-toolbar #alignSelect { width:78px; }
+    .editor-toolbar #fontFamilySelect { width:118px; }
+    .editor-toolbar .toolbar-divider { display:none; }
+  }
+  .phone-preview-stage { align-items:center; justify-content:center; }
+
+  @keyframes subtlePulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.15); opacity: 0.7; }
+  }
+  .pulse-glow { animation: subtlePulse 2.4s ease-in-out infinite; }
+
+  .article-node {
+    border-radius: 4px;
+    transition: background-color 160ms ease;
+    padding: 2px 6px;
+    margin-left: -6px;
+    margin-right: -6px;
+  }
+  .article-node:hover { background-color: rgba(109, 74, 255, 0.035); }
+
+  .editable-img-wrap {
+    display: block;
+    margin: 20px auto;
+    position: relative;
+    cursor: pointer;
+    transition: outline 0.15s ease;
+  }
+  .editable-img-wrap.img-selected {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+  .editable-img-wrap.img-selected::after {
+    content: '';
+    position: absolute;
+    right: -7px;
+    bottom: -7px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    cursor: nwse-resize;
+    z-index: 3;
+  }
+  .img-resize-handle { position:absolute; right:-9px; bottom:-9px; width:18px; height:18px; cursor:nwse-resize; z-index:4; background:transparent; }
+
+  /* Keep the writing surface usable on smaller screens without changing the article width. */
+  @media (max-width: 1180px) {
+    #workspaceRoot { overflow-x:auto; }
+    #workspaceRoot > aside:first-child { width:240px; }
+    #workspaceRoot > main { min-width:560px; }
+    #workspaceRoot > aside:last-child { width:330px; }
+  }
+  @media (max-width: 860px) {
+    #workspaceRoot { display:block; overflow-y:auto; }
+    #workspaceRoot > aside:first-child,
+    #workspaceRoot > aside:last-child { width:100%; height:auto; max-height:none; border:0; }
+    #workspaceRoot > main { min-width:0; height:auto; min-height:720px; }
+    #workspaceRoot > aside:first-child .tab-panel { max-height:280px; }
+    #editorScrollContainer { padding:20px 12px; }
+    #editor { padding:32px 20px; min-height:720px; }
+    #iphoneShell { transform:scale(.86); transform-origin:top center; margin-bottom:-80px; }
+  }
+
+  #copyBtn[aria-busy="true"] { cursor:wait; opacity:.75; }
+  #copyBtn:disabled { pointer-events:none; }
+
+  :root {
+    --wechat-font-default: "mp-quote", "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", Arial, sans-serif;
+    --wechat-font-serif: "Songti SC", STSong, SimSun, serif;
+    --wechat-font-sans: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", Arial, sans-serif;
+    --wechat-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+  }
+  /* Only use device-local families in the editor. The copy exporter always uses --wechat-font-default. */
+  #editor, #previewContent { font-family:var(--wechat-font-default); }
+  #editor .font-serif, #previewContent .font-serif { font-family:var(--wechat-font-serif); }
+  #editor .font-sans, #previewContent .font-sans { font-family:var(--wechat-font-sans); }
+  #editor .font-mono, #previewContent .font-mono { font-family:var(--wechat-font-mono); }
+
+  .iphone-titanium {
+    box-shadow: 
+      0 0 0 2.5px #27282c,
+      0 0 0 4.5px #141517,
+      0 28px 65px -14px rgba(19, 17, 30, 0.38),
+      0 12px 28px -6px rgba(109, 74, 255, 0.1);
+  }
+
+  .toast-enter {
+    animation: toastSlideUp 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes toastSlideUp {
+    from { opacity: 0; transform: translate(-50%, 14px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+</style>
+
+</head>
+<body class="bg-[#FAF9FF] text-ink-900 antialiased font-sans h-screen flex flex-col overflow-hidden select-none" data-theme="magazine">
+<!-- 顶栏 (48px) -->
+<header class="h-12 bg-white border-b border-ink-200/80 px-4 flex items-center justify-between z-30 shrink-0 shadow-xs">
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-2">
+<div class="w-6 h-6 rounded-md bg-brand text-white flex items-center justify-center font-serif font-bold text-xs shadow-xs">排</div>
+<span class="font-serif font-bold text-[15px] tracking-wide text-ink-950">排好看</span>
+<span class="text-ink-200 font-light text-xs">/</span>
+<div class="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-brand-soft border border-brand/20">
+<span class="w-1.5 h-1.5 rounded-full bg-brand"></span>
+<span class="text-[11px] text-brand font-medium tracking-wide">微信公众号文章排版工具 · 一排就好看</span>
+</div>
+</div>
+</div>
+<div class="flex items-center space-x-3 max-w-xl w-full justify-center">
+<input class="hidden" id="articleTitle" placeholder="输入文章主标题..." type="text" value="北京周末去哪玩？春日踏青与公园漫步手记"/>
+<div class="flex items-center space-x-2 text-[11px] text-ink-500 shrink-0 bg-ink-50 px-2.5 py-1 rounded-full border border-ink-200/60">
+<span class="w-2 h-2 rounded-full bg-emerald-500 pulse-glow"></span>
+<span class="font-mono text-ink-700 tracking-tight" id="saveStatus">本地自动保存完成</span>
+</div>
+</div>
+<div class="flex items-center space-x-2.5">
+<div class="flex items-center text-ink-500 pr-2 space-x-0.5 text-xs border-r border-ink-200/80">
+<button aria-label="撤销 (Ctrl+Z)" class="p-1.5 hover:text-brand hover:bg-brand-soft rounded transition active:scale-95" id="undoBtn" title="撤销 (Ctrl+Z)">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button aria-label="重做 (Ctrl+Y)" class="p-1.5 hover:text-brand hover:bg-brand-soft rounded transition active:scale-95" id="redoBtn" title="重做 (Ctrl+Y)">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+<button class="px-3 py-1.5 text-xs font-medium text-ink-700 hover:text-brand hover:border-brand/40 hover:bg-brand-soft/40 border border-ink-200 rounded-md transition flex items-center space-x-1.5 active:scale-95" id="importDraftBtn">
+<svg class="w-3.5 h-3.5 text-ink-400 group-hover:text-brand" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path></svg>
+<span>导入文章</span>
+</button>
+<button aria-label="一键复制内容到公众号后台" class="px-3.5 py-1.5 text-xs font-semibold bg-brand hover:bg-brand-dark text-white rounded-md transition tracking-wide flex items-center space-x-1.5 shadow-sm shadow-brand/25 active:scale-95" id="copyBtn">
+<svg class="w-3.5 h-3.5 text-white/95" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>一键复制到公众号后台</span>
+</button>
+</div>
+</header>
+<!-- 工作区 -->
+<div class="flex-1 flex overflow-hidden" id="workspaceRoot">
+<!-- 左侧工具与配置目录 (280px) -->
+<aside class="w-[280px] bg-[#FAF9FF] border-r border-ink-200/80 flex flex-col shrink-0 z-20">
+<div class="h-10 border-b border-ink-200/80 flex items-center px-1 bg-white select-none">
+<button class="tab-btn flex-1 text-xs py-2 text-brand font-semibold border-b-2 border-brand transition text-center" data-tab="panel-templates">模板</button>
+<button class="tab-btn flex-1 text-xs py-2 text-ink-500 hover:text-ink-900 transition text-center" data-tab="panel-palette">配色</button>
+<button class="tab-btn flex-1 text-xs py-2 text-ink-500 hover:text-ink-900 transition text-center" data-tab="panel-widgets">小组件</button>
+<button class="tab-btn flex-1 text-xs py-2 text-ink-500 hover:text-ink-900 transition text-center" data-tab="panel-images">图片</button>
+<button class="tab-btn flex-1 text-xs py-2 text-ink-500 hover:text-ink-900 transition text-center" data-tab="panel-settings">微调</button>
+</div>
+<!-- 面板 1: 版式模板 -->
+<div class="tab-panel flex-1 overflow-y-auto p-3 space-y-2.5" id="panel-templates">
+<div class="flex items-center justify-between px-1 text-[11px] font-medium text-ink-500 mb-1">
+<span>精选排版模板 (6套)</span>
+<span class="text-brand font-mono text-[10px]">点击实时应用</span>
+</div>
+<div class="template-card p-3 rounded-lg border-2 border-brand bg-brand-soft shadow-subtle-purple cursor-pointer transition flex space-x-3 items-center" data-accent="#9e794f" data-accent-soft="#fbf7f1" data-color-name="暖金麦浪" data-font="思源宋体" data-name="01 经典杂志" data-theme="magazine">
+<div class="w-12 h-16 bg-white rounded border border-brand/30 shadow-2xs shrink-0 p-1 flex flex-col justify-between">
+<div><div class="w-5 h-0.5 bg-[#9e794f] mx-auto mb-1"></div><div class="w-full h-1 bg-ink-950/70 mb-1"></div><div class="space-y-0.5"><div class="w-full h-0.5 bg-ink-200"></div><div class="w-3/4 h-0.5 bg-ink-200"></div></div></div>
+<div class="w-full py-0.5 bg-[#9e794f]/15 border-l border-[#9e794f]"><div class="w-2/3 h-0.5 bg-[#9e794f]"></div></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<span class="font-serif text-sm font-bold text-ink-950 truncate">01 经典杂志</span>
+<span class="w-4 h-4 rounded-full bg-brand text-white flex items-center justify-center shrink-0 text-[10px]">✓</span>
+</div>
+<div class="text-[11px] text-ink-600 truncate"><span class="text-brand font-medium">双线衬线</span> · 暖金细节</div>
+</div>
+</div>
+<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#2e6951" data-accent-soft="#eff6f2" data-color-name="冷杉墨绿" data-font="思源宋体" data-name="02 旷野纪实" data-theme="travel">
+<div class="w-12 h-16 bg-[#f8fbf9] rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
+<div><div class="w-3 h-3 rounded-full bg-emerald-900 text-white text-[7px] flex items-center justify-center font-bold mb-1">02</div><div class="w-full h-1 bg-[#2e6951] mb-1"></div><div class="w-full h-0.5 bg-ink-200"></div></div>
+<div class="border-t border-[#2e6951]/40 pt-0.5 flex justify-between"><div class="w-2 h-0.5 bg-[#2e6951]"></div><div class="w-2 h-0.5 bg-ink-300"></div></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<span class="font-serif text-sm font-bold text-ink-900 truncate">02 旷野纪实</span>
+<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
+</div>
+<div class="text-[11px] text-ink-600 truncate">时间轴标尺 · <span class="text-emerald-700 font-medium">冷杉墨绿</span></div>
+</div>
+</div>
+<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#3d5a80" data-accent-soft="#edf2f8" data-color-name="海雾灰蓝" data-font="标准黑体" data-name="03 城市漫步" data-theme="city">
+<div class="w-12 h-16 bg-[#f8fafd] rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
+<div><div class="w-full h-3 bg-slate-200 mb-1"></div><div class="w-3/4 h-1 bg-[#3d5a80] mb-1"></div><div class="w-full h-0.5 bg-ink-200"></div></div>
+<div class="w-full py-0.5 bg-[#3d5a80]/10 rounded"><div class="w-3 h-0.5 bg-[#3d5a80] mx-auto"></div></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<span class="font-serif text-sm font-bold text-ink-900 truncate">03 城市漫步</span>
+<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
+</div>
+<div class="text-[11px] text-ink-600 truncate">留白胶片 · <span class="text-sky-800 font-medium">海雾灰蓝</span></div>
+</div>
+</div>
+<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#232326" data-accent-soft="#f4f4f6" data-color-name="纯黑单色" data-font="思源宋体" data-name="04 极简随笔" data-theme="minimal">
+<div class="w-12 h-16 bg-white rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
+<div><div class="w-full h-0.5 bg-ink-950 mb-1.5"></div><div class="w-full h-1 bg-ink-950 mb-1"></div><div class="w-4/5 h-0.5 bg-ink-200"></div></div>
+<div class="w-3 h-0.5 bg-ink-950"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<span class="font-serif text-sm font-bold text-ink-900 truncate">04 极简随笔</span>
+<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
+</div>
+<div class="text-[11px] text-ink-600 truncate">打字机韵律 · 极简黑白</div>
+</div>
+</div>
+<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#596BFF" data-accent-soft="#EEF1FF" data-color-name="蓝紫未来感" data-font="标准黑体" data-name="05 科技随笔" data-theme="tech">
+<div class="w-12 h-16 bg-[#FAF9FF] rounded border border-brand/30 shrink-0 p-1 flex flex-col justify-between">
+<div><div class="w-full h-1 bg-brand mb-1"></div><div class="w-full h-0.5 bg-brand/30"></div></div>
+<div class="w-full py-0.5 bg-brand/10 text-center rounded"><div class="w-3 h-0.5 bg-brand mx-auto"></div></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<span class="font-serif text-sm font-bold text-ink-900 truncate">05 科技随笔</span>
+<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
+</div>
+<div class="text-[11px] text-ink-600 truncate"><span class="text-brand font-medium">蓝紫未来感</span> · 梦幻科技</div>
+</div>
+</div>
+<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#786c5f" data-accent-soft="#f7f5f2" data-color-name="素雅松烟" data-font="思源宋体" data-name="06 留白禅意" data-theme="zen">
+<div class="w-12 h-16 bg-[#faf8f5] rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
+<div class="w-3 h-3 mx-auto border border-[#786c5f] rounded-full mb-1"></div>
+<div class="w-2 h-0.5 bg-[#786c5f] mx-auto"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<span class="font-serif text-sm font-bold text-ink-900 truncate">06 留白禅意</span>
+<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
+</div>
+<div class="text-[11px] text-ink-600 truncate">大量呼吸感 · 素朴文气</div>
+</div>
+</div>
+<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#b4654a" data-accent-soft="#fdf3ef" data-color-name="暖砖陶土" data-font="思源宋体" data-name="07 旅居生活" data-theme="stay">
+<div class="w-12 h-16 bg-[#fffaf8] rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
+<div class="w-full h-1 bg-[#b4654a] mb-1"></div>
+<div class="w-3 h-0.5 bg-[#b4654a]"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<span class="font-serif text-sm font-bold text-ink-900 truncate">07 旅居生活</span>
+<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
+</div>
+<div class="text-[11px] text-ink-600 truncate">慢调叙事 · <span class="text-[#b4654a] font-medium">暖砖陶土</span></div>
+</div>
+</div>
+<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#297373" data-accent-soft="#edf8f8" data-color-name="幽蓝海青" data-font="标准黑体" data-name="08 摄影旅记" data-theme="photo">
+<div class="w-12 h-16 bg-slate-900 rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
+<div class="w-full h-5 bg-slate-700 rounded-xs mb-1 flex items-center justify-center text-[7px] text-white">PHOTO</div>
+<div class="w-full h-0.5 bg-emerald-400"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<span class="font-serif text-sm font-bold text-ink-900 truncate">08 摄影旅记</span>
+<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
+</div>
+<div class="text-[11px] text-ink-600 truncate">大图展示 · <span class="text-[#297373] font-medium">幽蓝海青</span></div>
+</div>
+</div>
+<div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-accent="#d97706" data-accent-soft="#fffbeb" data-color-name="夕阳落日橙" data-font="标准黑体" data-name="09 公路旅行" data-theme="road">
+<div class="w-12 h-16 bg-[#fffdfa] rounded border border-ink-200 shrink-0 p-1 flex flex-col justify-between">
+<div class="w-full h-1 bg-[#d97706] mb-1"></div>
+<div class="w-4 h-0.5 bg-[#d97706]"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<span class="font-serif text-sm font-bold text-ink-900 truncate">09 公路旅行</span>
+<span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span>
+</div>
+<div class="text-[11px] text-ink-600 truncate">路书卡片 · <span class="text-amber-600 font-medium">夕阳落日橙</span></div>
+</div>
+</div>
+</div>
+<!-- 面板 2: 文章配色 (67套真实旅行与自然意象调色库) -->
+<div class="tab-panel flex-1 overflow-y-auto p-3 space-y-3 hidden" id="panel-palette">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-ink-950">67套自然场景调色</span>
+<span class="text-[10px] text-brand font-mono">即选即染</span>
+</div>
+<div class="space-y-1.5">
+<input class="w-full text-xs px-2.5 py-1.5 bg-white border border-ink-200 rounded-md focus:ring-1 focus:ring-brand focus:border-brand placeholder-ink-400" id="paletteSearch" placeholder="搜索调色 (如: 湖畔、落日、海盐...)" type="text"/>
+<div class="flex space-x-1 overflow-x-auto pb-1 text-[11px]">
+<button class="palette-filter px-2 py-0.5 bg-brand text-white rounded font-medium" data-cat="all">全部</button>
+<button class="palette-filter px-2 py-0.5 bg-ink-100 text-ink-600 hover:text-ink-900 rounded" data-cat="morning">晨光</button>
+<button class="palette-filter px-2 py-0.5 bg-ink-100 text-ink-600 hover:text-ink-900 rounded" data-cat="afternoon">午后</button>
+<button class="palette-filter px-2 py-0.5 bg-ink-100 text-ink-600 hover:text-ink-900 rounded" data-cat="sunset">暮色</button>
+<button class="palette-filter px-2 py-0.5 bg-ink-100 text-ink-600 hover:text-ink-900 rounded" data-cat="nature">山海林谷</button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2" id="paletteGrid"></div>
+</div>
+<!-- 面板 3: 旅行组件 -->
+<div class="tab-panel flex-1 overflow-y-auto p-3 space-y-3 hidden" id="panel-widgets">
+<div class="flex items-center justify-between text-xs font-semibold text-ink-950">
+<span>旅行排版专用组件</span>
+<span class="text-[10px] text-ink-400">点击即插入</span>
+</div>
+<div class="p-2.5 rounded-lg border border-ink-200 bg-white shadow-2xs flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<div>
+<div class="text-xs font-semibold text-ink-900">纸张素笺质感</div>
+<div class="text-[10px] text-ink-500">模拟微粒棉纸印刷底色</div>
+</div>
+</div>
+<button class="px-2.5 py-1 text-[11px] rounded bg-ink-100 hover:bg-brand-soft text-ink-700 hover:text-brand font-medium transition" id="togglePaperTexture">开 / 关</button>
+</div>
+<div class="space-y-2">
+<button class="w-full text-left p-2.5 bg-white border border-ink-200 hover:border-brand rounded-lg shadow-2xs transition group" onclick="insertWidget('route')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-semibold text-ink-900 group-hover:text-brand">路线漫步节点卡片 (Route)</span>
+<span class="text-[10px] text-brand bg-brand-soft px-1.5 py-0.5 rounded font-medium">+ 插入</span>
+</div>
+<p class="text-[11px] text-ink-500 line-clamp-1">包含起点、途经打卡与终点耗时指南</p>
+</button>
+<button class="w-full text-left p-2.5 bg-white border border-ink-200 hover:border-brand rounded-lg shadow-2xs transition group" onclick="insertWidget('tip')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-semibold text-ink-900 group-hover:text-brand">单线条旅行贴士 (Tip)</span>
+<span class="text-[10px] text-brand bg-brand-soft px-1.5 py-0.5 rounded font-medium">+ 插入</span>
+</div>
+<p class="text-[11px] text-ink-500 line-clamp-1">侧边亮色竖线强调门票/交通/时间避坑</p>
+</button>
+<button class="w-full text-left p-2.5 bg-white border border-ink-200 hover:border-brand rounded-lg shadow-2xs transition group" onclick="insertWidget('caption')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-semibold text-ink-900 group-hover:text-brand">摄影机位与参数 (Exif)</span>
+<span class="text-[10px] text-brand bg-brand-soft px-1.5 py-0.5 rounded font-medium">+ 插入</span>
+</div>
+<p class="text-[11px] text-ink-500 line-clamp-1">35mm f/2.0 快门光圈与光影拍摄小结</p>
+</button>
+<button class="w-full text-left p-2.5 bg-white border border-ink-200 hover:border-brand rounded-lg shadow-2xs transition group" onclick="insertWidget('lodging')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-semibold text-ink-900 group-hover:text-brand">旅居酒店 / 咖啡馆名片</span>
+<span class="text-[10px] text-brand bg-brand-soft px-1.5 py-0.5 rounded font-medium">+ 插入</span>
+</div>
+<p class="text-[11px] text-ink-500 line-clamp-1">营业时间、人均消费与地址经纬度</p>
+</button>
+<button class="w-full text-left p-2.5 bg-white border border-ink-200 hover:border-brand rounded-lg shadow-2xs transition group" onclick="insertWidget('quote')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-semibold text-ink-900 group-hover:text-brand">双引手记引言 (Quote)</span>
+<span class="text-[10px] text-brand bg-brand-soft px-1.5 py-0.5 rounded font-medium">+ 插入</span>
+</div>
+<p class="text-[11px] text-ink-500 line-clamp-1">金句与出处，样式随模板变化</p>
+</button>
+<button class="w-full text-left p-2.5 bg-white border border-ink-200 hover:border-brand rounded-lg shadow-2xs transition group" onclick="insertWidget('list')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-semibold text-ink-900 group-hover:text-brand">序号列表 (List)</span>
+<span class="text-[10px] text-brand bg-brand-soft px-1.5 py-0.5 rounded font-medium">+ 插入</span>
+</div>
+<p class="text-[11px] text-ink-500 line-clamp-1">01 02 03 编号要点，适合总结与清单</p>
+</button>
+<button class="w-full text-left p-2.5 bg-white border border-ink-200 hover:border-brand rounded-lg shadow-2xs transition group" onclick="insertWidget('divider')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-semibold text-ink-900 group-hover:text-brand">分隔线 (Divider)</span>
+<span class="text-[10px] text-brand bg-brand-soft px-1.5 py-0.5 rounded font-medium">+ 插入</span>
+</div>
+<p class="text-[11px] text-ink-500 line-clamp-1">模板专属装饰分隔，切换段落节奏</p>
+</button>
+<button class="w-full text-left p-2.5 bg-white border border-ink-200 hover:border-brand rounded-lg shadow-2xs transition group" onclick="insertWidget('table')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-semibold text-ink-900 group-hover:text-brand">信息表格 (Table)</span>
+<span class="text-[10px] text-brand bg-brand-soft px-1.5 py-0.5 rounded font-medium">+ 插入</span>
+</div>
+<p class="text-[11px] text-ink-500 line-clamp-1">店铺、价格、行程等对比信息</p>
+</button>
+<div class="flex items-center justify-between px-1 text-[11px] text-ink-500">
+<span>表格行数（作用于光标所在表格）</span>
+<span class="space-x-1"><button class="px-2 py-0.5 rounded bg-ink-100 hover:bg-brand-soft hover:text-brand" onclick="adjustTableRows(1)">+ 行</button><button class="px-2 py-0.5 rounded bg-ink-100 hover:bg-brand-soft hover:text-brand" onclick="adjustTableRows(-1)">− 行</button></span>
+</div>
+</div>
+</div>
+<!-- 面板 4: 图片设置 (Image Inspector) -->
+<div class="tab-panel flex-1 overflow-y-auto p-3 space-y-3 hidden" id="panel-images">
+<div class="flex items-center justify-between text-xs font-semibold text-ink-950">
+<span>图片调节 (Image Inspector)</span>
+<span class="text-[10px] text-brand font-medium" id="imgSelectedHint">未选中图片</span>
+</div>
+<div class="p-3 border-2 border-dashed border-ink-200 hover:border-brand rounded-lg bg-white text-center cursor-pointer transition relative">
+<input accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" id="imgUploadInput" type="file"/>
+<svg class="w-6 h-6 text-brand mx-auto mb-1" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path></svg>
+<span class="text-xs font-medium text-ink-800 block">点击上传本地照片</span>
+<span class="text-[10px] text-ink-400 block mt-0.5">支持 JPG, PNG, WebP (自动插入)</span>
+</div>
+<div class="space-y-3 bg-white p-3 rounded-lg border border-ink-200/80 shadow-2xs">
+<div>
+<label class="text-[11px] text-ink-500 block mb-1">图片排版宽度</label>
+<div class="grid grid-cols-3 gap-1">
+<button class="img-opt-btn min-w-0 whitespace-nowrap px-1 py-1 text-[11px] leading-5 bg-ink-100 hover:bg-brand-soft hover:text-brand rounded font-medium" data-style="width" data-val="100%">100% 满幅</button>
+<button class="img-opt-btn min-w-0 whitespace-nowrap px-1 py-1 text-[11px] leading-5 bg-ink-100 hover:bg-brand-soft hover:text-brand rounded font-medium" data-style="width" data-val="80%">80% 呼吸</button>
+<button class="img-opt-btn min-w-0 whitespace-nowrap px-1 py-1 text-[11px] leading-5 bg-ink-100 hover:bg-brand-soft hover:text-brand rounded font-medium" data-style="width" data-val="60%">60% 适中</button>
+</div>
+<div class="mt-2.5 rounded-md bg-ink-50/70 px-2.5 py-2">
+<div class="flex items-center justify-between mb-1"><label class="text-[11px] text-ink-500">自定义图片大小</label><span class="text-[11px] font-mono text-brand" id="imgWidthValue">100%</span></div>
+<input class="w-full accent-brand" id="imgWidthRange" max="100" min="20" step="1" type="range" value="100"/>
+<div class="flex justify-between text-[9px] text-ink-400 mt-0.5"><span>20%</span><span>拖动图片右下角也可调整</span><span>100%</span></div>
+</div>
+</div>
+<div>
+<label class="text-[11px] text-ink-500 block mb-1">版面水平对齐</label>
+<div class="grid grid-cols-3 gap-1">
+<button class="img-opt-btn px-2 py-1 text-xs bg-ink-100 hover:bg-brand-soft hover:text-brand rounded font-medium" data-style="align" data-val="left">居左</button>
+<button class="img-opt-btn px-2 py-1 text-xs bg-brand text-white rounded font-medium" data-style="align" data-val="center">居中</button>
+<button class="img-opt-btn px-2 py-1 text-xs bg-ink-100 hover:bg-brand-soft hover:text-brand rounded font-medium" data-style="align" data-val="right">居右</button>
+</div>
+</div>
+<div>
+<label class="text-[11px] text-ink-500 block mb-1">画框风格</label>
+<div class="grid grid-cols-2 gap-1.5">
+<button class="img-opt-btn px-2 py-1 text-xs bg-ink-100 hover:bg-brand-soft hover:text-brand rounded text-center" data-style="frame" data-val="none">无框清爽</button>
+<button class="img-opt-btn px-2 py-1 text-xs bg-ink-100 hover:bg-brand-soft hover:text-brand rounded text-center" data-style="frame" data-val="polaroid">拍立得白边</button>
+<button class="img-opt-btn px-2 py-1 text-xs bg-ink-100 hover:bg-brand-soft hover:text-brand rounded text-center" data-style="frame" data-val="shadow">柔光微浮雕</button>
+<button class="img-opt-btn px-2 py-1 text-xs bg-ink-100 hover:bg-brand-soft hover:text-brand rounded text-center" data-style="frame" data-val="rounded">圆角柔和</button>
+</div>
+</div>
+<div class="pt-2 border-t border-ink-100 flex items-center justify-between">
+<button class="text-xs text-brand hover:underline font-medium" id="addImgCaptionBtn">+ 添加图注</button>
+<button class="text-xs text-red-500 hover:text-red-700 font-medium" id="removeImgBtn">删除图片</button>
+</div>
+</div>
+</div>
+<!-- 面板 5: 高级微调 -->
+<div class="tab-panel flex-1 overflow-y-auto p-3 space-y-3 hidden" id="panel-settings">
+<div class="text-xs font-semibold text-ink-950">正文参数微调</div>
+<div class="bg-white p-3 rounded-lg border border-ink-200/80 space-y-3 text-xs">
+<div>
+<div class="flex justify-between text-ink-600 mb-1"><span>字号</span><span class="font-mono text-brand" id="fontSizeVal">16px</span></div>
+<div class="flex items-center space-x-2">
+<input class="flex-1 accent-brand" id="fontSizeRange" max="30" min="12" step="1" type="range" value="16" aria-label="正文字号"/>
+<input class="w-14 px-1.5 py-1 text-center bg-ink-50 border border-ink-200 rounded font-mono text-ink-800 focus:border-brand focus:ring-1 focus:ring-brand/20" id="fontSizeNumber" max="30" min="12" step="1" type="number" value="16" aria-label="自定义正文字号"/>
+<span class="text-ink-500">px</span>
+</div>
+<div class="flex justify-between text-[9px] text-ink-400 mt-1"><span>12px</span><span>正文可调范围</span><span>30px</span></div>
+</div>
+<div>
+<div class="flex justify-between text-ink-600 mb-1"><span>行距比例</span><span class="font-mono text-brand" id="lineHeightVal">1.88</span></div>
+<input class="w-full accent-brand" id="lineHeightRange" max="2.4" min="1.5" step="0.05" type="range" value="1.88"/>
+</div>
+<div class="pt-2 border-t border-ink-100">
+<button class="w-full py-1.5 text-xs text-ink-700 hover:text-brand bg-ink-50 hover:bg-brand-soft rounded border border-ink-200 transition" onclick="resetTypography()">恢复版式预设</button>
+</div>
+</div>
+</div>
+</aside>
+<!-- 中间编辑区 -->
+<main class="flex-1 flex flex-col bg-[#FAF9FF] overflow-hidden relative">
+<div class="article-title-bar" id="articleTitleEditorPanel">
+<label class="article-title-label" for="articleTitleEditor">公众号文章标题</label>
+<div class="article-title-field">
+<input id="articleTitleEditor" placeholder="请输入文章标题" type="text" value="北京周末去哪玩？春日踏青与公园漫步手记" />
+<span class="article-title-hint">发布到公众号的标题</span>
+</div>
+</div>
+<!-- 段落排印工具栏 -->
+<div class="editor-toolbar bg-white border-b border-ink-200/80 px-6 flex items-center justify-between shrink-0 z-10 text-ink-700 shadow-xs">
+<div class="editor-toolbar-controls flex items-center space-x-3 text-xs">
+<div class="flex items-center space-x-1.5">
+<span class="toolbar-compact-label text-[10px] uppercase font-mono text-ink-400 font-semibold tracking-wider">段落</span>
+<select class="text-xs bg-ink-50 hover:bg-ink-100/70 border border-ink-200 rounded-md py-1 pl-2.5 pr-7 text-ink-900 font-medium cursor-pointer" id="formatBlockSelect">
+<option value="p">正文段落 (Body)</option>
+<option value="h1">主标题 (H1)</option>
+<option value="h2">二级章节 (H2)</option>
+<option value="h3">三级小节 (H3)</option>
+<option value="blockquote">引言引用 (Blockquote)</option>
+</select>
+<select class="text-xs bg-ink-50 hover:bg-ink-100/70 border border-ink-200 rounded-md py-1 pl-2 pr-6 text-ink-800 cursor-pointer" id="fontSizeSelect">
+<option value="12px">12px · 小号阅读</option>
+<option value="13px">13px · 紧凑注释</option>
+<option value="14px">14px · 精简正文</option>
+<option value="16px">16px · 标准正文</option>
+<option value="15px">15px · 紧凑版式</option>
+<option value="17px">17px · 舒适阅读</option>
+<option value="18px">18px · 舒朗大字</option>
+<option value="20px">20px · 大字阅读</option>
+<option value="22px">22px · 超大正文</option>
+</select>
+<label class="flex items-center space-x-1 text-[11px] text-ink-500" title="输入 12 到 30 之间的字号">
+<span class="toolbar-compact-label">自定义</span>
+<input class="w-12 px-1.5 py-1 text-xs text-center bg-white border border-ink-200 rounded-md font-mono text-ink-800 focus:border-brand focus:ring-1 focus:ring-brand/20" id="fontSizeCustom" type="number" min="12" max="30" step="1" value="16" aria-label="自定义字号"/>
+<span>px</span>
+</label>
+<select class="text-xs bg-ink-50 hover:bg-ink-100/70 border border-ink-200 rounded-md py-1 pl-2 pr-6 text-ink-800 cursor-pointer" id="alignSelect" aria-label="段落对齐方式" title="段落对齐方式">
+<option value="justifyLeft">左对齐</option>
+<option value="justifyFull" selected>两端对齐</option>
+<option value="justifyCenter">居中对齐</option>
+<option value="justifyRight">右对齐</option>
+</select>
+</div>
+<div class="flex items-center space-x-1">
+<select class="text-xs bg-ink-50 hover:bg-ink-100/70 border border-ink-200 rounded-md py-1 pl-2 pr-6 text-ink-800 cursor-pointer mr-1" id="fontFamilySelect">
+<option value="default">公众号默认字体 (推荐)</option>
+<option value="sans">苹方 / 微软雅黑 (无衬线)</option>
+<option value="serif">宋体 / 宋体类 (衬线)</option>
+<option value="mono">系统等宽字体 (数字/英文)</option>
+</select>
+<button class="cmd-btn w-7 h-7 flex items-center justify-center font-bold text-ink-800 hover:text-brand hover:bg-brand-soft rounded transition text-xs" data-cmd="bold" title="加粗 (Ctrl+B)">B</button>
+<button class="cmd-btn w-7 h-7 flex items-center justify-center italic font-serif text-ink-800 hover:text-brand hover:bg-brand-soft rounded transition text-xs" data-cmd="italic" title="斜体 (Ctrl+I)">I</button>
+<button class="cmd-btn w-7 h-7 flex items-center justify-center underline text-ink-800 hover:text-brand hover:bg-brand-soft rounded transition text-xs" data-cmd="underline" title="下划线 (Ctrl+U)">U</button>
+<button class="cmd-btn w-7 h-7 flex items-center justify-center line-through text-ink-800 hover:text-brand hover:bg-brand-soft rounded transition text-xs" data-cmd="strikeThrough" title="删除线">S</button>
+<button class="cmd-btn w-7 h-7 flex items-center justify-center text-ink-800 hover:text-brand hover:bg-brand-soft rounded transition text-xs" data-cmd="insertUnorderedList" title="无序列表">•</button>
+<button class="cmd-btn w-7 h-7 flex items-center justify-center text-ink-800 hover:text-brand hover:bg-brand-soft rounded transition text-xs" data-cmd="removeFormat" title="清除格式">×</button>
+</div>
+</div>
+</div>
+<!-- 画布工作区 -->
+<div class="relative flex-1 overflow-y-auto p-10 flex justify-center bg-[#FAF9FF]" id="editorScrollContainer">
+<article class="w-full max-w-[740px] min-h-[960px] px-14 py-12 text-ink-900 focus:outline-none transition-all" contenteditable="true" id="editor" spellcheck="false">
+<div class="article-node mb-6">
+<p class="font-serif text-[16px] leading-[1.88] text-ink-800 text-justify">春天到了，北京终于暖和起来。想找一个不用做太多复杂攻略、当天就能轻松往返的去处，这几个公园刚好适宜。既避开了人声鼎沸的打卡拥挤，又能饱览初春最具生命力的柳绿与樱粉。</p>
+</div>
+<section class="my-8">
+<div class="article-node mb-4 border-b border-ink-200 pb-2.5">
+<div class="flex items-baseline space-x-2.5">
+<span class="theme-accent-text font-mono text-base font-bold" style="color: var(--accent);">01</span>
+<h2 class="text-xl font-serif font-bold text-ink-950 tracking-wide">玉渊潭公园：晨光里的第一场早樱</h2>
+</div>
+</div>
+<div class="article-node mb-5">
+<p class="font-serif text-[16px] leading-[1.88] text-ink-800 text-justify">最近的早樱已经初绽，沿着东湖慢慢走一圈，风里有一点恰到好处的花香与水汽。建议上午八点半前入园，晨光斜斜穿过水杉与垂樱，水面泛起柔和的光晕，游人也相对稀疏。</p>
+</div>
+<div class="article-node my-6">
+<div class="theme-tip-card p-4 rounded-lg bg-white border-l-4 border-t border-r border-b border-ink-200/70 shadow-2xs" style="border-left-color: var(--accent);">
+<div class="flex items-center space-x-2 mb-1.5">
+<span class="w-4 h-4 rounded-full flex items-center justify-center font-bold text-[10px]" style="background-color: var(--accent-soft); color: var(--accent);">!</span>
+<span class="text-xs font-semibold" style="color: var(--accent);">出行贴士 (Tip)</span>
+</div>
+<p class="text-xs text-ink-700 leading-relaxed font-sans">周末建议搭乘地铁 16 号线直达玉渊潭东门，早 8:00 前后入园光线最佳，湖面风平浪静，倒影尤其清透分明。</p>
+</div>
+</div>
+</section>
+<section class="my-8">
+<div class="article-node mb-4 border-b border-ink-200 pb-2.5">
+<div class="flex items-baseline space-x-2.5">
+<span class="theme-accent-text font-mono text-base font-bold" style="color: var(--accent);">02</span>
+<h2 class="text-xl font-serif font-bold text-ink-950 tracking-wide">颐和园：西堤山桃花与夕阳长廊</h2>
+</div>
+</div>
+<div class="article-node mb-5">
+<p class="font-serif text-[16px] leading-[1.88] text-ink-800 text-justify">如果想把北方的春意看得更加完整舒展，不妨把颐和园排在午后。长廊、昆明湖与西堤六桥的颜色，会随着夕阳的光线层层叠叠变得极为温柔。</p>
+</div>
+<div class="article-node my-6">
+<div class="theme-route-card p-4 rounded-lg bg-white border shadow-2xs" style="border-color: rgba(109, 74, 255, 0.2);">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center space-x-2">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" style="color: var(--accent);" viewbox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span class="text-xs font-serif font-bold text-ink-900">推荐漫步路线</span>
+<span class="text-[11px] text-ink-500">· 徒步耗时约 2.5 小时</span>
+</div>
+<span class="text-[10px] px-2 py-0.5 rounded-full font-medium" style="background-color: var(--accent-soft); color: var(--accent);">轻松适宜</span>
+</div>
+<p class="text-xs text-ink-600 leading-relaxed font-serif">北宫门入园 → 后湖幽静林道 → 苏州街眺望 → 沿西堤看山桃花与柳树初芽 → 十七孔桥等待傍晚落日金光。</p>
+</div>
+</div>
+</section>
+</article>
+</div>
+<footer class="h-8 bg-white border-t border-ink-200/80 px-6 flex items-center justify-between text-xs text-ink-500 shrink-0">
+<div class="flex items-center space-x-4">
+<span>全文字数：<strong class="text-ink-950 font-mono font-medium" id="charCount">288</strong> 字</span>
+<span class="text-ink-300">/</span>
+<span>预估阅读：<strong class="text-ink-800 font-mono font-medium" id="readTime">2 分钟</strong></span>
+<span class="text-ink-300">/</span>
+<span>焦点版式：<strong class="text-brand font-medium" id="activeThemeBadge">01 经典杂志</strong></span>
+</div>
+<div class="flex items-center space-x-3 text-ink-400">
+<div class="flex items-center space-x-1">
+<kbd class="px-1.5 py-0.5 bg-ink-100 rounded text-[10px] text-ink-700 font-mono border border-ink-200">Ctrl + V</kbd>
+<span class="text-[11px]">复制后直接粘贴至公众号后台</span>
+</div>
+</div>
+</footer>
+</main>
+<!-- 右侧 iPhone 15 预览视窗 (410px) -->
+<aside class="w-[350px] bg-[#FAF9FF] border-l border-ink-200/80 flex flex-col shrink-0 z-20">
+<div class="h-10 px-4 border-b border-ink-200/80 flex items-center justify-between shrink-0 bg-white">
+<div class="w-full flex items-center justify-center">
+<span class="text-xs font-semibold text-ink-900">真机真视工作台</span>
+</div>
+</div>
+<div class="phone-preview-stage flex-1 min-h-0 overflow-y-auto p-4 flex flex-col items-center justify-center bg-[#F4F3F9]">
+<div class="iphone-titanium w-[300px] h-[600px] bg-[#1a1a1c] rounded-[42px] p-2.5 flex flex-col shrink-0 transition-transform origin-top duration-200" id="iphoneShell">
+<div class="relative w-full h-full bg-white rounded-[38px] overflow-hidden flex flex-col">
+<div class="h-9 w-full bg-white pt-2.5 px-6 flex items-center justify-between text-[11px] font-semibold text-ink-900 select-none shrink-0 z-20">
+<span class="font-mono text-[10px] font-semibold">9:41</span>
+<div class="w-[88px] h-[22px] bg-black rounded-full mx-auto -mt-1 flex items-center justify-between px-2.5">
+<div class="w-2.5 h-2.5 rounded-full bg-[#181818] ring-1 ring-white/15"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-brand/30 flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-brand"></span>
+</div>
+</div>
+<div class="flex items-center space-x-1 text-[10px]">
+<svg class="w-3 h-3" fill="currentColor" viewbox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
+<div class="w-3.5 h-2 border border-ink-900 rounded-[2px] p-0.2 flex items-center"><div class="h-full w-full bg-ink-900"></div></div>
+</div>
+</div>
+<div class="h-9 border-b border-ink-100 px-3.5 flex items-center justify-between text-xs text-ink-900 shrink-0 bg-white">
+<div class="flex items-center space-x-2">
+<svg class="w-4 h-4 text-ink-700 cursor-pointer" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span class="font-serif text-[11px] text-ink-800 truncate max-w-[140px]" id="previewTitle">北京周末去哪玩？春日...</span>
+</div>
+<div class="flex items-center space-x-1.5 cursor-pointer">
+<div class="w-1 h-1 bg-ink-700 rounded-full"></div><div class="w-1 h-1 bg-ink-700 rounded-full"></div><div class="w-1 h-1 bg-ink-700 rounded-full"></div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-4 py-4 text-ink-800 leading-relaxed font-serif text-[13px]" id="previewContent"></div>
+<div class="px-4 py-2 border-t border-ink-100 flex items-center justify-between text-[10px] text-ink-400 font-sans bg-white shrink-0">
+<span>阅读 1.2万 · 在看 86</span>
+<span class="text-brand hover:underline cursor-pointer font-medium">写留言</span>
+</div>
+<div class="h-3 w-full flex items-center justify-center pb-1 bg-white shrink-0"><div class="w-24 h-1 bg-ink-950/40 rounded-full"></div></div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+<!-- 导入文章弹窗 -->
+<div class="fixed inset-0 bg-ink-950/60 backdrop-blur-xs z-50 flex items-center justify-center hidden" id="importModal">
+<div class="bg-white rounded-xl shadow-pop w-[560px] max-w-[90vw] overflow-hidden border border-ink-200">
+<div class="px-5 py-3.5 border-b border-ink-100 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<div class="w-6 h-6 rounded-md bg-brand-soft text-brand flex items-center justify-center font-bold text-xs">导</div>
+<h3 class="font-serif font-bold text-sm text-ink-950">导入文章 / 智能一键排版</h3>
+</div>
+<button class="p-1 text-ink-400 hover:text-ink-700 rounded" onclick="closeImportModal()">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+<div class="p-5 space-y-4">
+<div>
+<label class="text-xs font-semibold text-ink-800 block mb-1">粘贴 Markdown 或纯文本内容</label>
+<textarea class="w-full h-44 text-xs font-mono p-3 border border-ink-200 rounded-lg focus:ring-1 focus:ring-brand focus:border-brand placeholder-ink-400" id="importTextInput" placeholder="# 你的文章主标题
+
+这是引言或导语内容...
+
+## 第一章：章节标题
+这是正文段落，支持自动识别标题、列表与引用段落。"></textarea>
+</div>
+<div class="flex items-center justify-between text-xs text-ink-500">
+<div class="flex items-center space-x-2">
+<span>选择本地文件：</span>
+<label class="px-2.5 py-1 bg-ink-50 hover:bg-ink-100 border border-ink-200 text-ink-700 rounded cursor-pointer font-medium">
+            选择 .md / .txt
+            <input accept=".md,.txt,.markdown" class="hidden" id="importFileInput" type="file"/>
+</label>
+</div>
+<span class="text-brand font-medium" id="fileLoadedHint"></span>
+</div>
+</div>
+<div class="px-5 py-3 bg-[#FAF9FF] border-t border-ink-100 flex items-center justify-between">
+<span class="text-[11px] text-ink-400">自动识别标题、章节、段落、列表与引用，并套用当前模板</span>
+<div class="flex space-x-2">
+<button class="px-3.5 py-1.5 text-xs text-ink-600 hover:text-ink-900 font-medium" onclick="closeImportModal()">取消</button>
+<button class="px-4 py-1.5 text-xs bg-brand hover:bg-brand-dark text-white rounded-md font-semibold transition active:scale-95 shadow-sm shadow-brand/20" id="executeImportBtn">一键智能排版</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 公众号草稿推送弹窗 -->
+<div class="fixed inset-0 bg-ink-950/60 backdrop-blur-xs z-50 flex items-center justify-center hidden" id="wechatConfigModal">
+<div class="bg-white rounded-xl shadow-pop w-[560px] max-w-[90vw] overflow-hidden border border-ink-200">
+<div class="px-5 py-3.5 border-b border-ink-100 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">微</div>
+<h3 class="font-serif font-bold text-sm text-ink-950">推送到微信公众号草稿箱</h3>
+</div>
+<button aria-label="关闭公众号配置" class="p-1 text-ink-400 hover:text-ink-700 rounded" id="closeWechatConfigBtn">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+<div class="p-5 space-y-4">
+<div class="grid grid-cols-2 gap-3">
+<label class="text-xs font-semibold text-ink-800">AppID<input class="mt-1 w-full text-xs border border-ink-200 rounded-md px-2.5 py-2" id="wechatAppId" autocomplete="off" placeholder="wx..."/></label>
+<label class="text-xs font-semibold text-ink-800">AppSecret<input class="mt-1 w-full text-xs border border-ink-200 rounded-md px-2.5 py-2" id="wechatAppSecret" autocomplete="new-password" type="password" placeholder="不会保存到浏览器"/></label>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<label class="text-xs font-semibold text-ink-800">服务端地址<input class="mt-1 w-full text-xs border border-ink-200 rounded-md px-2.5 py-2" id="wechatApiBase" value="http://127.0.0.1:8787"/></label>
+<label class="text-xs font-semibold text-ink-800">作者<input class="mt-1 w-full text-xs border border-ink-200 rounded-md px-2.5 py-2" id="wechatAuthor" placeholder="Aurora"/></label>
+</div>
+<label class="text-xs font-semibold text-ink-800 block">文章摘要<input class="mt-1 w-full text-xs border border-ink-200 rounded-md px-2.5 py-2" id="wechatDigest" placeholder="不填写则由公众号后台处理"/></label>
+<p class="text-[11px] leading-relaxed text-ink-500 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">服务端会上传文章内的图片，并将第一张图片作为封面。AppSecret 只发送给你配置的服务端，不会写入本地草稿。</p>
+</div>
+<div class="px-5 py-3 bg-[#FAF9FF] border-t border-ink-100 flex items-center justify-between">
+<span class="text-[11px] text-ink-400" id="wechatConfigStatus">尚未连接公众号</span>
+<div class="flex space-x-2">
+<button class="px-3.5 py-1.5 text-xs text-ink-600 hover:text-ink-900 font-medium" id="cancelWechatConfigBtn">取消</button>
+<button class="px-4 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-semibold transition" id="pushWechatConfirmBtn">连接并创建草稿</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Toast -->
+<div class="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none hidden transition-all duration-200" id="toast">
+<div class="bg-ink-950/90 text-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-pop flex items-center space-x-2 text-xs font-medium border border-white/10">
+<span class="w-2 h-2 rounded-full bg-brand"></span>
+<span id="toastMsg">操作成功</span>
+</div>
+</div>
+<!-- 核心脚本驱动引擎 -->
+<script>
+  // 67套自然旅行意象配色库
+  const PALETTE_COLLECTION = [
+    { name: '暖金麦浪', cat: 'afternoon', accent: '#9e794f', soft: '#fbf7f1', deep: '#775531' },
+    { name: '冷杉墨绿', cat: 'nature', accent: '#2e6951', soft: '#eff6f2', deep: '#1e4b39' },
+    { name: '海雾灰蓝', cat: 'morning', accent: '#3d5a80', soft: '#edf2f8', deep: '#253b56' },
+    { name: '高定紫光', cat: 'morning', accent: '#6D4AFF', soft: '#F4F1FF', deep: '#4931A8' },
+    { name: '极简炭黑', cat: 'all', accent: '#232326', soft: '#f4f4f6', deep: '#111113' },
+    { name: '素雅松烟', cat: 'nature', accent: '#786c5f', soft: '#f7f5f2', deep: '#544a40' },
+    { name: '暖砖陶土', cat: 'afternoon', accent: '#b4654a', soft: '#fdf3ef', deep: '#8a452e' },
+    { name: '幽蓝海青', cat: 'nature', accent: '#297373', soft: '#edf8f8', deep: '#1b4e4e' },
+    { name: '落日金橙', cat: 'sunset', accent: '#d97706', soft: '#fffbeb', deep: '#92400e' },
+    { name: '海盐冰蓝', cat: 'morning', accent: '#0284c7', soft: '#f0f9ff', deep: '#0369a1' },
+    { name: '暮光浆果', cat: 'sunset', accent: '#9d174d', soft: '#fdf2f8', deep: '#831843' },
+    { name: '沙丘米黄', cat: 'afternoon', accent: '#a16207', soft: '#fefce8', deep: '#713f12' },
+    { name: '晨曦浅粉', cat: 'morning', accent: '#be185d', soft: '#fdf2f8', deep: '#9d174d' },
+    { name: '深林青苔', cat: 'nature', accent: '#15803d', soft: '#f0fdf4', deep: '#166534' },
+    { name: '海岛蔚蓝', cat: 'nature', accent: '#0369a1', soft: '#e0f2fe', deep: '#075985' },
+    { name: '日落琥珀', cat: 'sunset', accent: '#c2410c', soft: '#fff7ed', deep: '#9a3412' },
+    { name: '冰川冷灰', cat: 'morning', accent: '#475569', soft: '#f1f5f9', deep: '#334155' },
+    { name: '静谧熏衣', cat: 'sunset', accent: '#7c3aed', soft: '#f5f3ff', deep: '#5b21b6' },
+    { name: '茶歇肉桂', cat: 'afternoon', accent: '#854d0e', soft: '#fefce8', deep: '#713f12' },
+    { name: '翠竹青绿', cat: 'nature', accent: '#047857', soft: '#ecfdf5', deep: '#065f46' },
+    { name: '薄暮黛青', cat: 'sunset', accent: '#1e3a8a', soft: '#eff6ff', deep: '#172554' },
+    { name: '暖阳杏黄', cat: 'morning', accent: '#b45309', soft: '#fffbeb', deep: '#78350f' },
+    { name: '红岩峡谷', cat: 'nature', accent: '#991b1b', soft: '#fef2f2', deep: '#7f1d1d' },
+    { name: '湖畔雾霭', cat: 'morning', accent: '#4b5563', soft: '#f3f4f6', deep: '#374151' },
+    { name: '橄榄古树', cat: 'nature', accent: '#3f6212', soft: '#f7fee7', deep: '#365314' },
+    { name: '塞纳浅咖', cat: 'afternoon', accent: '#713f12', soft: '#fefce8', deep: '#422006' },
+    { name: '晚霞茜红', cat: 'sunset', accent: '#b91c1c', soft: '#fef2f2', deep: '#991b1b' },
+    { name: '旷野岩茶', cat: 'afternoon', accent: '#78350f', soft: '#fffbeb', deep: '#451a03' },
+    { name: '远山淡紫', cat: 'sunset', accent: '#6b21a8', soft: '#faf5ff', deep: '#581c87' },
+    { name: '春江水暖', cat: 'morning', accent: '#0f766e', soft: '#f0fdfa', deep: '#115e59' },
+    { name: '焦糖拿铁', cat: 'afternoon', accent: '#854d0e', soft: '#fefce8', deep: '#713f12' },
+    { name: '极光碧绿', cat: 'nature', accent: '#059669', soft: '#ecfdf5', deep: '#047857' },
+    { name: '火山玄武', cat: 'nature', accent: '#27272a', soft: '#f4f4f5', deep: '#18181b' },
+    { name: '夜航星河', cat: 'sunset', accent: '#1e1b4b', soft: '#eef2ff', deep: '#0f172a' },
+    { name: '青石板巷', cat: 'morning', accent: '#334155', soft: '#f8fafc', deep: '#1e293b' },
+    { name: '蜜桃苏打', cat: 'afternoon', accent: '#db2777', soft: '#fdf2f8', deep: '#be185d' },
+    { name: '南法薰衣', cat: 'afternoon', accent: '#6d28d9', soft: '#f5f3ff', deep: '#5b21b6' },
+    { name: '挪威森林', cat: 'nature', accent: '#14532d', soft: '#f0fdf4', deep: '#052e16' },
+    { name: '冰岛黑沙', cat: 'nature', accent: '#18181b', soft: '#f4f4f5', deep: '#09090b' },
+    { name: '京都秋枫', cat: 'sunset', accent: '#991b1b', soft: '#fef2f2', deep: '#7f1d1d' },
+    { name: '托斯卡纳', cat: 'afternoon', accent: '#a16207', soft: '#fef9c3', deep: '#713f12' },
+    { name: '加州阳光', cat: 'afternoon', accent: '#d97706', soft: '#fef3c7', deep: '#b45309' },
+    { name: '阿勒泰雪', cat: 'morning', accent: '#0284c7', soft: '#e0f2fe', deep: '#0369a1' },
+    { name: '大理苍山', cat: 'morning', accent: '#334155', soft: '#f1f5f9', deep: '#1e293b' },
+    { name: '洱海微波', cat: 'morning', accent: '#0e7490', soft: '#ecfeff', deep: '#155e75' },
+    { name: '莫兰迪豆青', cat: 'nature', accent: '#47624f', soft: '#f2f7f3', deep: '#314437' },
+    { name: '莫兰迪灰粉', cat: 'afternoon', accent: '#9b6b78', soft: '#faf3f5', deep: '#6f4a54' },
+    { name: '敦煌壁画红', cat: 'sunset', accent: '#a63d40', soft: '#fbf0f0', deep: '#792a2c' },
+    { name: '西塘烟雨', cat: 'morning', accent: '#5c6b73', soft: '#f3f6f7', deep: '#3d484e' },
+    { name: '桂林青峰', cat: 'nature', accent: '#2d6a4f', soft: '#edf7f1', deep: '#1b4332' },
+    { name: '香格里拉草甸', cat: 'nature', accent: '#588157', soft: '#f3f7f2', deep: '#3a5a40' },
+    { name: '塞伦盖蒂', cat: 'afternoon', accent: '#bc6c25', soft: '#fdf6ee', deep: '#dda15e' },
+    { name: '北极光幽紫', cat: 'sunset', accent: '#4a0e4e', soft: '#f6ecf7', deep: '#310934' },
+    { name: '清晨薄荷', cat: 'morning', accent: '#10b981', soft: '#ecfdf5', deep: '#047857' },
+    { name: '乌镇夜泊', cat: 'sunset', accent: '#1f2937', soft: '#f3f4f6', deep: '#111827' },
+    { name: '波尔多干红', cat: 'sunset', accent: '#701a75', soft: '#fdf4ff', deep: '#4a044e' },
+    { name: '普吉岛果绿', cat: 'nature', accent: '#16a34a', soft: '#f0fdf4', deep: '#15803d' },
+    { name: '济州岛柑橘', cat: 'afternoon', accent: '#ea580c', soft: '#fff7ed', deep: '#c2410c' },
+    { name: '布拉格红顶', cat: 'sunset', accent: '#b91c1c', soft: '#fef2f2', deep: '#991b1b' },
+    { name: '西西里柠檬', cat: 'afternoon', accent: '#ca8a04', soft: '#fefce8', deep: '#a16207' },
+    { name: '圣托里尼白蓝', cat: 'morning', accent: '#2563eb', soft: '#eff6ff', deep: '#1d4ed8' },
+    { name: '卡帕多奇亚', cat: 'morning', accent: '#c2410c', soft: '#fff7ed', deep: '#9a3412' },
+    { name: '长白山天池', cat: 'morning', accent: '#0369a1', soft: '#f0f9ff', deep: '#075985' },
+    { name: '武夷山岩韵', cat: 'nature', accent: '#5c4d3c', soft: '#f8f6f3', deep: '#3d3327' },
+    { name: '景德镇天青', cat: 'morning', accent: '#437f97', soft: '#eef6f9', deep: '#2d5565' },
+    { name: '安吉竹海', cat: 'nature', accent: '#2d6a4f', soft: '#eff7f2', deep: '#1b4332' },
+    { name: '故宫琉璃黄', cat: 'afternoon', accent: '#d97706', soft: '#fffbeb', deep: '#b45309' }
+  ];
+
+  const editor = document.getElementById('editor');
+  const preview = document.getElementById('previewContent');
+  const articleTitle = document.getElementById('articleTitle');
+  const articleTitleEditor = document.getElementById('articleTitleEditor');
+  const previewTitle = document.getElementById('previewTitle');
+  const saveStatus = document.getElementById('saveStatus');
+  const charCount = document.getElementById('charCount');
+  const readTime = document.getElementById('readTime');
+  const activeThemeBadge = document.getElementById('activeThemeBadge');
+  const toast = document.getElementById('toast');
+  const toastMsg = document.getElementById('toastMsg');
+  const copyBtn = document.getElementById('copyBtn');
+  const iphoneShell = document.getElementById('iphoneShell');
+  const imgWidthRange = document.getElementById('imgWidthRange');
+  const imgWidthValue = document.getElementById('imgWidthValue');
+  const imgSelectedHint = document.getElementById('imgSelectedHint');
+  const wechatCompatibilityStatus = document.getElementById('wechatCompatibilityStatus');
+  const wechatCompatibilityDetail = document.getElementById('wechatCompatibilityDetail');
+
+  let currentSelectedImg = null;
+
+  function triggerToast(text) {
+    toastMsg.textContent = text;
+    toast.classList.remove('hidden');
+    toast.classList.add('toast-enter');
+    clearTimeout(window.toastTimer);
+    window.toastTimer = setTimeout(() => toast.classList.add('hidden'), 2200);
+  }
+
+  // 1. 同步与实时存储
+  function getPreviewHtml() {
+    const previewClone = editor.cloneNode(true);
+    previewClone.removeAttribute('contenteditable');
+    previewClone.removeAttribute('id');
+    previewClone.querySelectorAll('.img-resize-handle').forEach(handle => handle.remove());
+    previewClone.querySelectorAll('.img-selected').forEach(el => el.classList.remove('img-selected'));
+    return previewClone.innerHTML;
+  }
+
+  function normalizeLegacyOpening() {
+    const topLevelNodes = [...editor.children];
+    topLevelNodes.forEach(node => {
+      const text = node.textContent.replace(/\s+/g, ' ').trim();
+      if (node.querySelector('h1')) node.remove();
+      if (/^(Aurora|作者|Author).*(\d{4}年|原创撰文)|^(\d{4}年.*原创撰文)/.test(text)) node.remove();
+      if (/^避开人潮的四张春日散步地图与交通实用攻略$/.test(text)) node.remove();
+      if (node.classList.contains('w-12') && node.classList.contains('h-px')) node.remove();
+    });
+  }
+
+  // Templates start without an image. Remove the legacy placeholder from drafts
+  // saved by older versions, while keeping user-uploaded images untouched.
+  function removeDefaultTemplateImages() {
+    editor.querySelectorAll('img').forEach(img => {
+      const src = img.getAttribute('src') || '';
+      if (!/(^|\/)aurora-cover\.png(?:[?#]|$)/i.test(src)) return;
+      const wrapper = img.closest('figure');
+      if (wrapper && wrapper.querySelectorAll('img').length === 1) wrapper.remove();
+      else img.remove();
+    });
+  }
+
+  function removeTemplateEyebrows() {
+    editor.querySelectorAll('.theme-eyebrow').forEach(eyebrow => {
+      const wrapper = eyebrow.closest('.article-node');
+      if (wrapper) wrapper.remove();
+      else eyebrow.remove();
+    });
+  }
+
+  function sync() {
+    // Keep the in-app preview on the same conservative HTML path used by the
+    // WeChat API. This makes the preview an honest representation of the draft.
+    const content = generateWechatRichHtml();
+    const title = articleTitle.value.trim() || '未命名文章';
+    if (articleTitleEditor && articleTitleEditor.value !== articleTitle.value) articleTitleEditor.value = articleTitle.value;
+
+    const compatibilityIssues = [
+      [/<style\b/i, '发现样式块'],
+      [/\bclass=/i, '发现 class 样式'],
+      [/background-image\s*:/i, '发现背景图样式'],
+      [/filter\s*:/i, '发现滤镜样式'],
+      [/transform\s*:/i, '发现变换样式'],
+      [/display\s*:\s*(?:flex|grid)/i, '发现高级布局'],
+      [/\bgap\s*:/i, '发现 gap 间距']
+    ].filter(([pattern]) => pattern.test(content)).map(([, label]) => label);
+    if (wechatCompatibilityStatus && wechatCompatibilityDetail) {
+      const clean = compatibilityIssues.length === 0;
+      wechatCompatibilityStatus.className = `mt-2 px-2 py-1.5 rounded border flex items-center justify-between text-[10px] ${clean ? 'bg-emerald-50 border-emerald-100' : 'bg-amber-50 border-amber-100'}`;
+      wechatCompatibilityDetail.className = clean ? 'text-emerald-600' : 'text-amber-700';
+      wechatCompatibilityDetail.textContent = clean ? '已使用内联样式' : compatibilityIssues.join('、');
+    }
+
+    preview.innerHTML = content;
+    previewTitle.textContent = title.length > 14 ? title.substring(0, 14) + '...' : title;
+
+    const count = editor.innerText.replace(/\s+/g, '').length;
+    charCount.textContent = count;
+    const minutes = Math.max(1, Math.ceil(count / 380));
+    readTime.textContent = `${minutes} 分钟`;
+    const phoneReadTime = document.getElementById('miniPhoneReadTime');
+    if (phoneReadTime) phoneReadTime.textContent = `约 ${minutes} 分钟`;
+
+    saveStatus.textContent = '本地保存中...';
+    clearTimeout(window.saveTimer);
+    window.saveTimer = setTimeout(() => {
+      try {
+        localStorage.setItem('gzh-draft', JSON.stringify({
+          title: articleTitle.value,
+          content: editor.innerHTML,
+          theme: document.body.getAttribute('data-theme') || 'magazine',
+          accent: getComputedStyle(document.documentElement).getPropertyValue('--accent')
+        }));
+      } catch (e) {}
+      saveStatus.textContent = '本地自动保存完成';
+    }, 350);
+  }
+
+  let historyState = null;
+  const undoHistory = [];
+  const redoHistory = [];
+
+  function readHistoryState() {
+    return {
+      title: articleTitle.value,
+      content: editor.innerHTML,
+      theme: document.body.getAttribute('data-theme') || 'magazine',
+      fontSize: typographyState.fontSize,
+      lineHeight: typographyState.lineHeight,
+      accent: document.documentElement.style.getPropertyValue('--accent').trim(),
+      accentSoft: document.documentElement.style.getPropertyValue('--accent-soft').trim(),
+      accentDeep: document.documentElement.style.getPropertyValue('--accent-deep').trim()
+    };
+  }
+
+  function sameHistoryState(a, b) {
+    return Boolean(a && b && JSON.stringify(a) === JSON.stringify(b));
+  }
+
+  function commitHistoryState() {
+    const current = readHistoryState();
+    if (!historyState) {
+      historyState = current;
+      return;
+    }
+    if (sameHistoryState(historyState, current)) return;
+    undoHistory.push(historyState);
+    if (undoHistory.length > 40) undoHistory.shift();
+    historyState = current;
+    redoHistory.length = 0;
+  }
+
+  function restoreHistoryState(state) {
+    if (!state) return;
+    articleTitle.value = state.title;
+    document.body.setAttribute('data-theme', state.theme || 'magazine');
+    typographyState.fontSize = state.fontSize || 16;
+    typographyState.lineHeight = state.lineHeight || 1.88;
+    if (state.accent) document.documentElement.style.setProperty('--accent', state.accent);
+    if (state.accentSoft) document.documentElement.style.setProperty('--accent-soft', state.accentSoft);
+    if (state.accentDeep) document.documentElement.style.setProperty('--accent-deep', state.accentDeep);
+    editor.innerHTML = state.content;
+    updateTypographyControls();
+    materializeEditor();
+    bindImageSelection();
+    sync();
+  }
+
+  editor.addEventListener('input', () => { commitHistoryState(); sync(); });
+  articleTitle.addEventListener('input', () => { commitHistoryState(); sync(); });
+  articleTitleEditor?.addEventListener('input', () => {
+    articleTitle.value = articleTitleEditor.value;
+    commitHistoryState();
+    sync();
+  });
+
+  document.getElementById('undoBtn').addEventListener('click', () => {
+    if (!undoHistory.length) return;
+    const current = readHistoryState();
+    redoHistory.push(current);
+    historyState = undoHistory.pop();
+    restoreHistoryState(historyState);
+    triggerToast('已撤销上一步操作');
+  });
+
+  document.getElementById('redoBtn').addEventListener('click', () => {
+    if (!redoHistory.length) return;
+    const current = readHistoryState();
+    undoHistory.push(current);
+    historyState = redoHistory.pop();
+    restoreHistoryState(historyState);
+    triggerToast('已重做上一步操作');
+  });
+
+  // 2. 标签页切换
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+
+  function switchToTab(panelId) {
+    tabPanels.forEach(panel => panel.id === panelId ? panel.classList.remove('hidden') : panel.classList.add('hidden'));
+    tabBtns.forEach(btn => {
+      if (btn.getAttribute('data-tab') === panelId) {
+        btn.className = 'tab-btn flex-1 text-xs py-2 text-brand font-semibold border-b-2 border-brand transition text-center';
+      } else {
+        btn.className = 'tab-btn flex-1 text-xs py-2 text-ink-500 hover:text-ink-900 transition text-center';
+      }
+    });
+  }
+
+  tabBtns.forEach(btn => btn.addEventListener('click', () => switchToTab(btn.getAttribute('data-tab'))));
+
+  // 补充旅行模板：保留原有 13 套模板规模
+  const extraTemplateList = [
+    {theme:'nature',name:'05 山野自然',color:'森林苔绿',accent:'#647b54',soft:'#eef2e8',deep:'#405235',desc:'徒步、森林与露营记录'},
+    {theme:'olive',name:'06 橄榄手记',color:'橄榄灰绿',accent:'#6c735e',soft:'#f1f0e8',deep:'#4c513f',desc:'慢生活与旅行随笔'},
+    {theme:'wood',name:'07 木质美学',color:'木色暖棕',accent:'#849d52',soft:'#f5f6ee',deep:'#5a6b37',desc:'民宿、气味与生活方式'},
+    {theme:'journal',name:'08 紫色手账',color:'紫藤旅笺',accent:'#7953a6',soft:'#f1edf6',deep:'#533579',desc:'书影音与人文旅行记录'}
+  ];
+  // The exported Stitch markup names this panel `panel-templates`; keep a host fallback
+  // so the additional templates are actually rendered in the live UI.
+  const templateListHost = document.getElementById('templateList') || document.getElementById('panel-templates');
+  if (templateListHost) {
+    templateListHost.insertAdjacentHTML('beforeend', extraTemplateList.map(t => `
+      <div class="template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center" data-theme="${t.theme}" data-name="${t.name}" data-color-name="${t.color}" data-accent="${t.accent}" data-accent-soft="${t.soft}" data-accent-deep="${t.deep}">
+        <div class="w-[54px] h-[72px] bg-white rounded border border-ink-200 shadow-2xs shrink-0 overflow-hidden p-1.5 flex flex-col justify-between">
+          <div><div class="w-full h-1 rounded mb-2" style="background:${t.accent}"></div><div class="w-full h-0.5 bg-ink-300 mb-1"></div><div class="space-y-0.5"><div class="w-full h-0.5 bg-ink-200"></div><div class="w-4/5 h-0.5 bg-ink-200"></div></div></div><div class="w-3/4 h-2 rounded-sm" style="background:${t.soft};border-left:2px solid ${t.accent}"></div>
+        </div>
+        <div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-1.5"><span class="font-serif text-[15px] font-bold text-ink-900 tracking-tight truncate">${t.name}</span><span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span></div><div class="text-[11px] text-ink-600 font-sans truncate">${t.desc} · ${t.color}</div></div>
+      </div>`).join(''));
+  }  // 3. 模板套用
+  const currentSpecimenName = document.getElementById('currentSpecimenName');
+  const currentSpecimenColor = document.getElementById('currentSpecimenColor');
+  const miniPhoneTheme = document.getElementById('miniPhoneTheme');
+  const miniPhoneColor = document.getElementById('miniPhoneColor');
+  const accentDot = document.getElementById('accentDot');
+
+  function applyThemeColorsToEditor(accent, soft) {
+    editor.querySelectorAll('.theme-eyebrow').forEach(el => { el.style.color = accent; el.style.borderColor = accent; });
+    editor.querySelectorAll('.theme-accent-text').forEach(el => { el.style.color = accent; });
+    editor.querySelectorAll('.theme-tip-card').forEach(el => {
+      el.style.borderLeftColor = accent;
+      const dot = el.querySelector('span:first-child');
+      if (dot) { dot.style.backgroundColor = soft; dot.style.color = accent; }
+      const title = el.querySelector('span:last-child');
+      if (title) title.style.color = accent;
+    });
+    editor.querySelectorAll('.theme-route-card').forEach(el => {
+      el.style.borderColor = accent + '33';
+      const icon = el.querySelector('svg');
+      if (icon) icon.style.color = accent;
+      const tag = el.querySelector('span:last-child');
+      if (tag) { tag.style.backgroundColor = soft; tag.style.color = accent; }
+    });
+  }
+
+  // 4. 配色网格渲染
+  const paletteGrid = document.getElementById('paletteGrid');
+  const paletteSearch = document.getElementById('paletteSearch');
+
+  function markSelectedPalette(accent) {
+    const selectedAccent = String(accent || '').trim().toLowerCase();
+    document.querySelectorAll('.palette-card').forEach(card => {
+      const selected = (card.dataset.accent || '').toLowerCase() === selectedAccent;
+      card.classList.toggle('border-brand', selected);
+      card.classList.toggle('border-2', selected);
+      card.classList.toggle('shadow-subtle-purple', selected);
+      card.classList.toggle('border-ink-200', !selected);
+      const check = card.querySelector('[data-palette-check]');
+      if (check) check.classList.toggle('hidden', !selected);
+    });
+  }
+
+  function renderPalettes(items) {
+    paletteGrid.innerHTML = '';
+    items.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'palette-card relative p-2.5 rounded-lg bg-white border border-ink-200 cursor-pointer shadow-2xs hover:border-brand transition';
+      card.dataset.accent = p.accent;
+      card.innerHTML = `
+        <span class="hidden absolute top-1.5 right-1.5 z-20 w-4 h-4 rounded-full bg-brand text-white items-center justify-center text-[10px] font-bold" data-palette-check aria-label="已选中">✓</span>
+        <div class="grid grid-cols-4 gap-1.5 mb-2" aria-label="${p.name}配色方案">
+          <span class="h-1.5 rounded-md border border-black/5 shadow-inner" title="主色 ${p.accent}" style="background-color:${p.accent};"></span>
+          <span class="h-1.5 rounded-md border border-black/5 shadow-inner" title="深色 ${p.deep}" style="background-color:${p.deep};"></span>
+          <span class="h-1.5 rounded-md border border-black/5 shadow-inner" title="浅色 ${p.soft}" style="background-color:${p.soft};"></span>
+          <span class="h-1.5 rounded-md border border-ink-200 shadow-inner" title="留白底色 #FFFFFF" style="background-color:#FFFFFF;"></span>
+        </div>
+        <div class="flex items-center justify-between gap-1">
+          <span class="text-[11px] font-semibold text-ink-900 truncate">${p.name}</span>
+          <span class="text-[9px] font-mono text-ink-400 uppercase shrink-0">${p.accent}</span>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        document.documentElement.style.setProperty('--accent', p.accent);
+        document.documentElement.style.setProperty('--accent-soft', p.soft);
+        document.documentElement.style.setProperty('--accent-deep', p.deep);
+        if (currentSpecimenColor) currentSpecimenColor.textContent = p.name;
+        if (miniPhoneColor) miniPhoneColor.textContent = p.name;
+        if (accentDot) accentDot.style.backgroundColor = p.accent;
+        markSelectedPalette(p.accent);
+        // Cards are re-created on every filter/search, so the full refresh must
+        // live here rather than in a listener bound once at startup.
+        materializeEditor();
+        bindImageSelection();
+        sync();
+        commitHistoryState();
+        triggerToast(`已换上「${p.name}」自然色阶`);
+      });
+      paletteGrid.appendChild(card);
+    });
+    markSelectedPalette(getComputedStyle(document.documentElement).getPropertyValue('--accent'));
+  }
+  renderPalettes(PALETTE_COLLECTION);
+
+  document.querySelectorAll('.palette-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.palette-filter').forEach(b => b.className = 'palette-filter px-2 py-0.5 bg-ink-100 text-ink-600 hover:text-ink-900 rounded');
+      btn.className = 'palette-filter px-2 py-0.5 bg-brand text-white rounded font-medium';
+      const cat = btn.getAttribute('data-cat');
+      renderPalettes(cat === 'all' ? PALETTE_COLLECTION : PALETTE_COLLECTION.filter(p => p.cat === cat || p.cat === 'all'));
+    });
+  });
+
+  paletteSearch.addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    renderPalettes(PALETTE_COLLECTION.filter(p => p.name.includes(q) || p.accent.toLowerCase().includes(q)));
+  });
+
+  // 纸张质感切换
+  document.getElementById('togglePaperTexture').addEventListener('click', () => {
+    editor.classList.toggle('paper-texture');
+    preview.classList.toggle('paper-texture');
+    triggerToast(editor.classList.contains('paper-texture') ? '已开启棉纸颗粒质感' : '已恢复纯白画布');
+  });
+
+  // 5. 插入旅行组件
+  function insertWidget(type) {
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#9e794f';
+    const soft = getComputedStyle(document.documentElement).getPropertyValue('--accent-soft') || '#fbf7f1';
+    let html = '';
+
+    if (type === 'tip') {
+      html = `
+        <div class="article-node my-6" data-template-role="widget" data-widget-type="tip">
+          <div class="theme-tip-card p-4 rounded-lg bg-white border-l-4 border-t border-r border-b border-ink-200/70 shadow-2xs" style="border-left-color: ${accent};">
+            <div class="flex items-center space-x-2 mb-1.5">
+              <span class="w-4 h-4 rounded-full flex items-center justify-center font-bold text-[10px]" style="background-color: ${soft}; color: ${accent};">!</span>
+              <span class="text-xs font-semibold" style="color: ${accent};">旅行避坑贴士</span>
+            </div>
+            <p class="text-xs text-ink-700 leading-relaxed font-sans">点击此处编辑出行提示、开放时间、门票预约通道或天气穿衣建议。</p>
+          </div>
+        </div>
+      `;
+    } else if (type === 'route') {
+      html = `
+        <div class="article-node my-6" data-template-role="widget" data-widget-type="route">
+          <div class="theme-route-card p-4 rounded-lg bg-white border shadow-2xs" style="border-color: ${accent}40;">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" style="color: ${accent};" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                <span class="text-xs font-serif font-bold text-ink-900">推荐徒步路线</span>
+                <span class="text-[11px] text-ink-500">· 预估 2 小时</span>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-medium" style="background-color: ${soft}; color: ${accent};">适中强度</span>
+            </div>
+            <p class="text-xs text-ink-600 leading-relaxed font-serif">起始站A → 沿途咖啡馆小憩 → 观景台机位 → 终点公园落日。</p>
+          </div>
+        </div>
+      `;
+    } else if (type === 'caption') {
+      html = `
+        <div class="article-node my-4 text-center" data-template-role="widget" data-widget-type="caption">
+          <div class="inline-block px-3 py-1 bg-ink-50 border border-ink-200/60 rounded text-[11px] text-ink-600 font-mono">
+            <span>📷 35mm f/2.0 · 1/500s · ISO 100 · 晨光顺光拍摄</span>
+          </div>
+        </div>
+      `;
+    } else if (type === 'lodging') {
+      html = `
+        <div class="article-node my-6" data-template-role="widget" data-widget-type="lodging">
+          <div class="p-3.5 bg-ink-50/70 border border-ink-200 rounded-lg flex items-start space-x-3">
+            <div class="w-8 h-8 rounded bg-white shadow-2xs flex items-center justify-center text-sm">☕</div>
+            <div class="flex-1 text-xs">
+              <div class="font-bold text-ink-900 mb-0.5">湖畔独立咖啡生活馆</div>
+              <div class="text-[11px] text-ink-500 leading-normal">营业时间：10:00 - 18:30 · 人均 ¥45 · 推荐手冲瑰夏与肉桂卷</div>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (type === 'quote') {
+      html = `
+        <div class="article-node my-6 text-center px-8" data-template-role="widget" data-widget-type="quote">
+          <p class="font-serif italic text-[15px] text-ink-700 leading-loose">“山风拂过树梢时，我们才真正抵达了春天。”</p>
+          <div class="w-8 h-0.5 mx-auto mt-2" style="background-color: ${accent};"></div>
+        </div>
+      `;
+    }
+
+    if (!html && ['list', 'divider', 'table'].includes(type)) {
+      // Content is seeded by the template renderer on materialize.
+      html = `<div class="article-node" data-template-role="widget" data-widget-type="${type}"><p>${type}</p></div>`;
+    }
+    insertHtmlAtCursorOrEnd(html);
+    materializeEditor();
+    sync();
+    commitHistoryState();
+    bindImageSelection();
+    triggerToast('已成功插入排版组件');
+  }
+
+  window.adjustTableRows = function adjustTableRows(delta) {
+    const anchor = savedEditorRange?.startContainer;
+    const anchorElement = anchor && (anchor.nodeType === Node.ELEMENT_NODE ? anchor : anchor.parentElement);
+    const table = anchorElement?.closest?.('#editor table') || [...editor.querySelectorAll('table')].pop();
+    if (!table) {
+      triggerToast('请先插入表格');
+      return;
+    }
+    const rows = table.querySelectorAll('tr');
+    if (delta > 0) {
+      const row = rows[rows.length - 1].cloneNode(true);
+      row.querySelectorAll('td,th').forEach(cell => { cell.innerHTML = '<br>'; });
+      rows[rows.length - 1].after(row);
+    } else if (rows.length > 2) {
+      rows[rows.length - 1].remove();
+    } else {
+      triggerToast('表格至少保留表头和一行');
+      return;
+    }
+    sync();
+    commitHistoryState();
+  }
+
+  function insertHtmlAtCursorOrEnd(html) {
+    editor.focus();
+    const sel = window.getSelection();
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    const nodes = [...tempDiv.childNodes];
+    let block = null;
+    if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
+      let candidate = sel.anchorNode.nodeType === Node.ELEMENT_NODE ? sel.anchorNode : sel.anchorNode.parentElement;
+      block = candidate?.closest('p,h1,h2,h3,blockquote,figure,ul,ol,section,.article-node,[data-template-role]');
+      while (block && block.parentElement !== editor) block = block.parentElement;
+    }
+    if (block) {
+      nodes.forEach(node => block.after(node));
+    } else {
+      nodes.forEach(node => editor.appendChild(node));
+    }
+  }
+
+  // 6. 图片 Inspector 与操作
+  const imgUploadInput = document.getElementById('imgUploadInput');
+
+  imgUploadInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    // Reset so choosing the same file again still fires `change`.
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const newImgHtml = `
+        <figure class="editable-img-wrap my-6 max-w-full" data-width="100%" data-align="center" data-frame="none">
+          <img src="${ev.target.result}" alt="用户上传照片" class="w-full h-auto rounded object-cover shadow-xs" />
+        </figure>
+      `;
+      insertHtmlAtCursorOrEnd(newImgHtml);
+      sync();
+      commitHistoryState();
+      bindImageSelection();
+      triggerToast('图片已上传并插入文章！');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function bindImageSelection() {
+    editor.querySelectorAll('.editable-img-wrap').forEach(wrap => {
+      if (!wrap.querySelector('.img-resize-handle')) {
+        const handle = document.createElement('span');
+        handle.className = 'img-resize-handle';
+        handle.setAttribute('aria-label', '拖动调整图片大小');
+        wrap.appendChild(handle);
+        handle.addEventListener('pointerdown', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          const editorRect = editor.getBoundingClientRect();
+          const startRect = wrap.getBoundingClientRect();
+          const startWidth = startRect.width;
+          const startX = e.clientX;
+          const move = ev => {
+            const maxWidth = editorRect.width - 24;
+            const next = Math.max(20, Math.min(100, ((startWidth + ev.clientX - startX) / maxWidth) * 100));
+            setImageWidth(next);
+          };
+          const stop = () => {
+            document.removeEventListener('pointermove', move);
+            document.removeEventListener('pointerup', stop);
+            sync();
+            commitHistoryState();
+          };
+          document.addEventListener('pointermove', move);
+          document.addEventListener('pointerup', stop, { once: true });
+        });
+      }
+      wrap.onclick = e => {
+        e.stopPropagation();
+        editor.querySelectorAll('.editable-img-wrap').forEach(w => w.classList.remove('img-selected'));
+        wrap.classList.add('img-selected');
+        currentSelectedImg = wrap;
+        imgSelectedHint.textContent = '已选择 1 张图片';
+        const width = parseFloat(wrap.getAttribute('data-width')) || 100;
+        imgWidthRange.value = width;
+        imgWidthValue.textContent = `${Math.round(width)}%`;
+        switchToTab('panel-images');
+      };
+    });
+  }
+  bindImageSelection();
+
+  function setImageWidth(value) {
+    if (!currentSelectedImg) return;
+    const width = Math.max(20, Math.min(100, Number(value)));
+    currentSelectedImg.style.width = `${width}%`;
+    currentSelectedImg.setAttribute('data-width', `${width}%`);
+    imgWidthRange.value = width;
+    imgWidthValue.textContent = `${Math.round(width)}%`;
+  }
+
+  imgWidthRange.addEventListener('input', e => {
+    if (!currentSelectedImg) {
+      triggerToast('请先在文章中点击选中一张图片');
+      return;
+    }
+    setImageWidth(e.target.value);
+    sync();
+  });
+  imgWidthRange.addEventListener('change', () => { if (currentSelectedImg) commitHistoryState(); });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#editor') && !e.target.closest('#panel-images')) {
+      if (currentSelectedImg) {
+        currentSelectedImg.classList.remove('img-selected');
+        currentSelectedImg = null;
+        imgSelectedHint.textContent = '未选中图片';
+      }
+    }
+  });
+
+  document.querySelectorAll('.img-opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!currentSelectedImg) {
+        triggerToast('请先在文章中点击选中一张图片');
+        return;
+      }
+      const styleType = btn.getAttribute('data-style');
+      const val = btn.getAttribute('data-val');
+      const img = currentSelectedImg.querySelector('img');
+
+      if (styleType === 'width') {
+        setImageWidth(parseFloat(val));
+      } else if (styleType === 'align') {
+        currentSelectedImg.setAttribute('data-align', val);
+        if (val === 'left') {
+          currentSelectedImg.style.marginLeft = '0';
+          currentSelectedImg.style.marginRight = 'auto';
+        } else if (val === 'center') {
+          currentSelectedImg.style.marginLeft = 'auto';
+          currentSelectedImg.style.marginRight = 'auto';
+        } else if (val === 'right') {
+          currentSelectedImg.style.marginLeft = 'auto';
+          currentSelectedImg.style.marginRight = '0';
+        }
+      } else if (styleType === 'frame' && img) {
+        currentSelectedImg.setAttribute('data-frame', val);
+        if (val === 'none') {
+          img.className = 'w-full h-auto rounded object-cover shadow-xs';
+          currentSelectedImg.style.padding = '0';
+          currentSelectedImg.style.background = 'transparent';
+        } else if (val === 'polaroid') {
+          img.className = 'w-full h-auto object-cover';
+          currentSelectedImg.style.padding = '10px 10px 24px 10px';
+          currentSelectedImg.style.background = '#ffffff';
+          currentSelectedImg.style.boxShadow = '0 6px 20px rgba(0,0,0,0.12)';
+        } else if (val === 'shadow') {
+          img.className = 'w-full h-auto rounded-lg object-cover shadow-2xl';
+          currentSelectedImg.style.padding = '0';
+        } else if (val === 'rounded') {
+          img.className = 'w-full h-auto rounded-2xl object-cover';
+          currentSelectedImg.style.padding = '0';
+        }
+      }
+      sync();
+      commitHistoryState();
+      triggerToast('已更新图片视觉版式');
+    });
+  });
+
+  document.getElementById('removeImgBtn').addEventListener('click', () => {
+    if (currentSelectedImg) {
+      currentSelectedImg.remove();
+      currentSelectedImg = null;
+      imgSelectedHint.textContent = '未选中图片';
+      sync();
+      commitHistoryState();
+      triggerToast('图片已从文章中删除');
+    }
+  });
+
+  document.getElementById('addImgCaptionBtn').addEventListener('click', () => {
+    if (currentSelectedImg) {
+      let cap = currentSelectedImg.querySelector('figcaption');
+      if (!cap) {
+        cap = document.createElement('figcaption');
+        cap.className = 'text-center text-xs text-ink-500 mt-2 font-serif italic';
+        cap.textContent = '点击输入摄影图注说明...';
+        currentSelectedImg.appendChild(cap);
+      }
+      cap.focus();
+      sync();
+    }
+  });
+
+  // 7. 富文本命令执行
+  let savedEditorRange = null;
+  const typographyState = { fontSize: 16, lineHeight: 1.88 };
+
+  function clampTypographyValue(value, min, max, fallback) {
+    const parsed = Number.parseFloat(value);
+    if (!Number.isFinite(parsed)) return fallback;
+    return Math.min(max, Math.max(min, parsed));
+  }
+
+  function updateTypographyControls() {
+    const size = typographyState.fontSize;
+    const lineHeight = typographyState.lineHeight;
+    document.documentElement.style.setProperty('--article-font-size', `${size}px`);
+    document.documentElement.style.setProperty('--article-line-height', String(lineHeight));
+    document.documentElement.style.setProperty('--font-size', `${size}px`);
+    document.documentElement.style.setProperty('--line-height', String(lineHeight));
+    const sizeLabel = `${size}px`;
+    ['fontSizeVal', 'currentSpecimenSize'].forEach(id => {
+      const element = document.getElementById(id);
+      if (element) element.textContent = sizeLabel;
+    });
+    ['fontSizeRange', 'fontSizeNumber', 'fontSizeCustom'].forEach(id => {
+      const element = document.getElementById(id);
+      if (element) element.value = String(size);
+    });
+    const select = document.getElementById('fontSizeSelect');
+    if (select) {
+      const matchingOption = [...select.options].some(option => option.value === sizeLabel);
+      select.value = matchingOption ? sizeLabel : '16px';
+    }
+    const lineHeightRange = document.getElementById('lineHeightRange');
+    const lineHeightLabel = document.getElementById('lineHeightVal');
+    if (lineHeightRange) lineHeightRange.value = String(lineHeight);
+    if (lineHeightLabel) lineHeightLabel.textContent = String(lineHeight);
+  }
+
+  function showSelectedFontSize(size) {
+    const label = `${size}px`;
+    const select = document.getElementById('fontSizeSelect');
+    if (select) {
+      select.value = [...select.options].some(option => option.value === label) ? label : '16px';
+    }
+    const custom = document.getElementById('fontSizeCustom');
+    if (custom) custom.value = String(size);
+    const specimen = document.getElementById('currentSpecimenSize');
+    if (specimen) specimen.textContent = label;
+  }
+
+  function refreshTypographySurface() {
+    materializeEditor();
+    bindImageSelection();
+    sync();
+    commitHistoryState();
+  }
+
+  function setArticleFontSize(value) {
+    typographyState.fontSize = clampTypographyValue(value, 12, 30, 16);
+    updateTypographyControls();
+    refreshTypographySurface();
+  }
+
+  function setArticleLineHeight(value) {
+    typographyState.lineHeight = clampTypographyValue(value, 1.5, 2.4, 1.88);
+    typographyState.lineHeight = Math.round(typographyState.lineHeight * 100) / 100;
+    refreshTypographySurface();
+  }
+
+  window.resetTypography = function resetTypography() {
+    typographyState.fontSize = 16;
+    typographyState.lineHeight = 1.88;
+    updateTypographyControls();
+    refreshTypographySurface();
+    triggerToast('已恢复 16px 标准正文与默认行距');
+  };
+
+  function captureEditorSelection() {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    if (editor.contains(range.commonAncestorContainer)) savedEditorRange = range.cloneRange();
+  }
+
+  function restoreEditorSelection() {
+    if (!savedEditorRange) return false;
+    editor.focus();
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(savedEditorRange);
+    return true;
+  }
+
+  function normalizeFontTags() {
+    editor.querySelectorAll('font[face]').forEach(font => {
+      const span = document.createElement('span');
+      span.style.fontFamily = font.getAttribute('face');
+      while (font.firstChild) span.appendChild(font.firstChild);
+      font.replaceWith(span);
+    });
+    normalizeInlineFontSizes(editor);
+    editor.querySelectorAll('font[size]').forEach(font => {
+      const span = document.createElement('span');
+      const sizeMap = { '1':'12px', '2':'13px', '3':'16px', '4':'18px', '5':'24px', '6':'26px', '7':'16px' };
+      span.style.fontSize = `${clampTypographyValue(sizeMap[font.getAttribute('size')] || '16px', 12, 30, 16)}px`;
+      while (font.firstChild) span.appendChild(font.firstChild);
+      font.replaceWith(span);
+    });
+  }
+
+  function normalizeInlineFontSize(value) {
+    const keywordSizes = {
+      'xx-small': 12,
+      'x-small': 13,
+      'small': 14,
+      'medium': 16,
+      'large': 18,
+      'x-large': 22,
+      'xx-large': 26,
+      /* 浏览器会把旧版 execCommand 的 size=7 序列化成 xxx-large；它不是用户的真实字号。 */
+      'xxx-large': 16
+    };
+    const raw = String(value || '').trim().toLowerCase();
+    const numeric = Object.prototype.hasOwnProperty.call(keywordSizes, raw) ? keywordSizes[raw] : Number.parseFloat(raw);
+    return `${clampTypographyValue(numeric, 12, 30, 16)}px`;
+  }
+
+  function normalizeInlineFontSizes(root) {
+    if (!root) return;
+    if (root.style?.fontSize) root.style.fontSize = normalizeInlineFontSize(root.style.fontSize);
+    root.querySelectorAll('[style*="font-size"]').forEach(element => {
+      element.style.fontSize = normalizeInlineFontSize(element.style.fontSize);
+    });
+  }
+
+  function applyFontToSelection(stack) {
+    const hasSelection = restoreEditorSelection() && !window.getSelection().isCollapsed;
+    if (!hasSelection) {
+      // Whole-article font follows the template; an editor-level style would be
+      // overwritten on the next re-render and never reach the export.
+      triggerToast('请先选中要修改字体的文字');
+      return;
+    }
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('fontName', false, stack);
+    normalizeFontTags();
+    captureEditorSelection();
+    sync();
+  }
+
+  function applyFontSizeToSelection(size) {
+    const normalizedSize = clampTypographyValue(String(size).replace('px', ''), 12, 30, 16);
+    const hasSelection = restoreEditorSelection() && !window.getSelection().isCollapsed;
+    if (!hasSelection) {
+      setArticleFontSize(normalizedSize);
+      return;
+    }
+    // execCommand 在 CSS 模式下会生成浏览器私有的 xxx-large，无法可靠地
+    // 定位选区；字号操作使用标准 font[size]，随后立即转换为明确的 px。
+    document.execCommand('styleWithCSS', false, false);
+    document.execCommand('fontSize', false, '7');
+    editor.querySelectorAll('font[size="7"]').forEach(font => {
+      const span = document.createElement('span');
+      span.style.fontSize = `${normalizedSize}px`;
+      while (font.firstChild) span.appendChild(font.firstChild);
+      font.replaceWith(span);
+    });
+    normalizeFontTags();
+    showSelectedFontSize(normalizedSize);
+    captureEditorSelection();
+    sync();
+  }
+
+  editor.addEventListener('mouseup', captureEditorSelection);
+  editor.addEventListener('keyup', captureEditorSelection);
+  editor.addEventListener('selectstart', captureEditorSelection);
+  document.addEventListener('selectionchange', captureEditorSelection);
+  document.querySelectorAll('.cmd-btn, #formatBlockSelect, #fontSizeSelect, #fontSizeCustom, #fontFamilySelect, #alignSelect').forEach(control => {
+    control.addEventListener('mousedown', captureEditorSelection);
+  });
+
+  document.querySelectorAll('.cmd-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      restoreEditorSelection();
+      document.execCommand('styleWithCSS', false, true);
+      document.execCommand(btn.getAttribute('data-cmd'), false, null);
+      sync();
+    });
+  });
+
+  document.getElementById('formatBlockSelect').addEventListener('change', e => {
+    restoreEditorSelection();
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('formatBlock', false, e.target.value);
+    sync();
+  });
+
+  document.getElementById('alignSelect').addEventListener('change', e => {
+    restoreEditorSelection();
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand(e.target.value, false, null);
+    sync();
+  });
+
+  document.getElementById('fontSizeSelect').addEventListener('change', e => {
+    applyFontSizeToSelection(e.target.value);
+  });
+
+  document.getElementById('fontSizeCustom').addEventListener('change', e => {
+    applyFontSizeToSelection(e.target.value);
+  });
+  document.getElementById('fontSizeCustom').addEventListener('blur', e => {
+    applyFontSizeToSelection(e.target.value);
+  });
+  document.getElementById('fontSizeCustom').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    applyFontSizeToSelection(e.currentTarget.value);
+    e.currentTarget.blur();
+  });
+
+  document.getElementById('fontSizeRange').addEventListener('input', e => {
+    setArticleFontSize(e.target.value);
+  });
+
+  document.getElementById('fontSizeNumber').addEventListener('change', e => {
+    setArticleFontSize(e.target.value);
+  });
+  document.getElementById('fontSizeNumber').addEventListener('blur', e => {
+    setArticleFontSize(e.target.value);
+  });
+  document.getElementById('fontSizeNumber').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    setArticleFontSize(e.currentTarget.value);
+    e.currentTarget.blur();
+  });
+
+  document.getElementById('lineHeightRange').addEventListener('input', e => {
+    setArticleLineHeight(e.target.value);
+  });
+
+  document.getElementById('fontFamilySelect').addEventListener('change', e => {
+    // Literal stacks: var(...) values are stripped by sanitizeWechatStyle on export.
+    const fontStacks = {
+      default: "'PingFang SC','Microsoft YaHei',Arial,sans-serif",
+      sans: "'PingFang SC','Microsoft YaHei',Arial,sans-serif",
+      serif: "'Songti SC',STSong,SimSun,serif",
+      mono: "ui-monospace,Menlo,Monaco,Consolas,'Courier New',monospace"
+    };
+    applyFontToSelection(fontStacks[e.target.value] || fontStacks.default);
+  });
+
+  function safeWechatFont(fontFamily) {
+    const value = String(fontFamily || '').toLowerCase();
+    if (/songti|stsong|simsun|serif/.test(value)) return '"Songti SC",STSong,SimSun,serif';
+    if (/mono|menlo|monaco|consolas|courier/.test(value)) return 'ui-monospace,Menlo,Monaco,Consolas,"Courier New",monospace';
+    return '"PingFang SC","Microsoft YaHei",Arial,sans-serif';
+  }
+
+  // 8. Generate a conservative inline-style HTML payload for WeChat's editor.
+  function generateWechatRichHtml() {
+    const clone = editor.cloneNode(true);
+    // Keep the editor id while styles are computed. Template rules are scoped to
+    // #editor, so removing it before mounting makes the exported copy lose them.
+    clone.removeAttribute('contenteditable');
+    clone.querySelectorAll('.img-resize-handle').forEach(handle => handle.remove());
+    clone.querySelectorAll('.img-selected').forEach(el => el.classList.remove('img-selected'));
+
+    // Mount the clone briefly so getComputedStyle sees the active template rules.
+    // Computing styles on a detached clone silently falls back to browser defaults.
+    const staging = document.createElement('div');
+    staging.style.cssText = `position:absolute;left:-100000px;top:0;width:${editor.getBoundingClientRect().width}px;visibility:hidden;pointer-events:none;`;
+    staging.appendChild(clone);
+    document.body.appendChild(staging);
+
+    const computed = window.getComputedStyle(editor);
+    const defaultWechatFont = safeWechatFont(computed.fontFamily);
+    const bodyColor = computed.color || '#252238';
+    const themeSoft = computed.getPropertyValue('--soft').trim() || '#ffffff';
+
+    const props = [
+      'fontSize', 'fontWeight', 'fontStyle', 'fontFamily', 'lineHeight', 'color', 'textAlign',
+      'letterSpacing', 'textIndent', 'display', 'verticalAlign', 'margin', 'padding',
+      'backgroundColor', 'backgroundImage', 'backgroundSize', 'backgroundPosition',
+      'backgroundRepeat', 'border', 'borderTop', 'borderRight', 'borderBottom', 'borderLeft',
+      'borderRadius', 'boxShadow', 'textDecoration',
+      'listStyleType', 'listStylePosition', 'whiteSpace', 'overflowWrap', 'wordBreak'
+    ];
+
+    const styleText = (computedStyle, includeDisplay = true) => {
+      const hasBackgroundImage = computedStyle.backgroundImage && computedStyle.backgroundImage !== 'none';
+      return props
+      .filter(prop => (includeDisplay || prop !== 'display') && !(
+        hasBackgroundImage && ['backgroundImage', 'backgroundSize', 'backgroundPosition', 'backgroundRepeat'].includes(prop)
+      ))
+      .map(prop => {
+        const value = computedStyle[prop];
+        if (!value || value === 'none' || value === 'normal' || value === 'auto' || value === 'rgba(0, 0, 0, 0)') return '';
+        const safeValue = prop === 'fontFamily' ? safeWechatFont(value) : value;
+        return `${prop.replace(/[A-Z]/g, m => `-${m.toLowerCase()}`)}:${safeValue};`;
+      })
+      .filter(Boolean)
+      .join('') + (hasBackgroundImage && (!computedStyle.backgroundColor || computedStyle.backgroundColor === 'rgba(0, 0, 0, 0)')
+        ? `background-color:${themeSoft};`
+        : '');
+    };
+
+    // CSS pseudo-elements are visible in the editor but do not exist in copied
+    // HTML. Materialize their text so labels such as TRAVEL NOTES and quote marks
+    // survive both clipboard paste and the draft API.
+    const materializePseudo = (element, pseudo) => {
+      const computedStyle = window.getComputedStyle(element, pseudo);
+      const content = computedStyle.content;
+      if (!content || content === 'none' || content === 'normal' || content === 'open-quote' || content === 'close-quote') return;
+      const text = content.replace(/^(['"])(.*)\1$/, '$2');
+      if (!text) return;
+      const marker = document.createElement('span');
+      marker.textContent = text;
+      marker.setAttribute('style', styleText(computedStyle));
+      if (pseudo === '::before') element.insertBefore(marker, element.firstChild);
+      else element.appendChild(marker);
+    };
+    clone.querySelectorAll('*').forEach(el => {
+      materializePseudo(el, '::before');
+      materializePseudo(el, '::after');
+    });
+
+    const blockedTags = new Set(['SCRIPT', 'STYLE', 'LINK', 'IFRAME', 'OBJECT', 'EMBED', 'VIDEO', 'AUDIO', 'FORM', 'INPUT', 'BUTTON']);
+    clone.querySelectorAll('*').forEach(el => {
+      if (blockedTags.has(el.tagName)) {
+        el.remove();
+        return;
+      }
+      if (el.tagName === 'SVG') {
+        el.remove();
+        return;
+      }
+      const cs = window.getComputedStyle(el);
+      el.setAttribute('style', styleText(cs));
+      [...el.attributes].forEach(attr => {
+        const keep = (el.tagName === 'IMG' && ['src', 'alt', 'width', 'height', 'style'].includes(attr.name))
+          || (el.tagName === 'A' && ['href', 'style'].includes(attr.name))
+          || attr.name === 'style' || attr.name === 'class';
+        if (!keep) el.removeAttribute(attr.name);
+      });
+    });
+
+    // WeChat strips flex and gap declarations. Convert the small layout rows used by
+    // the templates into block + inline-block rows before removing class names.
+    clone.querySelectorAll('.flex').forEach(el => {
+      const classes = new Set((el.getAttribute('class') || '').split(/\s+/));
+      let style = el.getAttribute('style') || '';
+      style = style.replace(/display:flex;/g, 'display:block;');
+      style += classes.has('justify-center') ? 'text-align:center;' : '';
+      el.setAttribute('style', style);
+      [...el.children].forEach((child, index, children) => {
+        let childStyle = child.getAttribute('style') || '';
+        childStyle += 'display:inline-block;vertical-align:middle;';
+        if (index < children.length - 1) childStyle += 'margin-right:8px;';
+        child.setAttribute('style', childStyle);
+      });
+    });
+
+    // Semantic h2 elements and div borders are rewritten by WeChat. Use a
+    // borderless table with a dedicated one-pixel separator row: table borders
+    // become full boxes in WeChat's editor, while a colored cell stays a line.
+    clone.querySelectorAll('.flex.items-baseline').forEach(row => {
+      const number = row.children[0];
+      const heading = row.querySelector('h2, h3');
+      if (!number || !heading) return;
+      const wrapper = row.parentElement;
+      const wrapperStyle = wrapper ? window.getComputedStyle(wrapper) : null;
+      const dividerColor = wrapperStyle && wrapperStyle.borderBottomWidth !== '0px'
+        ? wrapperStyle.borderBottomColor
+        : '#e9e2d8';
+      const table = document.createElement('table');
+      table.setAttribute('cellpadding', '0');
+      table.setAttribute('cellspacing', '0');
+      table.setAttribute('width', '100%');
+      table.setAttribute('style', 'width:100%;margin:0 0 16px;border-collapse:collapse;');
+      const tbody = document.createElement('tbody');
+      const tableRow = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.setAttribute('style', `padding:${wrapperStyle?.padding || '10px 0'};`);
+      const line = document.createElement('p');
+      line.setAttribute('style', 'display:block;margin:0;padding:0;line-height:1.75;white-space:normal;');
+      const numberSpan = document.createElement('span');
+      numberSpan.setAttribute('style', 'display:inline;font-size:16px;font-weight:700;line-height:1.75;color:inherit;margin-right:10px;');
+      numberSpan.innerHTML = number.innerHTML;
+      const titleSpan = document.createElement('span');
+      const headingStyle = heading.getAttribute('style') || '';
+      const safeHeadingStyle = headingStyle
+        .replace(/(?:display|margin|padding|border(?:-top|-right|-bottom|-left)?|vertical-align):[^;]+;?/gi, '')
+        .replace(/;+/g, ';');
+      titleSpan.setAttribute('style', `${safeHeadingStyle}display:inline;font-size:20px;font-weight:700;line-height:1.75;`);
+      titleSpan.innerHTML = heading.innerHTML;
+      line.append(numberSpan, titleSpan);
+      cell.appendChild(line);
+      tableRow.appendChild(cell);
+      tbody.appendChild(tableRow);
+      const dividerRow = document.createElement('tr');
+      const dividerCell = document.createElement('td');
+      dividerCell.setAttribute('height', '1');
+      dividerCell.setAttribute('style', `height:1px;line-height:1px;font-size:1px;padding:0;background-color:${dividerColor};`);
+      dividerCell.innerHTML = '&nbsp;';
+      dividerRow.appendChild(dividerCell);
+      tbody.appendChild(dividerRow);
+      table.appendChild(tbody);
+      if (wrapper) wrapper.replaceWith(table);
+      else row.replaceWith(table);
+    });
+
+    // Export reusable components as tables. WeChat preserves table cell borders
+    // and backgrounds far more reliably than styled div/span component trees.
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#9e794f';
+    const accentSoft = getComputedStyle(document.documentElement).getPropertyValue('--accent-soft').trim() || '#fbf7f1';
+    clone.querySelectorAll('.theme-tip-card').forEach(card => {
+      const wrapper = card.parentElement;
+      const header = card.firstElementChild;
+      const title = header?.lastElementChild?.textContent.trim() || '提示';
+      const body = card.querySelector('p')?.textContent.trim() || '';
+      const frame = document.createElement('table');
+      frame.setAttribute('cellpadding', '0');
+      frame.setAttribute('cellspacing', '0');
+      frame.setAttribute('width', '100%');
+      frame.setAttribute('style', `width:100%;margin:24px 0;border-collapse:collapse;background-color:${accentSoft};`);
+      const row = document.createElement('tbody');
+      const cell = document.createElement('td');
+      cell.setAttribute('style', `padding:16px 18px;background-color:${accentSoft};border:1px solid #e9e2d8;border-left:3px solid ${accent};`);
+      const heading = document.createElement('p');
+      heading.setAttribute('style', `display:block;margin:0 0 8px;padding:0;color:${accent};font-family:${defaultWechatFont};font-size:14px;font-weight:700;line-height:1.6;`);
+      heading.textContent = `!  ${title}`;
+      const copy = document.createElement('p');
+      copy.setAttribute('style', `display:block;margin:0;padding:0;color:#4e4962;font-family:${defaultWechatFont};font-size:14px;font-weight:400;line-height:1.8;`);
+      copy.textContent = body;
+      cell.append(heading, copy);
+      const tr = document.createElement('tr');
+      tr.appendChild(cell);
+      row.appendChild(tr);
+      frame.append(row);
+      if (wrapper) wrapper.setAttribute('style', 'display:block;margin:0;padding:0;border:0;background:transparent;box-shadow:none;');
+      card.replaceWith(frame);
+    });
+    clone.querySelectorAll('.theme-route-card').forEach(card => {
+      const wrapper = card.parentElement;
+      const header = card.firstElementChild;
+      const labels = [...(header?.querySelectorAll('span') || [])].map(el => el.textContent.trim()).filter(Boolean);
+      const title = labels[0] || '路线推荐';
+      const meta = labels.slice(1).join('  ');
+      const body = card.querySelector('p')?.textContent.trim() || '';
+      const frame = document.createElement('table');
+      frame.setAttribute('cellpadding', '0');
+      frame.setAttribute('cellspacing', '0');
+      frame.setAttribute('width', '100%');
+      frame.setAttribute('style', 'width:100%;margin:24px 0;border-collapse:collapse;background-color:#ffffff;');
+      const row = document.createElement('tbody');
+      const cell = document.createElement('td');
+      cell.setAttribute('style', 'padding:16px 18px;background-color:#ffffff;border:1px solid #e9e2d8;');
+      const heading = document.createElement('p');
+      heading.setAttribute('style', `display:block;margin:0 0 10px;padding:0;color:#252238;font-family:${defaultWechatFont};font-size:15px;font-weight:700;line-height:1.6;`);
+      heading.textContent = title;
+      const badge = document.createElement('p');
+      badge.setAttribute('style', `display:block;margin:0 0 10px;padding:0;color:${accent};font-family:${defaultWechatFont};font-size:13px;font-weight:400;line-height:1.6;`);
+      badge.textContent = meta;
+      const copy = document.createElement('p');
+      copy.setAttribute('style', `display:block;margin:0;padding:0;color:#4e4962;font-family:${defaultWechatFont};font-size:14px;font-weight:400;line-height:1.8;`);
+      copy.textContent = body;
+      cell.append(heading, badge, copy);
+      const tr = document.createElement('tr');
+      tr.appendChild(cell);
+      row.appendChild(tr);
+      frame.append(row);
+      if (wrapper) wrapper.setAttribute('style', 'display:block;margin:0;padding:0;border:0;background:transparent;box-shadow:none;');
+      card.replaceWith(frame);
+    });
+    clone.querySelectorAll('[class]').forEach(el => el.removeAttribute('class'));
+
+    // WeChat's editor is more reliable with div/p than figure/section elements.
+    const replaceBlock = (node, tagName = 'div') => {
+      const block = document.createElement(tagName);
+      block.setAttribute('style', node.getAttribute('style') || '');
+      while (node.firstChild) block.appendChild(node.firstChild);
+      node.replaceWith(block);
+      return block;
+    };
+    clone.querySelectorAll('figure').forEach(figure => {
+      const block = document.createElement('div');
+      block.setAttribute('style', figure.getAttribute('style') || '');
+      while (figure.firstChild) block.appendChild(figure.firstChild);
+      const caption = block.querySelector('figcaption');
+      if (caption) {
+        const p = document.createElement('p');
+        p.setAttribute('style', caption.getAttribute('style') || '');
+        p.innerHTML = caption.innerHTML;
+        caption.replaceWith(p);
+      }
+      figure.replaceWith(block);
+    });
+    clone.querySelectorAll('section, article, header, footer').forEach(section => replaceBlock(section));
+    clone.querySelectorAll('img').forEach(img => {
+      const style = img.getAttribute('style') || '';
+      img.setAttribute('style', `${style}width:100%;max-width:100%;height:auto;display:block;`);
+    });
+    // Keep #editor until after computed styles are captured. Template rules target this id.
+    clone.removeAttribute('id');
+    const rootBackground = 'transparent';
+    const rootStyle = `box-sizing:border-box;width:100%;font-family:${defaultWechatFont};font-size:16px;line-height:1.88;color:${bodyColor};background-color:${rootBackground};padding:12px 6px;word-break:break-word;`;
+    const escapedRootStyle = rootStyle.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    const output = `<div style="${escapedRootStyle}">${clone.innerHTML}</div>`;
+    staging.remove();
+    return output;
+  }
+
+  function copyRichHtmlWithSelection(htmlData) {
+    return new Promise((resolve, reject) => {
+      const holder = document.createElement('div');
+      holder.contentEditable = 'true';
+      holder.setAttribute('aria-hidden', 'true');
+      // It must remain rendered (not display:none) for execCommand('copy') to include HTML.
+      holder.style.cssText = 'position:fixed;left:-100000px;top:0;width:740px;opacity:0;pointer-events:none;';
+      holder.innerHTML = htmlData;
+      document.body.appendChild(holder);
+      const range = document.createRange();
+      range.selectNodeContents(holder);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      let copied = false;
+      try { copied = document.execCommand('copy'); } catch (e) {}
+      selection.removeAllRanges();
+      holder.remove();
+      copied ? resolve() : reject(new Error('legacy rich copy unavailable'));
+    });
+  }
+
+  async function writeRichClipboard(htmlData, plainText) {
+    // Prefer the standards API, but always fall back to a rendered rich selection.
+    if (navigator.clipboard && window.ClipboardItem && navigator.clipboard.write) {
+      try {
+        await navigator.clipboard.write([
+          new window.ClipboardItem({
+            'text/html': new Blob([htmlData], { type: 'text/html' }),
+            'text/plain': new Blob([plainText], { type: 'text/plain' })
+          })
+        ]);
+        return;
+      } catch (e) {
+        // Embedded/file pages often reject the modern API; continue to the rich selection path.
+      }
+    }
+    await copyRichHtmlWithSelection(htmlData);
+  }
+
+  copyBtn.addEventListener('click', async () => {
+    if (copyBtn.disabled) return;
+    copyBtn.disabled = true;
+    copyBtn.setAttribute('aria-busy', 'true');
+    const originalMarkup = copyBtn.innerHTML;
+    try {
+      const htmlData = generateWechatRichHtml();
+      const plainText = editor.innerText;
+      await writeRichClipboard(htmlData, plainText);
+      copyBtn.classList.add('bg-emerald-600');
+      copyBtn.innerHTML = '<span>✓ 已成功复制到剪贴板</span>';
+      setTimeout(() => {
+        copyBtn.classList.remove('bg-emerald-600');
+        copyBtn.innerHTML = originalMarkup;
+        copyBtn.disabled = false;
+        copyBtn.removeAttribute('aria-busy');
+      }, 2000);
+      triggerToast('内容已复制，请打开公众号后台草稿箱并 Ctrl+V 粘贴');
+    } catch (err) {
+      copyBtn.innerHTML = originalMarkup;
+      copyBtn.disabled = false;
+      copyBtn.removeAttribute('aria-busy');
+      triggerToast('复制失败，请手动选择内容后 Ctrl+C');
+    }
+  });
+
+  // 9. Push the same exported HTML to a server-side WeChat draft endpoint.
+  const pushWechatBtn = document.getElementById('pushWechatBtn');
+  const wechatConfigModal = document.getElementById('wechatConfigModal');
+  const closeWechatConfigBtn = document.getElementById('closeWechatConfigBtn');
+  const cancelWechatConfigBtn = document.getElementById('cancelWechatConfigBtn');
+  const pushWechatConfirmBtn = document.getElementById('pushWechatConfirmBtn');
+  const wechatConfigStatus = document.getElementById('wechatConfigStatus');
+
+  function closeWechatConfig() { wechatConfigModal.classList.add('hidden'); }
+  function openWechatConfig() {
+    const savedEndpoint = localStorage.getItem('wechat-api-base');
+    if (savedEndpoint) document.getElementById('wechatApiBase').value = savedEndpoint;
+    wechatConfigModal.classList.remove('hidden');
+  }
+  // 草稿箱直推已下线，保留配置代码仅用于兼容旧草稿，不再暴露入口。
+  if (pushWechatBtn) pushWechatBtn.addEventListener('click', openWechatConfig);
+  closeWechatConfigBtn.addEventListener('click', closeWechatConfig);
+  cancelWechatConfigBtn.addEventListener('click', closeWechatConfig);
+
+  pushWechatConfirmBtn.addEventListener('click', async () => {
+    if (pushWechatConfirmBtn.disabled) return;
+    const apiBase = document.getElementById('wechatApiBase').value.trim().replace(/\/$/, '');
+    const appId = document.getElementById('wechatAppId').value.trim();
+    const appSecret = document.getElementById('wechatAppSecret').value.trim();
+    const coverSrc = editor.querySelector('img')?.getAttribute('src') || '';
+    if (!apiBase || !appId || !appSecret) {
+      wechatConfigStatus.textContent = '请填写服务端地址、AppID 和 AppSecret';
+      triggerToast('公众号配置不完整');
+      return;
+    }
+    if (!coverSrc) {
+      wechatConfigStatus.textContent = '请先插入一张图片，第一张图片将作为封面';
+      triggerToast('请先插入文章图片');
+      return;
+    }
+    pushWechatConfirmBtn.disabled = true;
+    pushWechatConfirmBtn.textContent = '正在上传并创建草稿...';
+    wechatConfigStatus.textContent = '正在连接公众号服务端';
+    try {
+      const connect = await fetch(`${apiBase}/api/wechat/config`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appId, appSecret })
+      });
+      const connectResult = await connect.json();
+      if (!connect.ok || !connectResult.ok) throw new Error(connectResult.error || '公众号连接失败');
+      localStorage.setItem('wechat-api-base', apiBase);
+      wechatConfigStatus.textContent = '连接成功，正在提交当前文章';
+      const draft = await fetch(`${apiBase}/api/wechat/draft`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: articleTitle.value.trim() || '未命名文章',
+          author: document.getElementById('wechatAuthor').value.trim(),
+          digest: document.getElementById('wechatDigest').value.trim(),
+          content: generateWechatRichHtml(),
+          coverSrc
+        })
+      });
+      const result = await draft.json();
+      if (!draft.ok || !result.ok) throw new Error(result.error || '创建草稿失败');
+      wechatConfigStatus.textContent = '草稿已创建，请到公众号后台预览';
+      triggerToast('已推送到公众号草稿箱');
+      setTimeout(closeWechatConfig, 1600);
+    } catch (error) {
+      wechatConfigStatus.textContent = error.message;
+      triggerToast(`推送失败：${error.message}`);
+    } finally {
+      pushWechatConfirmBtn.disabled = false;
+      pushWechatConfirmBtn.textContent = '连接并创建草稿';
+    }
+  });
+
+  // 10. 文章导入与 Markdown 智能排版
+  const importModal = document.getElementById('importModal');
+  const importDraftBtn = document.getElementById('importDraftBtn');
+  const importTextInput = document.getElementById('importTextInput');
+  const importFileInput = document.getElementById('importFileInput');
+  const fileLoadedHint = document.getElementById('fileLoadedHint');
+  const executeImportBtn = document.getElementById('executeImportBtn');
+
+  function openImportModal() { importModal.classList.remove('hidden'); }
+  function closeImportModal() { importModal.classList.add('hidden'); }
+  importDraftBtn.addEventListener('click', openImportModal);
+
+  importFileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    fileLoadedHint.textContent = `已载入: ${file.name}`;
+    const reader = new FileReader();
+    reader.onload = ev => { importTextInput.value = ev.target.result; };
+    reader.readAsText(file);
+  });
+
+  function parseMarkdownToEditorialHtml(raw) {
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#9e794f';
+    const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
+    const lines = raw.split(/\r?\n/).map(line => line.replace(/[ \t]+$/g, ''));
+    let html = '';
+    let secIndex = 1;
+    let paragraph = [];
+    let listType = '';
+    let listItems = [];
+    let sawContent = false;
+
+    const numberText = value => {
+      const match = String(value).match(/^(\d{1,2}|[一二三四五六七八九十百]+)[、.．)]\s*/);
+      return match ? match[1] : '';
+    };
+    const stripMarker = value => value.replace(/^(?:[-*+•]\s+|\d{1,2}[、.．)]\s+|[一二三四五六七八九十百]+[、.．)]\s+)/, '').trim();
+    const isShortHeading = value => {
+      const text = value.replace(/^第[一二三四五六七八九十百]+[章节篇]\s*/u, '').trim();
+      return text.length >= 2 && text.length <= 32 && !/[。！？；]$/.test(text) && !/^https?:\/\//i.test(text);
+    };
+    const addParagraph = () => {
+      if (!paragraph.length) return;
+      const text = paragraph.join(' ').replace(/\s+/g, ' ').trim();
+      if (text) {
+        html += `<div class="article-node mb-5"><p class="font-serif text-[16px] leading-[1.88] text-ink-800 text-justify">${escapeHtml(text)}</p></div>`;
+        sawContent = true;
+      }
+      paragraph = [];
+    };
+    const addList = () => {
+      if (!listItems.length) return;
+      const tag = listType || 'ul';
+      html += `<${tag} class="article-node mb-5 pl-6 text-ink-800 leading-[1.88]">${listItems.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</${tag}>`;
+      listItems = [];
+      listType = '';
+      sawContent = true;
+    };
+    const addHeading = (text, level = 2) => {
+      addParagraph();
+      addList();
+      const clean = text.replace(/^第[一二三四五六七八九十百]+[章节篇]\s*/u, '').replace(/^[一二三四五六七八九十百]+[、.．)]\s*/, '').trim();
+      if (level === 1) {
+        articleTitle.value = clean;
+        return;
+      }
+      const numStr = secIndex < 10 ? `0${secIndex}` : `${secIndex}`;
+      secIndex++;
+      const tag = level === 3 ? 'h3' : 'h2';
+      html += `<div class="article-node mb-4 border-b border-ink-200 pb-2.5 mt-8"><div class="flex items-baseline space-x-2.5"><span class="theme-accent-text font-mono text-base font-bold" style="color: ${accent};">${numStr}</span><${tag} class="text-xl font-serif font-bold text-ink-950 tracking-wide">${escapeHtml(clean)}</${tag}></div></div>`;
+      sawContent = true;
+    };
+
+    for (let index = 0; index < lines.length; index++) {
+      const line = lines[index];
+      const t = line.trim();
+      if (!t) { addParagraph(); addList(); continue; }
+      if (/^#\s+/.test(t)) { addHeading(t.replace(/^#\s+/, ''), 1); continue; }
+      if (/^##\s+/.test(t)) { addHeading(t.replace(/^##\s+/, ''), 2); continue; }
+      if (/^###\s+/.test(t)) { addHeading(t.replace(/^###\s+/, ''), 3); continue; }
+      if (/^>\s+/.test(t)) {
+        addParagraph(); addList();
+        html += `<blockquote class="article-node my-6 text-center px-8 font-serif italic text-[15px] text-ink-700 leading-loose">${escapeHtml(t.replace(/^>\s+/, ''))}</blockquote>`;
+        sawContent = true;
+        continue;
+      }
+      const unordered = /^[-*+•]\s+/.test(t);
+      const ordered = /^(?:\d{1,2}|[一二三四五六七八九十百]+)[、.．)]\s+/.test(t);
+      if (unordered || ordered) {
+        addParagraph();
+        const nextType = ordered ? 'ol' : 'ul';
+        if (listType && listType !== nextType) addList();
+        listType = nextType;
+        listItems.push(stripMarker(t));
+        continue;
+      }
+      const explicitHeading = /^(?:第[一二三四五六七八九十百]+[章节篇]|[一二三四五六七八九十百]+[、.．)])\s*/u.test(t);
+      const plainHeading = !sawContent && index === lines.findIndex(item => item.trim()) || (isShortHeading(t) && (index === 0 || !lines[index - 1].trim()));
+      if (explicitHeading || plainHeading) { addHeading(t, explicitHeading && /^第/u.test(t) ? 2 : 2); continue; }
+      paragraph.push(t);
+    }
+    addParagraph();
+    addList();
+    return html;
+  }
+
+  executeImportBtn.addEventListener('click', () => {
+    const text = importTextInput.value.trim();
+    if (!text) {
+      triggerToast('请先粘贴文章或选择文件');
+      return;
+    }
+    const parsed = parseMarkdownToEditorialHtml(text);
+    editor.innerHTML = parsed;
+    removeDefaultTemplateImages();
+    normalizeLegacyOpening();
+    closeImportModal();
+    materializeEditor();
+    sync();
+    bindImageSelection();
+    commitHistoryState();
+    triggerToast('文章已智能转换并完成杂志排版！');
+  });
+
+  // 10. 读取缓存草稿或首次初始化
+  try {
+    const saved = localStorage.getItem('gzh-draft');
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data.title) articleTitle.value = data.title;
+      if (data.content) editor.innerHTML = data.content;
+    }
+  } catch (e) {}
+
+  removeDefaultTemplateImages();
+  removeTemplateEyebrows();
+  normalizeLegacyOpening();
+
+  /*
+   * Template system v2
+   * One token set drives the writing canvas, phone preview and exported HTML.
+   * The exported markup remains conservative: inline styles only, no template
+   * decoration is allowed to create a fixed-width or white article card.
+   */
+  const TEMPLATE_PROFILES = {
+    magazine: { name: '01 明窗', family: 'serif', bg: '#FFFFFF', ink: '#333333', title: '#252525', accent: '#9B8064', soft: '#FAF8F5', line: '#D8D0C7', intro: '#666666', radius: '0', label: '克制留白 · 细线层次' },
+    travel: { name: '02 素笺', family: 'serif', bg: '#FCF8F3', ink: '#514744', title: '#765C57', accent: '#C49A83', soft: '#F6EEE8', line: '#E7D7CC', intro: '#8D7972', radius: '8px', label: '柔和衬线 · 文艺手记' },
+    minimal: { name: '03 海图', family: 'sans', bg: '#FFFFFF', ink: '#1F2937', title: '#111827', accent: '#1E40AF', soft: '#EFF6FF', line: '#BFDBFE', intro: '#1E3A8A', radius: '6px', label: '商务蓝调 · 信息清晰' },
+    tech: { name: '04 深空信号', family: 'sans', bg: '#101426', ink: '#D7DCF5', title: '#FFFFFF', accent: '#7C83FF', soft: '#191E3A', line: '#3B467D', intro: '#B9C5FF', radius: '6px', label: '蓝紫未来 · 梦幻科技' },
+    zen: { name: '05 禅庭', family: 'serif', bg: '#F8F6F0', ink: '#55534B', title: '#5D6257', accent: '#9A8F7B', soft: '#EEEADF', line: '#D8D2C5', intro: '#7A776D', radius: '0', label: '东方留白 · 安静阅读' },
+    stay: { name: '06 薄荷波', family: 'sans', bg: '#FFFFFF', ink: '#334155', title: '#0F172A', accent: '#087F8C', soft: '#E6F7F5', line: '#F4B942', intro: '#087F8C', radius: '10px', label: '清新明亮 · 生活方式' }
+  };
+
+  function currentTemplateProfile() {
+    return TEMPLATE_PROFILES[document.body.getAttribute('data-theme')] || TEMPLATE_PROFILES.magazine;
+  }
+
+  function removeLegacyTemplateDecoration() {
+    editor.querySelectorAll('img').forEach(img => {
+      const src = img.getAttribute('src') || '';
+      if (/(aurora-cover\.png|placehold\.co|via\.placeholder\.com)/i.test(src)) {
+        const figure = img.closest('figure');
+        if (figure && figure.querySelectorAll('img').length === 1) figure.remove();
+        else img.remove();
+      }
+    });
+    editor.querySelectorAll('.theme-eyebrow').forEach(node => node.remove());
+    [...editor.children].forEach(node => {
+      const text = (node.textContent || '').replace(/\s+/g, ' ').trim();
+      if (/^(春日出行特辑|出行特辑|旅行特辑|生活特辑|科技特辑)/.test(text)) node.remove();
+    });
+  }
+
+  function styleTemplateContent() {
+    const p = currentTemplateProfile();
+    const font = p.family === 'serif' ? "'Songti SC','STSong','SimSun',serif" : "-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif";
+    editor.style.backgroundColor = 'transparent';
+    editor.style.backgroundImage = 'none';
+    editor.style.color = p.ink;
+    editor.style.fontFamily = font;
+    editor.querySelectorAll('h1').forEach(el => {
+      el.style.cssText = `margin:0 0 24px 0;color:${p.title};font-family:${font};font-size:30px;line-height:1.45;font-weight:700;letter-spacing:.02em;background-color:transparent;padding:0;border:0;`;
+    });
+    editor.querySelectorAll('h2').forEach(el => {
+      el.style.cssText = `margin:34px 0 16px 0;color:${p.title};font-family:${font};font-size:21px;line-height:1.55;font-weight:700;letter-spacing:.01em;border-left:3px solid ${p.accent};border-bottom:1px solid ${p.line};padding:10px 12px;background-color:${p.soft};`;
+    });
+    editor.querySelectorAll('h3').forEach(el => {
+      el.style.cssText = `margin:26px 0 12px 0;color:${p.title};font-family:${font};font-size:17px;line-height:1.6;font-weight:700;`;
+    });
+    editor.querySelectorAll('p').forEach(el => {
+      if (el.classList.contains('photo-caption') || el.classList.contains('artboard-caption')) return;
+      if (el.closest('.theme-tip-card,.theme-route-card,.route-card,.stay-card')) return;
+      el.style.fontFamily = font;
+      el.style.color = p.ink;
+      el.style.fontSize = '16px';
+      el.style.lineHeight = p.family === 'serif' ? '2' : '1.9';
+      el.style.margin = '0 0 24px 0';
+      el.style.textIndent = '2em';
+      el.style.textAlign = 'justify';
+      el.style.backgroundColor = 'transparent';
+    });
+    editor.querySelectorAll('blockquote').forEach(el => {
+      el.style.cssText = `margin:28px 0 24px 0;padding:16px 18px;border-left:3px solid ${p.accent};background-color:${p.soft};color:${p.intro};font-family:${font};font-size:15px;line-height:1.9;`;
+    });
+    editor.querySelectorAll('ul,ol').forEach(el => {
+      el.style.cssText = `margin:0 0 24px 0;padding:0 0 0 24px;color:${p.ink};font-family:${font};font-size:15px;line-height:2;`;
+    });
+    editor.querySelectorAll('li').forEach(el => { el.style.margin = '0 0 6px 0'; });
+    editor.querySelectorAll('img').forEach(img => {
+      img.style.maxWidth = '100%';
+      img.style.width = img.style.width || '100%';
+      img.style.height = 'auto';
+      img.style.display = 'block';
+      img.style.margin = '28px auto 8px auto';
+    });
+    editor.querySelectorAll('figcaption').forEach(el => {
+      el.style.cssText = `display:block;margin:0 0 28px 0;color:${p.intro};font-size:12px;line-height:1.7;text-align:center;`;
+    });
+    editor.querySelectorAll('.theme-tip-card,.theme-route-card,.route-card,.stay-card').forEach(el => {
+      el.style.backgroundColor = p.soft;
+      el.style.borderColor = p.line;
+      el.style.borderLeftColor = p.accent;
+      el.style.borderRadius = p.radius;
+      el.style.boxShadow = p.family === 'sans' ? `0 6px 18px ${p.accent}18` : 'none';
+    });
+    document.documentElement.style.setProperty('--accent', p.accent);
+    document.documentElement.style.setProperty('--accent-soft', p.soft);
+    document.documentElement.style.setProperty('--accent-deep', p.title);
+  }
+
+  function applyTemplateProfile(theme) {
+    if (!TEMPLATE_PROFILES[theme]) return;
+    document.body.setAttribute('data-theme', theme);
+    styleTemplateContent();
+    const p = TEMPLATE_PROFILES[theme];
+    const selected = document.querySelector(`.template-card[data-theme="${theme}"]`);
+    if (selected) {
+      document.querySelectorAll('.template-card').forEach(card => card.classList.remove('selected'));
+      selected.classList.add('selected');
+      const name = selected.querySelector('[data-template-name]') || selected.querySelector('.font-serif');
+      if (activeThemeBadge) activeThemeBadge.textContent = p.name;
+      if (currentSpecimenName) currentSpecimenName.textContent = p.name;
+      if (currentSpecimenColor) currentSpecimenColor.textContent = p.label;
+      if (miniPhoneTheme) miniPhoneTheme.textContent = p.name;
+      if (miniPhoneColor) miniPhoneColor.textContent = p.label;
+      if (accentDot) accentDot.style.backgroundColor = p.accent;
+      if (name) name.textContent = p.name;
+    }
+  }
+
+  Object.entries(TEMPLATE_PROFILES).forEach(([theme, profile]) => {
+    const card = document.querySelector(`.template-card[data-theme="${theme}"]`);
+    if (!card) return;
+    const nameNode = card.querySelector('.flex-1 .flex span');
+    const descNode = card.querySelector('.flex-1 > div:last-child');
+    if (nameNode) nameNode.textContent = profile.name;
+    if (descNode) descNode.textContent = profile.label;
+  });
+  document.querySelectorAll('.template-card').forEach(card => {
+    if (!TEMPLATE_PROFILES[card.getAttribute('data-theme')]) {
+      card.hidden = true;
+      card.style.display = 'none';
+    }
+  });
+
+  // Keep the visible phone preview and the copied HTML on exactly the same path.
+  const legacySync = sync;
+  sync = function upgradedSync() {
+    removeLegacyTemplateDecoration();
+    styleTemplateContent();
+    legacySync();
+    const root = preview.firstElementChild;
+    if (root && currentTemplateProfile().bg !== '#FFFFFF') root.style.backgroundColor = currentTemplateProfile().bg;
+  };
+
+  removeLegacyTemplateDecoration();
+  applyTemplateProfile(document.body.getAttribute('data-theme') || 'magazine');
+
+  /*
+   * Canonical rendering v3
+   * The editor is materialized into the exact inline markup used for preview,
+   * clipboard and the WeChat draft API. There is no second preview-only layout.
+   */
+  Object.keys(TEMPLATE_PROFILES).forEach(key => delete TEMPLATE_PROFILES[key]);
+
+  const SERIF = "'Songti SC','STSong','SimSun',serif";
+  const SANS = "'PingFang SC','Microsoft YaHei',Arial,sans-serif";
+  const MONO = "ui-monospace,Menlo,Monaco,Consolas,monospace";
+  // Template system v4: every template is a complete component spec — palette
+  // plus one style per component (section heading, subheading, emphasis, quote,
+  // tip/route/card, divider, list, table, image caption). Renderers read these
+  // keys, so adding a template never needs new rendering code.
+  const CANONICAL_PROFILES = {
+    magazine: { name: '01 杂志特写', note: '大号编号 · 藏青留白', thumb: '01/', font: SERIF, bg: '#FFFFFF', ink: '#2B2B2B', title: '#1B1B1B', accent: '#2D5B8F', soft: '#EEF1F5', line: '#D3D8DF', muted: '#8A9099', h3: 'plain', quote: 'block', divider: { glyph: '//', border: 'double' }, table: 'lines', bullet: '—', caption: 'left', radius: '0' },
+    reading: { name: '02 简约阅读', note: '酒红竖条 · 安静长文', thumb: '▍', font: SERIF, bg: '#FFFDF9', ink: '#35322D', title: '#1F1D1A', accent: '#8F3F36', soft: '#F6E7E2', line: '#DDD5CA', muted: '#918A7E', h3: 'bar', quote: 'rule', divider: { glyph: '', border: 'solid' }, table: 'grid', bullet: '·', caption: 'center', radius: '0' },
+    cinnabar: { name: '03 宣纸朱砂', note: '朱砂印章 · 东方雅致', thumb: '贰', font: SERIF, bg: '#F7F2E9', ink: '#3F3B37', title: '#2A2622', accent: '#A63B2E', soft: '#EFE6D9', line: '#D8CAB6', muted: '#8B8178', h3: 'bar', quote: 'band', divider: { glyph: '◆', border: 'solid' }, table: 'grid', bullet: '◆', caption: 'center', radius: '0', numerals: 'chinese' },
+    city: { name: '04 城市手记', note: '笔触下划 · 暖棕街巷', thumb: '城', font: SERIF, bg: '#FFFAF6', ink: '#3B342F', title: '#7A3E22', accent: '#A45E3C', soft: '#F7E7DB', line: '#E4D1C3', muted: '#9A877A', h3: 'highlight', quote: 'round', divider: { glyph: '◆', border: 'solid' }, table: 'grid', bullet: '•', caption: 'center', radius: '10px', highlight: true },
+    lingnan: { name: '05 岭南青绿', note: '圆形编号 · 花叶清新', thumb: '❦', font: SERIF, bg: '#F6FBF8', ink: '#2B3A33', title: '#1F4A43', accent: '#2E7D73', soft: '#DDF0E8', line: '#A7D3C0', muted: '#6F8A80', h3: 'plain', quote: 'round', divider: { glyph: '❦', border: 'solid' }, table: 'lines', bullet: '❦', caption: 'center', radius: '10px', imageRadius: '10px' },
+    gazette: { name: '06 暖金旧报', note: '报纸横线 · 复古年代', thumb: '01▌', font: SERIF, bg: '#F5E6C8', ink: '#3E2F1F', title: '#2B1F12', accent: '#3E2F1F', em: '#A0712C', soft: '#EAD8B7', line: '#8B7355', muted: '#7A6650', h3: 'plain', quote: 'frame', divider: { glyph: '◆', border: 'double' }, table: 'grid', bullet: '■', caption: 'figure', radius: '0', indent: true, imageFrame: true },
+    tech: { name: '07 科技简报', note: '代码编号 · 蓝紫信号', thumb: '[01]', font: SANS, bg: '#FFFFFF', ink: '#33415F', title: '#1E2A5A', accent: '#4F5BFF', soft: '#EEF0FF', line: '#CDD2FF', muted: '#7C86A8', h3: 'plain', quote: 'bar', divider: { glyph: '</>', border: 'solid' }, table: 'lines', bullet: '›', caption: 'center', radius: '6px', tipLabel: 'NOTE' },
+    road: { name: '08 公路旅行', note: '里程路标 · 落日橙', thumb: 'KM', font: SANS, bg: '#FFFFFF', ink: '#4A3A28', title: '#7C3A0A', accent: '#D97706', soft: '#FFF4E0', line: '#F2C98A', muted: '#9A7D5C', h3: 'plain', quote: 'bar', divider: { glyph: '▶', border: 'dashed' }, table: 'lines', bullet: '▸', caption: 'center', radius: '4px' },
+    photo: { name: '09 摄影旅记', note: '胶片编号 · 黑白大图', thumb: 'F01', font: SANS, bg: '#FFFFFF', ink: '#2F2F2F', title: '#111111', accent: '#111111', soft: '#F3F3F3', line: '#D9D9D9', muted: '#8C8C8C', h3: 'plain', quote: 'center', divider: { glyph: '■', border: 'solid' }, table: 'lines', bullet: '—', caption: 'mono', radius: '0' },
+    nature: { name: '10 山野徒步', note: '山形符号 · 苔绿户外', thumb: '▲', font: SANS, bg: '#FBFBF7', ink: '#3F4A36', title: '#2F3D24', accent: '#5E7A3A', soft: '#EEF2E3', line: '#C9D4B3', muted: '#7F8A70', h3: 'plain', quote: 'round', divider: { glyph: '▲', border: 'dashed' }, table: 'lines', bullet: '▲', caption: 'center', radius: '8px' },
+    journal: { name: '11 紫色手账', note: '虚线标签 · 紫藤笔记', thumb: 'NO.', font: SANS, bg: '#FCFAFE', ink: '#45434B', title: '#3A2D52', accent: '#7953A6', soft: '#F1EBF8', line: '#D9CBEA', muted: '#8E86A0', h3: 'highlight', quote: 'dashed', divider: { glyph: '✦', border: 'dashed' }, table: 'grid', bullet: '✦', caption: 'center', radius: '6px', imageRadius: '6px' },
+    zen: { name: '12 留白禅意', note: '居中标题 · 素色呼吸', thumb: '壹', font: SERIF, bg: '#FAF8F4', ink: '#55514A', title: '#4A443C', accent: '#8C7B66', soft: '#F1ECE3', line: '#DCD3C5', muted: '#9A9286', h3: 'center', quote: 'center', divider: { glyph: '·  ·  ·', border: 'none' }, table: 'lines', bullet: '·', caption: 'center', radius: '0', numerals: 'chinese' }
+  };
+  // Retired templates map to their closest replacement so old drafts still open.
+  const LEGACY_THEME_ALIASES = { travel: 'nature', stay: 'city', olive: 'nature', wood: 'city', lucid: 'reading', paper: 'reading', blue: 'magazine', signal: 'tech', mint: 'lingnan', minimal: 'reading' };
+  const TEMPLATE_VERSION = 4;
+
+  function resolveTheme(theme) {
+    return CANONICAL_PROFILES[theme] ? theme : (LEGACY_THEME_ALIASES[theme] || 'magazine');
+  }
+
+  function canonicalProfile() {
+    const theme = resolveTheme(document.body.getAttribute('data-theme') || 'magazine');
+    const base = CANONICAL_PROFILES[theme];
+    const root = getComputedStyle(document.documentElement);
+    const accent = root.getPropertyValue('--accent').trim();
+    const soft = root.getPropertyValue('--accent-soft').trim();
+    const deep = root.getPropertyValue('--accent-deep').trim();
+    const customPalette = Boolean(accent) && accent.toLowerCase() !== base.accent.toLowerCase();
+    return {
+      ...base,
+      theme,
+      accent: accent || base.accent,
+      soft: soft || base.soft,
+      title: deep || base.title,
+      em: customPalette ? accent : (base.em || base.accent),
+      // A custom palette has no line colour of its own; derive a visible one
+      // from the accent (using the soft background made separators invisible).
+      line: customPalette ? (mixHex(accent, '#ffffff', 0.7) || base.line) : base.line
+    };
+  }
+
+  function mixHex(hex, target, amount) {
+    const parse = value => {
+      const match = String(value || '').trim().match(/^#([0-9a-f]{6})$/i);
+      return match ? [0, 2, 4].map(i => parseInt(match[1].slice(i, i + 2), 16)) : null;
+    };
+    const from = parse(hex);
+    const to = parse(target);
+    if (!from || !to) return '';
+    return '#' + from.map((value, i) => Math.round(value + (to[i] - value) * amount).toString(16).padStart(2, '0')).join('');
+  }
+
+  function escaped(value) {
+    return String(value || '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+  }
+
+  const SAFE_WECHAT_STYLE_PROPERTIES = new Set([
+    'color', 'font-family', 'font-size', 'font-style', 'font-weight', 'line-height',
+    'letter-spacing', 'text-align', 'text-decoration', 'text-indent', 'white-space',
+    'word-break', 'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+    'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+    'border', 'border-top', 'border-right', 'border-bottom', 'border-left',
+    'border-radius', 'background-color', 'width', 'max-width', 'height', 'vertical-align'
+  ]);
+
+  function sanitizeWechatStyle(element) {
+    if (!element?.style) return;
+    const safe = [];
+    for (const property of [...element.style]) {
+      const value = element.style.getPropertyValue(property).trim();
+      if (!SAFE_WECHAT_STYLE_PROPERTIES.has(property)) continue;
+      if (/(?:url\(|var\(|gradient|color-mix|!important)/i.test(value)) continue;
+      safe.push(`${property}:${value}`);
+    }
+    element.setAttribute('style', safe.join(';'));
+  }
+
+  function cleanInlineMarkup(node) {
+    const copy = node.cloneNode(true);
+    copy.querySelectorAll('*').forEach(child => {
+      child.removeAttribute('class');
+      child.removeAttribute('id');
+      child.removeAttribute('contenteditable');
+      [...child.attributes].filter(attr => attr.name.startsWith('data-')).forEach(attr => child.removeAttribute(attr.name));
+      sanitizeWechatStyle(child);
+      if (child.style?.fontSize) child.style.fontSize = normalizeInlineFontSize(child.style.fontSize);
+      if (child.tagName === 'IMG') {
+        const src = child.getAttribute('src') || '';
+        if (/(aurora-cover\.png|placehold\.co|via\.placeholder\.com)/i.test(src)) child.remove();
+      }
+    });
+    sanitizeWechatStyle(copy);
+    return copy.innerHTML;
+  }
+
+  function bodyStyle(profile, textAlign = 'justify', sourceNode = null) {
+    const allowedAlignments = new Set(['left', 'center', 'right', 'justify']);
+    const align = allowedAlignments.has(textAlign) ? textAlign : 'justify';
+    const sourceStyle = sourceNode?.style;
+    // Size and family always come from the typography controls and template.
+    // Reading them back from the previous render froze them at their first
+    // value, and the browser serializes font-family with double quotes, which
+    // closed the style="..." attribute early and dropped every later property.
+    const fontWeight = sourceStyle?.fontWeight || '400';
+    const fontStyle = sourceStyle?.fontStyle || 'normal';
+    const textDecoration = (sourceStyle?.textDecoration || 'none').replace(/"/g, "'");
+    const indent = profile.indent ? '2em' : '0';
+    return `margin:0 0 22px 0;padding:0;color:${profile.ink};font-family:${profile.font};font-size:${typographyState.fontSize}px;font-weight:${fontWeight};font-style:${fontStyle};text-decoration:${textDecoration};line-height:${typographyState.lineHeight};letter-spacing:.02em;text-indent:${indent};text-align:${align};word-break:break-word;`;
+  }
+
+  function cleanLegacyHeading(text) {
+    const raw = String(text || '').replace(/\s+/g, ' ').trim();
+    const number = raw.match(/(?:^|\D)(\d{1,2})(?:\D|$)/)?.[1] || '';
+    const chineseRuns = raw.match(/[一-鿿][一-鿿0-9：、，。！？；：“”‘’《》\s]{1,}/g) || [];
+    const label = chineseRuns.sort((a, b) => b.length - a.length)[0]?.replace(/\s+/g, '').trim() || raw.replace(/[^一-鿿0-9：、，。！？；：“”‘’《》]/g, '');
+    return { number, label };
+  }
+
+  // Read a heading's label and optional subtitle. Rendered headings mark these
+  // with data-part; older drafts fall back to the <span>number</span><span>label</span>
+  // shape. Numbers are not read back: section headings are numbered in order.
+  // A subtitle can be typed after "｜", e.g. "老街的日常｜OLDER STREETS".
+  function headingParts(node) {
+    const labelNode = node.querySelector('[data-part="label"]');
+    if (labelNode) {
+      const label = labelNode.textContent.replace(/\s+/g, ' ').trim();
+      const sub = node.querySelector('[data-part="sub"]')?.textContent.replace(/\s+/g, ' ').trim() || '';
+      return sub ? { label, sub } : splitHeadingLabel(label);
+    }
+    const spans = [...node.querySelectorAll(':scope > span')];
+    if (spans.length >= 2 && /^\d{0,3}$/.test(spans[0].textContent.trim())) return splitHeadingLabel(spans[1].textContent);
+    const text = node.textContent.replace(/\s+/g, ' ').trim();
+    const match = text.match(/^(\d{1,2})(?:[\s.、:：·-]+|(?=\D))(.+)$/);
+    return splitHeadingLabel(match ? match[2] : text);
+  }
+
+  function splitHeadingLabel(text) {
+    const [label, ...rest] = String(text || '').replace(/\s+/g, ' ').trim().split(/\s*[|｜]\s*/);
+    return { label: label || '', sub: rest.join(' ').trim() };
+  }
+
+  function chineseNumeral(n) {
+    const digits = '零壹贰叁肆伍陆柒捌玖';
+    if (n <= 0 || n >= 100) return String(n);
+    if (n < 10) return digits[n];
+    const tens = Math.floor(n / 10);
+    const ones = n % 10;
+    return `${tens > 1 ? digits[tens] : ''}拾${ones ? digits[ones] : ''}`;
+  }
+
+  // One section-heading design per template. WeChat-safe: p/span + inline style,
+  // decorations are glyphs or borders on non-empty spans, no float/transform.
+  function headingBlock(index, parts, profile, roleAttribute = '', editorMode = false) {
+    const p = profile;
+    const part = name => editorMode ? ` data-part="${name}"` : '';
+    const lock = editorMode ? ' contenteditable="false"' : '';
+    const num = String(index).padStart(2, '0');
+    const cn = chineseNumeral(index);
+    const label = escaped(parts.label);
+    const sub = escaped(parts.sub);
+    const base = `padding:0;color:${p.title};font-family:${p.font};font-weight:700;letter-spacing:0;text-indent:0;text-align:left;word-break:break-word;`;
+    const labelSpan = (style = '', inner = label) => `<span${part('label')} style="font-size:19px;line-height:1.5;${style}">${inner}</span>`;
+    const subSpan = (style = '', prefix = '') => sub ? `<span style="display:block;margin:4px 0 0 0;color:${p.muted};font-size:12px;line-height:1.6;font-weight:400;letter-spacing:.06em;${style}">${prefix ? `<span${lock}>${prefix}</span>` : ''}<span${part('sub')}>${sub}</span></span>` : '';
+    const r = roleAttribute;
+    switch (p.theme) {
+      case 'magazine':
+        return `<p${r} style="margin:40px 0 20px 0;${base}"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 4px 0 0;color:${p.accent};font-family:Georgia,'Times New Roman',serif;font-size:38px;line-height:1.25;font-weight:400;">${num}</span><span${lock} style="display:inline-block;vertical-align:middle;margin:0 12px 0 0;color:${p.line};font-size:34px;line-height:1.25;font-weight:300;">/</span><span style="display:inline-block;vertical-align:middle;max-width:62%;">${labelSpan('display:block;')}${subSpan('margin-top:2px;font-size:11px;letter-spacing:.2em;')}</span></p>`;
+      case 'reading':
+        return `<p${r} style="margin:36px 0 20px 0;${base}padding:2px 0 2px 12px;border-left:4px solid ${p.accent};">${labelSpan('display:block;')}${subSpan('', '—— ')}</p>`;
+      case 'cinnabar':
+        return `<p${r} style="margin:36px 0 20px 0;${base}"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 12px 0 0;padding:2px;border:1px solid ${p.accent};"><span style="display:block;width:28px;height:28px;line-height:28px;background-color:${p.accent};color:#FFFFFF;text-align:center;font-size:15px;font-weight:400;">${cn}</span></span><span style="display:inline-block;vertical-align:middle;max-width:72%;">${labelSpan('display:block;')}${subSpan('', '—— ')}</span></p>`;
+      case 'city': {
+        const chars = [...parts.label];
+        const inner = `<span style="padding:0 0 2px 0;border-bottom:3px solid ${p.accent};">${escaped(chars.slice(0, 2).join(''))}</span>${escaped(chars.slice(2).join(''))}`;
+        return `<p${r} style="margin:38px 0 20px 0;${base}">${labelSpan('display:block;font-size:20px;', inner)}${subSpan('margin-top:8px;padding-left:2em;', '—— ')}</p>`;
+      }
+      case 'lingnan':
+        return `<p${r} style="margin:36px 0 20px 0;${base}"><span${lock} style="display:inline-block;vertical-align:middle;width:36px;height:36px;line-height:36px;border-radius:50%;background-color:${p.accent};color:#FFFFFF;text-align:center;font-family:Georgia,serif;font-size:16px;font-weight:400;">${num}</span><span${lock} style="display:inline-block;vertical-align:middle;margin:0 8px;color:${p.line};font-size:20px;line-height:1.25;font-weight:400;">❦</span><span style="display:inline-block;vertical-align:middle;max-width:62%;">${labelSpan('display:block;')}${subSpan('letter-spacing:.1em;')}</span></p>`;
+      case 'gazette':
+        return `<p${r} style="margin:36px 0 20px 0;${base}padding:6px 0;border-top:2px solid ${p.ink};border-bottom:1px solid ${p.ink};"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 10px 0 0;padding:0 8px;background-color:${p.accent};color:${p.bg};font-family:Georgia,serif;font-size:20px;line-height:1.5;font-weight:400;">${num}</span>${labelSpan('vertical-align:middle;')}${sub ? `<span style="display:inline-block;vertical-align:middle;margin:0 0 0 10px;color:${p.muted};font-size:12px;font-weight:400;"><span${part('sub')}>${sub}</span></span>` : ''}</p>`;
+      case 'tech':
+        return `<p${r} style="margin:36px 0 20px 0;${base}padding:0 0 10px 0;border-bottom:1px solid ${p.line};"><span${lock} style="margin:0 8px 0 0;color:${p.accent};font-family:${MONO};font-size:15px;font-weight:700;">[${num}]</span>${labelSpan()}${subSpan(`font-family:${MONO};font-size:11px;letter-spacing:.08em;`, '// ')}</p>`;
+      case 'road':
+        return `<p${r} style="margin:36px 0 20px 0;${base}padding:0 0 10px 0;border-bottom:2px dashed ${p.accent};"><span${lock} style="display:inline-block;margin:0 0 6px 0;padding:1px 8px;border-radius:2px;background-color:${p.accent};color:#FFFFFF;font-family:${MONO};font-size:11px;line-height:1.8;letter-spacing:.12em;font-weight:700;">KM ${num}</span>${labelSpan('display:block;font-size:20px;')}${subSpan()}</p>`;
+      case 'photo':
+        return `<p${r} style="margin:44px 0 20px 0;${base}"><span${lock} style="display:block;margin:0 0 6px 0;color:${p.muted};font-family:${MONO};font-size:11px;line-height:1.6;letter-spacing:.25em;font-weight:400;">FRAME ${num}</span>${labelSpan('display:block;font-size:22px;line-height:1.4;')}${subSpan()}</p>`;
+      case 'nature':
+        return `<p${r} style="margin:36px 0 20px 0;${base}padding:0 0 8px 0;border-bottom:1px dashed ${p.line};"><span${lock} style="margin:0 6px 0 0;color:${p.accent};font-size:15px;font-weight:400;">▲</span><span${lock} style="margin:0 10px 0 0;color:${p.accent};font-family:${MONO};font-size:14px;">${num}</span>${labelSpan()}${subSpan('padding-left:2.6em;')}</p>`;
+      case 'journal':
+        return `<p${r} style="margin:36px 0 20px 0;${base}"><span${lock} style="display:inline-block;vertical-align:middle;margin:0 10px 0 0;padding:1px 8px;border:1px dashed ${p.accent};border-radius:4px;color:${p.accent};font-family:${MONO};font-size:12px;line-height:1.7;font-weight:400;">NO.${num}</span>${labelSpan('vertical-align:middle;')}${subSpan()}</p>`;
+      case 'zen':
+        return `<p${r} style="margin:48px 0 26px 0;${base}text-align:center;font-weight:600;"><span${lock} style="display:block;margin:0 0 10px 0;color:${p.accent};font-size:14px;letter-spacing:.3em;font-weight:400;">${cn}</span>${labelSpan('display:block;letter-spacing:.15em;')}${subSpan('letter-spacing:.12em;')}<span${lock} style="display:inline-block;width:36px;margin:14px 0 0 0;border-top:1px solid ${p.accent};font-size:1px;line-height:2px;">&nbsp;</span></p>`;
+      default:
+        return `<p${r} style="margin:34px 0 18px 0;${base}padding:10px 0 10px 13px;border-left:3px solid ${p.accent};border-bottom:1px solid ${p.line};"><span${lock} style="margin-right:10px;color:${p.accent};font-size:13px;">${num}</span>${labelSpan()}${subSpan()}</p>`;
+    }
+  }
+
+  // Turn loose content into blocks the renderer understands, so nothing typed
+  // or pasted is silently dropped: stray text/inline runs and leaf <div>s become
+  // <p>, h1 becomes h2, h4-h6 become h3, and inline images get their own figure.
+  function normalizeLooseBlocks(root) {
+    const blockSelector = 'p,h1,h2,h3,h4,h5,h6,blockquote,ul,ol,figure,section,div,table,hr,pre,article,header,footer';
+    const protectedSelector = '[data-template-role="widget"],.theme-tip-card,.theme-route-card,.route-card,.stay-card,figure,table';
+    let run = [];
+    const flush = before => {
+      if (run.some(node => node.textContent.trim() || node.nodeName === 'IMG' || node.querySelector?.('img'))) {
+        const paragraph = document.createElement('p');
+        root.insertBefore(paragraph, before);
+        run.forEach(node => paragraph.appendChild(node));
+      }
+      run = [];
+    };
+    [...root.childNodes].forEach(node => {
+      const inline = node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && !node.matches(blockSelector));
+      if (inline) run.push(node);
+      else flush(node);
+    });
+    flush(null);
+    const swapTag = (node, tagName) => {
+      const replacement = document.createElement(tagName);
+      [...node.attributes].forEach(attr => replacement.setAttribute(attr.name, attr.value));
+      while (node.firstChild) replacement.appendChild(node.firstChild);
+      node.replaceWith(replacement);
+      return replacement;
+    };
+    root.querySelectorAll('div').forEach(div => {
+      if (div.closest(protectedSelector) || div.querySelector(blockSelector) || !div.textContent.trim() && !div.querySelector('img')) return;
+      swapTag(div, 'p');
+    });
+    root.querySelectorAll('h1').forEach(node => swapTag(node, 'h2'));
+    root.querySelectorAll('h4,h5,h6').forEach(node => swapTag(node, 'h3'));
+    root.querySelectorAll('pre').forEach(node => {
+      const paragraph = swapTag(node, 'p');
+      paragraph.innerHTML = paragraph.innerHTML.replace(/\n/g, '<br/>');
+    });
+    const lastInserted = new Map();
+    root.querySelectorAll('p img, li img, h2 img, h3 img, blockquote img').forEach(img => {
+      if (img.closest('figure')) return;
+      let top = img.closest('p, li, h2, h3, blockquote');
+      while (top.parentElement && top.parentElement !== root) top = top.parentElement;
+      const figure = document.createElement('figure');
+      figure.className = 'editable-img-wrap';
+      figure.setAttribute('data-width', '100%');
+      figure.setAttribute('data-align', 'center');
+      figure.setAttribute('data-frame', 'none');
+      figure.appendChild(img);
+      (lastInserted.get(top) || top).after(figure);
+      lastInserted.set(top, figure);
+    });
+  }
+
+  const PLACEHOLDER_CAPTION = /^点击(?:编辑|输入).*说明\.\.\.$/;
+  const LEGACY_HEADING_MARKER = /(?:^|[^A-Za-z])(?:DEEP SPACE|FIELD NOTE|SIGNAL|STREET|ARRIVAL|NOTE|CHAPTER|EDITORIAL|WINDOW|FRAME|NEXT STOP|WILD NOTE|CITY WALK)(?![A-Za-z])|^\[\d+\]/;
+
+  function hexToRgbString(hex) {
+    const match = String(hex || '').trim().match(/^#([0-9a-f]{6})$/i);
+    if (!match) return '';
+    const [r, g, b] = [0, 2, 4].map(i => parseInt(match[1].slice(i, i + 2), 16));
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  function canonicalArticleHtml(editorMode = false) {
+    const p = canonicalProfile();
+    const blocks = [];
+    const componentSelector = '.theme-tip-card,.theme-route-card,.route-card,.stay-card';
+    const role = value => editorMode ? ` data-template-role="${value}"` : '';
+    // Component renderers. WeChat-safe by construction: only section/p/span
+    // (plus table for data tables) with inline styles; no flex, positioning,
+    // pseudo-elements or empty elements (WeChat may drop them). Dots, marks and
+    // ornaments are text glyphs; rules are borders on elements that carry text.
+    // In editor mode, data-part marks each field so edits can be re-parsed.
+    const part = name => editorMode ? ` data-part="${name}"` : '';
+    const locked = editorMode ? ' contenteditable="false"' : '';
+    const muted = p.muted || mixHex(p.ink, '#ffffff', 0.4) || p.ink;
+    const textBase = `padding:0;font-family:${p.font};text-indent:0;text-align:left;`;
+    const emptyEditable = html => html || (editorMode ? '<br/>' : '');
+    const radius = p.radius || '0';
+    const emRgb = hexToRgbString(p.em);
+    let headingIndex = 0;
+    let imageIndex = 0;
+    // Render from a normalized copy so live typing in the editor is never disturbed.
+    const source = editor.cloneNode(true);
+    normalizeLooseBlocks(source);
+
+    // Bold text is the template's emphasis: accent colour, plus a soft
+    // highlight for templates that use one. Un-bolded text drops the colour.
+    const emphasize = html => {
+      if (!/<(?:b|strong|span)\b/i.test(html)) return html;
+      const holder = document.createElement('div');
+      holder.innerHTML = html;
+      holder.querySelectorAll('b,strong,span').forEach(el => {
+        const weight = el.style.fontWeight;
+        const bold = el.tagName !== 'SPAN' || weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
+        if (bold) {
+          el.style.color = p.em;
+          if (el.tagName === 'SPAN') el.style.fontWeight = '700';
+          el.style.backgroundColor = p.highlight ? p.soft : '';
+          el.style.padding = p.highlight ? '0 2px' : '';
+        } else if (emRgb && el.style.color === emRgb) {
+          el.style.color = '';
+          el.style.backgroundColor = '';
+          el.style.padding = '';
+        }
+      });
+      return holder.innerHTML;
+    };
+    const inline = node => emphasize(cleanInlineMarkup(node));
+
+    const renderTip = ({ title, bodyHtml }) => {
+      const box = p.quote === 'frame' ? `border:1px solid ${p.ink};` : `border-left:3px solid ${p.accent};`;
+      return `<section${role('tip')} style="margin:26px 0;padding:12px 16px;${box}border-radius:0;background-color:${p.soft};"><p${part('title')} style="margin:0 0 6px 0;${textBase}color:${p.title};font-size:14px;line-height:1.7;font-weight:700;"><span${part('badge')}${locked} style="display:inline-block;margin:0 8px 0 0;padding:0 7px;background-color:${p.accent};color:#FFFFFF;font-size:11px;line-height:1.8;letter-spacing:.1em;font-weight:700;">${p.tipLabel || 'TIP'}</span>${escaped(title)}</p>${bodyHtml || editorMode ? `<p style="margin:0;${textBase}color:${p.ink};font-size:14px;line-height:1.85;">${emptyEditable(bodyHtml)}</p>` : ''}</section>`;
+    };
+
+    const renderRoute = ({ label, title, tags, stations }) => {
+      const list = stations.length ? stations : (editorMode ? [{ name: '点击编辑站点', note: '' }] : []);
+      const tagHtml = tags.map(tag => `<span${part('tag')} style="display:inline-block;margin:0 6px 4px 0;padding:1px 9px;border-radius:999px;background-color:${p.soft};color:${p.title};font-size:12px;line-height:1.7;">${escaped(tag)}</span>`).join('');
+      const stationHtml = list.map((station, index) => {
+        const glyph = index === 0 || index === list.length - 1 ? '●' : '○';
+        const note = station.note ? `<br/><span${part('note')} style="display:inline-block;margin:0 0 0 20px;color:${muted};font-size:12px;line-height:1.6;">${escaped(station.note)}</span>` : '';
+        return `<p style="margin:0;padding:0 0 10px 0;font-family:${p.font};text-indent:0;text-align:left;color:${p.ink};font-size:14px;line-height:1.7;"><span${part('dot')}${locked} style="margin:0 8px 0 0;color:${p.accent};font-size:12px;">${glyph}</span>${escaped(station.name)}${note}</p>`;
+      }).join('');
+      const frame = radius === '0'
+        ? `border:1px solid ${p.line};border-top:3px solid ${p.accent};border-radius:0;`
+        : `border:1px solid ${p.line};border-radius:${radius};`;
+      return `<section${role('route')} style="margin:26px 0;padding:14px 16px 6px 16px;${frame}"><p${part('label')} style="margin:0 0 2px 0;${textBase}color:${p.accent};font-family:${MONO};font-size:11px;line-height:1.6;letter-spacing:.15em;">${escaped(label || 'ROUTE')}</p><p${part('title')} style="margin:0 0 8px 0;${textBase}color:${p.title};font-size:16px;line-height:1.6;font-weight:700;">${escaped(title)}</p>${tagHtml ? `<p${part('tags')} style="margin:0 0 6px 0;${textBase}line-height:1.6;">${tagHtml}</p>` : ''}${stationHtml ? `<section${part('stations')} style="margin:6px 0 8px 4px;padding:2px 0 0 14px;border-left:1px dashed ${p.line};">${stationHtml}</section>` : ''}</section>`;
+    };
+
+    const renderCard = ({ category, title, rows }) => {
+      const rowHtml = rows.map(row => `<p style="margin:0 0 4px 0;${textBase}color:${p.ink};font-size:13px;line-height:1.8;">${row.key ? `<span${part('key')} style="display:inline-block;width:4em;color:${p.accent};font-size:12px;">${escaped(row.key)}</span>` : ''}${escaped(row.value)}</p>`).join('');
+      const border = p.quote === 'frame' ? p.ink : p.line;
+      return `<section${role('card')} style="margin:26px 0;padding:0;border:1px solid ${border};border-radius:${radius};"><section style="margin:0 16px;padding:14px 0 12px 0;border-bottom:1px dashed ${border};">${category ? `<p${part('category')} style="margin:0 0 4px 0;${textBase}color:${p.accent};font-size:11px;line-height:1.6;letter-spacing:.1em;">${escaped(category)}</p>` : ''}<p${part('title')} style="margin:0;${textBase}color:${p.title};font-size:17px;line-height:1.5;font-weight:700;">${escaped(title)}</p></section>${rowHtml || editorMode ? `<section${part('rows')} style="margin:0;padding:10px 16px 10px 16px;">${rowHtml || `<p style="margin:0;${textBase}font-size:13px;line-height:1.8;color:${p.ink};"><br/></p>`}</section>` : ''}</section>`;
+    };
+
+    const renderQuote = ({ bodyHtml, cite }) => {
+      if (p.quote === 'center') {
+        return `<section${role('quote')} style="margin:30px 0;padding:0 18px;text-align:center;"><p${part('mark')}${locked} style="margin:0;padding:0;text-indent:0;text-align:center;color:${p.line};font-family:Georgia,'Songti SC',serif;font-size:40px;line-height:1.25;">“</p><p style="margin:4px 0 12px 0;padding:0;text-indent:0;text-align:center;color:${p.title};font-family:${p.font};font-size:17px;font-style:italic;line-height:1.9;">${emptyEditable(bodyHtml)}</p>${cite || editorMode ? `<p${part('cite')} style="margin:0;padding:0;text-indent:0;text-align:center;line-height:1.6;"><span style="display:inline-block;padding:8px 0 0 0;border-top:1px solid ${p.accent};color:${muted};font-family:${p.font};font-size:12px;">— ${escaped(cite)}</span></p>` : ''}</section>`;
+      }
+      const boxes = {
+        block: `padding:14px 18px;background-color:${p.soft};`,
+        rule: `padding:2px 0 2px 16px;border-left:2px solid ${mixHex(p.accent, '#ffffff', 0.55) || p.line};`,
+        band: `padding:14px 18px;border-top:1px solid ${p.accent};border-bottom:1px solid ${p.accent};background-color:${p.soft};`,
+        round: `padding:14px 18px;border-radius:${radius === '0' ? '10px' : radius};background-color:${p.soft};`,
+        frame: `padding:14px 18px;border:1px solid ${p.ink};background-color:${p.soft};`,
+        bar: `padding:14px 18px;border-left:4px solid ${p.accent};background-color:${p.soft};`,
+        dashed: `padding:14px 18px;border:1px dashed ${p.accent};border-radius:${radius};background-color:${p.soft};`
+      };
+      const box = boxes[p.quote] || boxes.block;
+      const textColor = p.quote === 'rule' ? p.accent : p.ink;
+      const mark = p.quote === 'rule' ? '' : `<p${part('mark')}${locked} style="margin:0;padding:0;text-indent:0;text-align:left;color:${p.quote === 'block' ? p.line : p.accent};font-family:Georgia,'Times New Roman',serif;font-size:36px;line-height:1.25;">“</p>`;
+      return `<section${role('quote')} style="margin:28px 0;${box}">${mark}<p style="margin:0;${textBase}color:${textColor};font-size:15px;font-style:italic;line-height:1.9;">${emptyEditable(bodyHtml)}</p>${cite || editorMode ? `<p${part('cite')} style="margin:8px 0 0 0;padding:0;text-indent:0;text-align:right;color:${muted};font-family:${p.font};font-size:12px;line-height:1.6;">—— ${escaped(cite)}</p>` : ''}</section>`;
+    };
+
+    // Plain Markdown/body quotes: a quiet rule, visually distinct from the tip.
+    const renderNote = bodyHtml => `<section${role('note')} style="margin:24px 0;padding:2px 0 2px 14px;border-left:2px solid ${p.line};border-radius:0;"><p style="margin:0;${textBase}color:${muted};font-size:15px;line-height:1.9;">${emptyEditable(bodyHtml)}</p></section>`;
+
+    const renderDivider = () => {
+      const d = p.divider || { glyph: '◆', border: 'solid' };
+      const ruleStyle = d.border === 'double' ? `3px double ${p.line}` : `1px ${d.border} ${p.line}`;
+      const ruleSpan = width => `<span style="display:inline-block;width:${width};vertical-align:middle;border-top:${ruleStyle};font-size:1px;line-height:2px;">&nbsp;</span>`;
+      let inner;
+      if (d.border === 'none') inner = `<span style="color:${p.accent};font-size:14px;letter-spacing:.3em;">${escaped(d.glyph)}</span>`;
+      else if (!d.glyph) inner = ruleSpan('100%');
+      else inner = `${ruleSpan('36%')}<span style="display:inline-block;vertical-align:middle;margin:0 10px;color:${p.accent};font-size:12px;line-height:1.25;">${escaped(d.glyph)}</span>${ruleSpan('36%')}`;
+      return `<p${role('divider')}${locked} style="margin:30px 0;padding:0;text-align:center;text-indent:0;line-height:1.25;">${inner}</p>`;
+    };
+
+    const renderList = (type, itemsHtml) => {
+      const items = itemsHtml.length ? itemsHtml : (editorMode ? ['<br/>'] : []);
+      if (!items.length) return '';
+      const rows = items.map((html, index) => {
+        const ordered = type === 'ol';
+        const marker = ordered ? String(index + 1).padStart(2, '0') : (p.bullet || '•');
+        return `<p style="margin:0 0 8px 0;padding:0 0 0 2em;font-family:${p.font};text-indent:-2em;text-align:left;color:${p.ink};font-size:15px;line-height:1.85;"><span${part('marker')}${locked} style="display:inline-block;width:2em;text-indent:0;color:${p.accent};font-family:${ordered ? "Georgia,'Times New Roman',serif" : p.font};font-size:${ordered ? '15px' : '12px'};font-weight:700;">${marker}</span>${html}</p>`;
+      }).join('');
+      return `<section${role('list')}${editorMode ? ` data-list="${type}"` : ''} style="margin:0 0 24px 0;padding:0;">${rows}</section>`;
+    };
+
+    const renderTable = rows => {
+      const kept = editorMode ? rows : rows.filter(row => row.some(Boolean));
+      if (!kept.length) return '';
+      const cols = Math.max(...kept.map(row => row.length), 1);
+      const grid = p.table === 'grid';
+      const html = kept.map((row, rowIndex) => {
+        const head = rowIndex === 0;
+        const border = grid ? `border:1px solid ${p.line};` : `border:0;border-bottom:1px solid ${p.line};${head ? `border-top:1px solid ${p.line};` : ''}`;
+        const cells = Array.from({ length: cols }, (_, colIndex) => {
+          const text = row[colIndex] || '';
+          return `<td style="padding:8px 6px;${border}${head ? `background-color:${p.soft};color:${p.title};font-weight:700;` : `color:${p.ink};`}font-family:${p.font};font-size:13px;line-height:1.6;text-align:center;vertical-align:middle;word-break:break-all;">${escaped(text) || (editorMode ? '<br/>' : '&nbsp;')}</td>`;
+        }).join('');
+        return `<tr>${cells}</tr>`;
+      }).join('');
+      return `<table${role('table')} style="width:100%;margin:24px 0;border-collapse:collapse;"><tbody>${html}</tbody></table>`;
+    };
+
+    const subheading = node => {
+      const variants = {
+        bar: `padding:0 0 0 10px;border-left:3px solid ${p.accent};`,
+        highlight: `display:inline-block;padding:0 8px;background-color:${p.soft};`,
+        center: 'text-align:center;letter-spacing:.1em;',
+        plain: ''
+      };
+      return `<p${role('subheading')} style="margin:28px 0 12px 0;${textBase}color:${p.title};font-size:17px;line-height:1.6;font-weight:700;${variants[p.h3] || ''}">${cleanInlineMarkup(node)}</p>`;
+    };
+
+    const fieldText = (root, name) => root.querySelector(`[data-part="${name}"]`)?.textContent.replace(/\s+/g, ' ').trim() || '';
+    const textWithout = (element, selector) => {
+      const copy = element.cloneNode(true);
+      copy.querySelectorAll(selector).forEach(child => child.remove());
+      return copy.textContent.replace(/\s+/g, ' ').trim();
+    };
+    const isBlankHtml = html => !html.replace(/<br\s*\/?>|&nbsp;/gi, '').trim();
+    const bodyParagraphs = root => [...root.querySelectorAll(':scope > p:not([data-part])')]
+      .map(paragraph => inline(paragraph))
+      .filter(html => !isBlankHtml(html))
+      .join('<br/>');
+    const splitStations = text => String(text || '').split(/\s*(?:→|->|➝|›)\s*/).map(name => name.trim()).filter(Boolean).map(name => ({ name, note: '' }));
+    const parseRow = text => {
+      const match = String(text || '').trim().match(/^([^：:]{1,6})[：:]\s*(.*)$/);
+      return match ? { key: match[1].trim(), value: match[2].trim() } : { key: '', value: String(text || '').trim() };
+    };
+    const pushHeading = parts => {
+      if (!parts.label) return;
+      headingIndex += 1;
+      blocks.push(headingBlock(headingIndex, parts, p, role('heading'), editorMode));
+    };
+
+    const nodes = source.querySelectorAll('h2,h3,p,blockquote,ul,ol,hr,table,figure,img,section[data-template-role],[data-template-role="widget"],.theme-tip-card,.theme-route-card,.route-card,.stay-card');
+    nodes.forEach(node => {
+      if (node.closest(componentSelector) && !node.matches(componentSelector)) return;
+      if (node.closest('[data-template-role="widget"]') && !node.matches('[data-template-role="widget"]')) return;
+      if (node.closest('section[data-template-role]') && !node.matches('section[data-template-role]')) return;
+      if (node.tagName !== 'TABLE' && node.closest('table')) return;
+      if (node.tagName === 'IMG' && node.closest('figure')) return;
+      if (node.tagName === 'P' && node.closest('figure')) return;
+      // Content nested in list items is already rendered as part of the <li>.
+      if (node.parentElement?.closest('li')) return;
+      if (node.matches('section[data-template-role]')) {
+        // Re-render in both modes (keeping the role) so components pick up the
+        // current template and survive any number of re-renders.
+        const type = node.dataset.templateRole;
+        if (type === 'route') {
+          const rail = node.querySelector('[data-part="stations"]');
+          const stations = rail ? [...rail.querySelectorAll(':scope > p')].map(station => ({
+            name: textWithout(station, '[data-part="note"],[data-part="dot"]').replace(/^[●○•]\s*/, ''),
+            note: fieldText(station, 'note')
+          })).filter(station => station.name || station.note) : [];
+          const tags = [...node.querySelectorAll('[data-part="tags"] span')].map(tag => tag.textContent.trim()).filter(Boolean);
+          blocks.push(renderRoute({ label: fieldText(node, 'label'), title: fieldText(node, 'title'), tags, stations }));
+        } else if (type === 'card') {
+          const rowsHost = node.querySelector('[data-part="rows"]');
+          const rows = rowsHost ? [...rowsHost.querySelectorAll(':scope > p')].map(row => {
+            const key = fieldText(row, 'key');
+            return key ? { key, value: textWithout(row, '[data-part="key"]') } : parseRow(row.textContent.replace(/\s+/g, ' '));
+          }).filter(row => row.key || row.value) : [];
+          blocks.push(renderCard({ category: fieldText(node, 'category'), title: fieldText(node, 'title'), rows }));
+        } else if (type === 'quote') {
+          blocks.push(renderQuote({ bodyHtml: bodyParagraphs(node), cite: fieldText(node, 'cite').replace(/^[—–-]+\s*/, '') }));
+        } else if (type === 'note') {
+          blocks.push(renderNote(bodyParagraphs(node)));
+        } else if (type === 'list') {
+          const items = [...node.querySelectorAll(':scope > p')].map(item => {
+            const copy = item.cloneNode(true);
+            copy.querySelectorAll('[data-part="marker"]').forEach(marker => marker.remove());
+            return inline(copy);
+          }).filter(html => !isBlankHtml(html));
+          blocks.push(renderList(node.dataset.list === 'ol' ? 'ol' : 'ul', items));
+        } else {
+          const titleNode = node.querySelector(':scope > [data-part="title"]');
+          blocks.push(renderTip({ title: titleNode ? textWithout(titleNode, '[data-part="badge"]') : '', bodyHtml: bodyParagraphs(node) }));
+        }
+        return;
+      }
+      if (node.matches('[data-template-role="widget"]')) {
+        // Freshly inserted widgets are materialized immediately, so seed each
+        // component with its default content.
+        const widgetType = node.getAttribute('data-widget-type') || 'tip';
+        const firstParagraph = node.querySelector('p');
+        const copy = firstParagraph ? inline(firstParagraph) : escaped(node.innerText.replace(/\s+/g, ' ').trim());
+        if (widgetType === 'quote') {
+          blocks.push(renderQuote({ bodyHtml: copy.replace(/^[“"]|[”"]$/g, ''), cite: '旅途随想' }));
+        } else if (widgetType === 'caption') {
+          blocks.push(`<p${role('caption')} style="margin:20px 0 24px 0;padding:8px 12px;color:${p.accent};font-family:${p.font};font-size:12px;line-height:1.7;text-align:center;text-indent:0;border:1px solid ${p.line};background-color:${p.soft};">${copy}</p>`);
+        } else if (widgetType === 'route') {
+          blocks.push(renderRoute({ label: 'ROUTE 01', title: '推荐徒步路线', tags: ['约 2 小时', '适中强度'], stations: splitStations(firstParagraph?.textContent.replace(/。$/, '')) }));
+        } else if (widgetType === 'lodging') {
+          blocks.push(renderCard({ category: '咖啡馆 · CAFÉ', title: '湖畔独立咖啡生活馆', rows: [{ key: '营业', value: '10:00 – 18:30' }, { key: '人均', value: '¥45' }, { key: '推荐', value: '手冲瑰夏、肉桂卷' }] }));
+        } else if (widgetType === 'table') {
+          blocks.push(renderTable([['项目', '推荐', '人均'], ['早茶', '虾饺、凤爪', '¥80'], ['晚餐', '煲仔饭', '¥60']]));
+        } else if (widgetType === 'divider') {
+          blocks.push(renderDivider());
+        } else if (widgetType === 'list') {
+          blocks.push(renderList('ol', ['保留城市的烟火气', '发现日常中的小美好', '在熟悉的街巷里重新出发']));
+        } else {
+          blocks.push(renderTip({ title: '旅行避坑贴士', bodyHtml: copy }));
+        }
+        return;
+      }
+      if (node.matches(componentSelector)) {
+        // Cards from older templates/drafts. Skip one-character badges such as
+        // the "!" dot before the real title.
+        const labels = [...node.querySelectorAll('strong,span')].map(el => el.textContent.replace(/\s+/g, ' ').trim()).filter(text => text.length > 1);
+        const copy = [...node.querySelectorAll('p')].map(el => el.textContent.trim()).filter(Boolean).join(' ');
+        if (node.matches('.theme-route-card,.route-card')) {
+          const tags = labels.slice(1).map(text => text.replace(/^[·•]\s*/, '')).filter(Boolean);
+          const stationText = copy || labels[labels.length - 1] || '';
+          blocks.push(renderRoute({ label: 'ROUTE', title: labels[0] || '路线推荐', tags: node.matches('.route-card') ? [] : tags, stations: splitStations(stationText.replace(/。$/, '')) }));
+        } else if (node.matches('.stay-card')) {
+          const detail = labels.slice(1).join(' · ') || copy;
+          const rows = detail.split(/\s*·\s*/).filter(Boolean).map(item => {
+            const match = item.match(/^(\S{1,4})\s+(.+)$/);
+            return match ? { key: match[1], value: match[2] } : { key: '', value: item };
+          });
+          blocks.push(renderCard({ category: '旅居', title: labels[0] || '旅居信息', rows }));
+        } else {
+          blocks.push(renderTip({ title: labels[0] || '提示', bodyHtml: escaped(copy) }));
+        }
+        return;
+      }
+      if (node.tagName === 'TABLE') {
+        const rows = [...node.querySelectorAll('tr')].map(tr => [...tr.children].map(cell => cell.textContent.replace(/\s+/g, ' ').trim()));
+        blocks.push(renderTable(rows));
+        return;
+      }
+      if (node.tagName === 'HR' || node.matches('[data-template-role="divider"]')) {
+        blocks.push(renderDivider());
+        return;
+      }
+      if (node.tagName === 'H2') {
+        pushHeading(headingParts(node));
+        return;
+      }
+      if (node.tagName === 'H3') {
+        blocks.push(subheading(node));
+        return;
+      }
+      if (node.tagName === 'BLOCKQUOTE') {
+        blocks.push(renderNote(inline(node)));
+        return;
+      }
+      if (node.tagName === 'UL' || node.tagName === 'OL') {
+        const items = [...node.querySelectorAll(':scope > li')].map(li => inline(li)).filter(html => !isBlankHtml(html));
+        blocks.push(renderList(node.tagName === 'OL' ? 'ol' : 'ul', items));
+        return;
+      }
+      if (node.tagName === 'FIGURE' || node.tagName === 'IMG') {
+        const img = node.tagName === 'IMG' ? node : node.querySelector('img');
+        const src = img?.getAttribute('src') || '';
+        if (!src || /(aurora-cover\.png|placehold\.co|via\.placeholder\.com)/i.test(src)) return;
+        imageIndex += 1;
+        const alt = img.getAttribute('alt') || '';
+        const captionNode = node.querySelector?.('figcaption');
+        let caption = captionNode ? textWithout(captionNode, '[data-part="prefix"]') : '';
+        // Unedited placeholder captions stay visible while editing but are never exported.
+        if (!editorMode && PLACEHOLDER_CAPTION.test(caption)) caption = '';
+        const widthValue = node.tagName === 'FIGURE' ? node.getAttribute('data-width') : '';
+        const width = Math.min(100, Math.max(20, Number.parseFloat(widthValue || img.style.width || '100') || 100));
+        const align = (node.tagName === 'FIGURE' && node.getAttribute('data-align')) || 'center';
+        const margin = align === 'left' ? '28px auto 8px 0' : align === 'right' ? '28px 0 8px auto' : '28px auto 8px auto';
+        const frame = (node.tagName === 'FIGURE' && node.getAttribute('data-frame')) || 'none';
+        const templateFrame = p.imageFrame ? `padding:4px;border:1px solid ${p.line};border-radius:0;` : 'border:0;border-radius:0;';
+        const frameStyle = frame === 'polaroid'
+          ? 'padding:10px 10px 24px 10px;background-color:#FFFFFF;box-shadow:0 6px 20px rgba(0,0,0,.12);border:0;border-radius:0;'
+          : frame === 'shadow'
+            ? 'border:0;border-radius:12px;box-shadow:0 8px 24px rgba(15,23,42,.16);'
+            : frame === 'rounded'
+              ? 'border:0;border-radius:14px;'
+              : templateFrame;
+        const imgRadius = frame === 'rounded' || frame === 'shadow' ? '14px' : frame === 'none' ? (p.imageRadius || '0') : '0';
+        const captionAlign = ['left', 'figure', 'mono'].includes(p.caption) ? 'left' : 'center';
+        const captionFont = p.caption === 'mono' ? MONO : p.font;
+        const prefix = p.caption === 'figure' ? `<span${part('prefix')}${locked} style="display:inline-block;margin:0 6px 0 0;padding:0 5px;background-color:${p.soft};color:${p.ink};font-size:11px;font-weight:700;">图${imageIndex}</span>` : '';
+        const editorFigureAttrs = editorMode ? ` class="editable-img-wrap" data-template-role="image" data-width="${width}%" data-align="${align}" data-frame="${frame}"` : '';
+        blocks.push(`<figure${editorFigureAttrs} style="display:block;width:${width}%;max-width:100%;margin:${margin};${frameStyle}"><img src="${escaped(src)}" alt="${escaped(alt)}" style="display:block;width:100%;max-width:100%;height:auto;border-radius:${imgRadius};"/>${caption ? `<figcaption style="display:block;margin:8px 0 28px 0;padding:0;color:${muted};font-family:${captionFont};font-size:12px;line-height:1.7;text-align:${captionAlign};">${prefix}${escaped(caption)}</figcaption>` : ''}</figure>`);
+        return;
+      }
+      if (node.tagName === 'P') {
+        const text = node.textContent.replace(/\s+/g, ' ').trim();
+        if (!text) return;
+        if (node.closest('h2,h3,blockquote')) return;
+        if (node.dataset.templateRole === 'caption') {
+          blocks.push(`<p${role('caption')} style="margin:20px 0 24px 0;padding:8px 12px;color:${p.accent};font-family:${p.font};font-size:12px;line-height:1.7;text-align:center;text-indent:0;border:1px solid ${p.line};background-color:${p.soft};">${cleanInlineMarkup(node)}</p>`);
+          return;
+        }
+        if (node.dataset.templateRole === 'heading') {
+          pushHeading(headingParts(node));
+          return;
+        }
+        if (node.dataset.templateRole === 'subheading') {
+          blocks.push(subheading(node));
+          return;
+        }
+        // Migrate short eyebrow lines from older templates (e.g. "FIELD NOTE 01 玉渊潭").
+        // Case-sensitive whole words and a length cap keep ordinary prose such as
+        // "我买了一本 Notebook……" from being turned into a heading.
+        if (text.length <= 40 && /[一-鿿]/.test(text) && LEGACY_HEADING_MARKER.test(text)) {
+          const cleaned = cleanLegacyHeading(text);
+          if (cleaned.label) {
+            pushHeading({ label: cleaned.label, sub: '' });
+            return;
+          }
+        }
+        const textAlign = node.style.textAlign || node.getAttribute('align') || 'justify';
+        blocks.push(`<p${role('body')} style="${bodyStyle(p, textAlign, node)}">${inline(node)}</p>`);
+      }
+    });
+    return blocks.join('');
+  }
+
+  function canonicalRootHtml() {
+    const p = canonicalProfile();
+    const padding = p.bg.toUpperCase() === '#FFFFFF' ? '8px 6px' : '20px 14px';
+    return `<section style="display:block;width:100%;margin:0;padding:${padding};background-color:${p.bg};color:${p.ink};font-family:${p.font};word-break:break-word;">${canonicalArticleHtml(false)}</section>`;
+  }
+
+  function materializeEditor() {
+    const p = canonicalProfile();
+    editor.innerHTML = canonicalArticleHtml(true);
+    editor.setAttribute('data-rendered-theme', document.body.getAttribute('data-theme') || 'magazine');
+    editor.style.cssText = `background-color:${p.bg};background-image:none;color:${p.ink};font-family:${p.font};`;
+  }
+
+  function updateWechatCompatibility(content) {
+    if (!wechatCompatibilityStatus || !wechatCompatibilityDetail) return;
+    const compatibilityIssues = [
+      [/<style\b/i, '发现样式块'],
+      [/\bclass=/i, '发现 class 样式'],
+      [/\b(?:data|aria)-[\w-]+=/i, '发现扩展属性'],
+      [/background-image\s*:/i, '发现背景图样式'],
+      [/filter\s*:/i, '发现滤镜样式'],
+      [/transform\s*:/i, '发现变换样式'],
+      [/display\s*:\s*(?:flex|grid)/i, '发现高级布局'],
+      [/\bgap\s*:/i, '发现 gap 间距'],
+      [/<(?:div|article|main|header|footer)\b/i, '发现非基础标签'],
+      [/<svg\b/i, '发现 SVG'],
+      [/(?:^|[;"\s])(?:position|float)\s*:/i, '发现定位或浮动']
+    ].filter(([pattern]) => pattern.test(content)).map(([, label]) => label);
+    const clean = compatibilityIssues.length === 0;
+    wechatCompatibilityStatus.className = `mt-2 px-2 py-1.5 rounded border flex items-center justify-between text-[10px] ${clean ? 'bg-emerald-50 border-emerald-100' : 'bg-amber-50 border-amber-100'}`;
+    wechatCompatibilityDetail.className = clean ? 'text-emerald-600' : 'text-amber-700';
+    wechatCompatibilityDetail.textContent = clean ? '已使用可复制的内联样式' : compatibilityIssues.join('、');
+  }
+
+  generateWechatRichHtml = canonicalRootHtml;
+  sync = function canonicalSync() {
+    const activeTheme = document.body.getAttribute('data-theme') || 'magazine';
+    if (editor.getAttribute('data-rendered-theme') !== activeTheme) {
+      materializeEditor();
+      bindImageSelection();
+    }
+    const content = canonicalRootHtml();
+    preview.innerHTML = content;
+    updateWechatCompatibility(content);
+    const displayTitle = articleTitle.value.trim() || '未命名文章';
+    if (articleTitleEditor && articleTitleEditor.value !== articleTitle.value) articleTitleEditor.value = articleTitle.value;
+    previewTitle.textContent = displayTitle.length > 14 ? `${displayTitle.slice(0, 14)}...` : displayTitle;
+    const count = editor.innerText.replace(/\s+/g, '').length;
+    charCount.textContent = count;
+    const minutes = Math.max(1, Math.ceil(count / 380));
+    readTime.textContent = `${minutes} 分钟`;
+    clearTimeout(window.saveTimer);
+    window.saveTimer = setTimeout(() => {
+      const rootStyle = document.documentElement.style;
+      try {
+        localStorage.setItem('gzh-draft', JSON.stringify({
+          title: articleTitle.value,
+          content: editor.innerHTML,
+          theme: document.body.getAttribute('data-theme'),
+          templateVersion: TEMPLATE_VERSION,
+          accent: rootStyle.getPropertyValue('--accent').trim(),
+          accentSoft: rootStyle.getPropertyValue('--accent-soft').trim(),
+          accentDeep: rootStyle.getPropertyValue('--accent-deep').trim(),
+          fontSize: typographyState.fontSize,
+          lineHeight: typographyState.lineHeight
+        }));
+        saveStatus.textContent = '本地自动保存完成';
+        window.saveFailureNotified = false;
+      } catch (e) {
+        // Usually the ~5MB localStorage quota, hit by embedded base64 images.
+        saveStatus.textContent = '本地保存失败：内容过大';
+        if (!window.saveFailureNotified) {
+          window.saveFailureNotified = true;
+          triggerToast('草稿过大（多为图片），本地保存失败，刷新会丢失最新修改');
+        }
+      }
+    }, 250);
+  };
+
+  function markSelectedTemplate(theme) {
+    document.querySelectorAll('.template-card').forEach(card => {
+      const selected = card.getAttribute('data-theme') === theme;
+      card.classList.toggle('border-2', selected);
+      card.classList.toggle('border-brand', selected);
+      card.classList.toggle('bg-brand-soft', selected);
+      card.classList.toggle('shadow-subtle-purple', selected);
+      card.classList.toggle('border', !selected);
+      const badge = card.querySelector('.flex-1 .flex span:last-child');
+      if (!badge) return;
+      if (selected) {
+        badge.className = 'w-4 h-4 rounded-full bg-brand text-white flex items-center justify-center shrink-0 text-[10px]';
+        badge.textContent = '✓';
+      } else {
+        badge.className = 'text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded';
+        badge.textContent = '套用';
+      }
+      card.setAttribute('aria-selected', selected ? 'true' : 'false');
+    });
+  }
+
+  function renderCanonicalTemplate(theme) {
+    const profile = CANONICAL_PROFILES[theme];
+    if (!profile) return;
+    document.body.setAttribute('data-theme', theme);
+    document.documentElement.style.setProperty('--accent', profile.accent);
+    document.documentElement.style.setProperty('--accent-soft', profile.soft);
+    document.documentElement.style.setProperty('--accent-deep', profile.title);
+    markSelectedTemplate(theme);
+    activeThemeBadge.textContent = profile.name;
+    if (accentDot) accentDot.style.backgroundColor = profile.accent;
+    markSelectedPalette(profile.accent);
+    if (currentSpecimenName) currentSpecimenName.textContent = profile.name;
+    if (currentSpecimenColor) currentSpecimenColor.textContent = profile.note;
+    if (miniPhoneTheme) miniPhoneTheme.textContent = profile.name;
+    if (miniPhoneColor) miniPhoneColor.textContent = profile.note;
+    // Rebuild the editable canvas before refreshing the phone preview so both
+    // surfaces receive the same canonical template snapshot.
+    materializeEditor();
+    editor.offsetHeight;
+    bindImageSelection();
+    sync();
+    // A second frame protects against stale layout/style work from the click
+    // event, especially when the browser is rendering a large editable canvas.
+    requestAnimationFrame(() => {
+      if (document.body.getAttribute('data-theme') !== theme) return;
+      materializeEditor();
+      bindImageSelection();
+      sync();
+    });
+    commitHistoryState();
+    triggerToast(`已套用「${profile.name}」模板`);
+  }
+
+  // The template list is generated from CANONICAL_PROFILES so the sidebar,
+  // renderer and saved drafts can never disagree about which templates exist.
+  document.querySelectorAll('.template-card').forEach(card => card.remove());
+  Object.entries(CANONICAL_PROFILES).forEach(([theme, profile]) => {
+    const card = document.createElement('div');
+    card.className = 'template-card p-3 rounded-lg border border-ink-200/80 bg-white hover:border-brand/50 shadow-2xs cursor-pointer transition flex space-x-3 items-center';
+    card.setAttribute('data-theme', theme);
+    card.innerHTML = `<div class="w-12 h-16 rounded border border-ink-200 shrink-0 overflow-hidden flex flex-col justify-between" style="background:${profile.bg};padding:5px 4px;"><div style="color:${profile.accent};font-family:${profile.font};font-size:11px;line-height:1.25;font-weight:700;white-space:nowrap;overflow:hidden;">${escaped(profile.thumb)}</div><div><div style="height:2px;width:90%;margin-bottom:3px;background:${profile.title};"></div><div style="height:2px;margin-bottom:2px;background:${profile.line};"></div><div style="height:2px;width:75%;background:${profile.line};"></div></div><div style="height:6px;background:${profile.soft};border-left:2px solid ${profile.accent};"></div></div><div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-1"><span class="font-serif text-sm font-bold text-ink-900 truncate">${escaped(profile.name)}</span><span class="text-[10px] text-ink-400 font-medium px-1.5 py-0.5 bg-ink-100 rounded">套用</span></div><div class="text-[11px] text-ink-600 truncate">${escaped(profile.note)}</div></div>`;
+    card.addEventListener('click', () => renderCanonicalTemplate(theme));
+    templateListHost.appendChild(card);
+  });
+
+  const templateLabel = document.querySelector('#panel-templates > div:first-child span:first-child');
+  if (templateLabel) templateLabel.textContent = `精选排版模板 (${Object.keys(CANONICAL_PROFILES).length}套)`;
+  // Restore the template, palette and typography saved with the draft. Without
+  // this every reload fell back to the default template and colours.
+  (function restoreSavedPreferences() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('gzh-draft') || 'null'); } catch (e) {}
+    const theme = resolveTheme(saved?.theme || document.body.getAttribute('data-theme') || 'magazine');
+    const profile = CANONICAL_PROFILES[theme];
+    // Palette overrides only carry over from drafts saved with the current
+    // template set; older colours belonged to templates that no longer exist.
+    const palette = saved?.templateVersion === TEMPLATE_VERSION && saved.theme === theme ? saved : null;
+    document.body.setAttribute('data-theme', theme);
+    document.documentElement.style.setProperty('--accent', palette?.accent || profile.accent);
+    document.documentElement.style.setProperty('--accent-soft', palette?.accentSoft || profile.soft);
+    document.documentElement.style.setProperty('--accent-deep', palette?.accentDeep || profile.title);
+    if (saved?.fontSize) typographyState.fontSize = clampTypographyValue(saved.fontSize, 12, 30, 16);
+    if (saved?.lineHeight) typographyState.lineHeight = clampTypographyValue(saved.lineHeight, 1.5, 2.4, 1.88);
+    if (activeThemeBadge) activeThemeBadge.textContent = profile.name;
+    if (currentSpecimenName) currentSpecimenName.textContent = profile.name;
+    if (currentSpecimenColor) currentSpecimenColor.textContent = profile.note;
+    if (miniPhoneTheme) miniPhoneTheme.textContent = profile.name;
+    if (miniPhoneColor) miniPhoneColor.textContent = profile.note;
+    if (accentDot) accentDot.style.backgroundColor = palette?.accent || profile.accent;
+    markSelectedPalette(palette?.accent || profile.accent);
+  })();
+  updateTypographyControls();
+  materializeEditor();
+  markSelectedTemplate(document.body.getAttribute('data-theme') || 'magazine');
+
+  // Bind editor-only controls first, then render a clean preview/draft snapshot.
+  bindImageSelection();
+  sync();
+  commitHistoryState();
+</script>
+</body>
+</html>
+
+
