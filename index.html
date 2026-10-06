@@ -2333,7 +2333,7 @@
       if ((m = t.match(/^##\s+(.+)$/))) return { kind: 'md2', text: stripMd(m[1]), full: stripMd(m[1]) };
       if ((m = t.match(/^#{3,6}\s+(.+)$/))) return { kind: 'md3', text: stripMd(m[1]), full: stripMd(m[1]) };
       const rules = [
-        ['chapter', new RegExp(`^第${NUM}[章节篇部站天日]\\s*[：:、.．·|｜\\-—]?\\s*(.*)$`)],
+        ['chapter', new RegExp(`^第${NUM}(?:部分|[章节篇部站天日])\\s*[：:、.．·\\-—]?\\s*(.*)$`)],
         ['day', /^(?:Day|DAY|D)\s*\d{1,2}(?!\d)\s*[：:·|｜\-—]?\s*(.*)$/],
         ['cn', /^[一二三四五六七八九十]+\s*[、.．]\s*(.+)$/],
         ['twoDigit', /^0\d\s*(?:[.、．|｜/:：]\s*|\s+)(.+)$/],
@@ -2349,7 +2349,8 @@
         const rest = stripMd(m.slice(1).find(Boolean) || '');
         const full = kind === 'bracket' || kind === 'bold' ? rest : stripMd(t);
         if (!isShort(full)) return null;
-        return { kind, text: kind === 'day' ? full : (rest || full), full };
+        // "第一部分｜副标题": the numbered phrase itself is the title.
+        return { kind, text: kind === 'day' || !rest || /^[|｜]/.test(rest) ? full : rest, full };
       }
       return null;
     };
@@ -2514,7 +2515,10 @@
     const explicit = PRIORITY.filter(has);
     const topKind = has('md2') ? 'md2' : explicit[0] || (has('md3') ? 'md3' : 'plain');
     const levelOf = tk => tk.kind === 'md2' ? 2 : tk.kind === topKind ? 2 : 3;
-    const sectionLabel = text => text.replace(new RegExp(`^(?:第${NUM}[章节篇部站]|[一二三四五六七八九十]+\\s*[、.．]|0?\\d{1,2}\\s*[、.．|｜/:：]|[（(][一二三四五六七八九十]+[)）])\\s*`), '').trim() || text;
+    const sectionLabel = text => {
+      const rest = text.replace(new RegExp(`^(?:第${NUM}(?:部分|[章节篇部站])|[一二三四五六七八九十]+\\s*[、.．]|0?\\d{1,2}\\s*[、.．|｜/:：]|[（(][一二三四五六七八九十]+[)）])\\s*`), '').replace(/^[\s：:、.．·\-—]+/, '').trim();
+      return rest && !/^[|｜]/.test(rest) ? rest : text;
+    };
 
     const stats = { h2: 0, h3: 0, route: 0, card: 0, tip: 0, quote: 0, table: 0, image: 0 };
     const cardCategory = rows => {
@@ -2774,16 +2778,16 @@
     festival: { name: '16 节庆中国红', note: '红底标题 · 金线喜庆', thumb: '❖', font: SERIF, bg: '#FFF8F0', ink: '#4A2A22', title: '#8E1B1B', accent: '#C0282D', em: '#C0282D', soft: '#FBE7DC', line: '#E2B77A', muted: '#9C7A62', h3: 'center', quote: 'band', divider: { glyph: '❖', border: 'solid' }, table: 'grid', bullet: '❖', caption: 'center', radius: '0', numerals: 'chinese', imageFrame: true, tipLabel: '吉' },
     health: { name: '17 健康科普', note: '十字标记 · 清透医蓝', thumb: '✚', font: SANS, bg: '#FFFFFF', ink: '#34404D', title: '#14466B', accent: '#1F8AC0', soft: '#EAF5FB', line: '#C4E1F0', muted: '#7B8C9B', h3: 'bar', quote: 'bar', divider: { glyph: '✚', border: 'solid' }, table: 'lines', bullet: '✓', caption: 'center', radius: '8px', imageRadius: '8px', tipLabel: '小知识' },
     emotion: { name: '18 柔粉心事', note: '心形点缀 · 温柔治愈', thumb: '♡', font: SERIF, bg: '#FFF9FA', ink: '#5A4A50', title: '#7A3B52', accent: '#D46A8A', soft: '#FBEAF0', line: '#F2C6D4', muted: '#A68D96', h3: 'center', quote: 'center', divider: { glyph: '·  ♡  ·', border: 'none' }, table: 'lines', bullet: '♡', caption: 'center', radius: '12px', imageRadius: '12px' },
-    career: { name: '19 职场干货', note: '荧光标注 · 清晰干练', thumb: 'LESSON', font: SANS, bg: '#FFFFFF', ink: '#2F3640', title: '#1E293B', accent: '#CA8A04', soft: '#FFF1B8', line: '#E5E7EB', muted: '#7B8494', h3: 'bar', quote: 'bar', divider: { glyph: '', border: 'solid' }, table: 'grid', bullet: '▪', caption: 'left', radius: '4px', highlight: true, tipLabel: '干货' },
-    fashion: { name: '20 时尚美妆', note: '斜体大号 · 玫瑰摩登', thumb: 'No.01', font: SERIF, bg: '#FFFFFF', ink: '#3A3A3A', title: '#111111', accent: '#C2185B', soft: '#FCE8EF', line: '#EBC9D6', muted: '#9E8A92', h3: 'center', quote: 'center', divider: { glyph: '◇', border: 'solid' }, table: 'lines', bullet: '◇', caption: 'center', radius: '0', tipLabel: 'BEAUTY' },
+    career: { name: '19 职场干货', note: '荧光标注 · 清晰干练', thumb: 'LESSON', font: SANS, bg: '#FFFFFF', ink: '#2F3640', title: '#1E293B', accent: '#CA8A04', soft: '#FFF1B8', line: '#E5E7EB', muted: '#7B8494', h3: 'bar', quote: 'bar', divider: { glyph: '▰ ▰ ▰ ▱ ▱', border: 'none' }, table: 'grid', bullet: '✔', caption: 'left', radius: '4px', highlight: true, tipLabel: '干货' },
+    fashion: { name: '20 时尚美妆', note: '斜体大号 · 玫瑰摩登', thumb: 'No.01', font: SERIF, bg: '#FFFFFF', ink: '#3A3A3A', title: '#111111', accent: '#C2185B', soft: '#FCE8EF', line: '#EBC9D6', muted: '#9E8A92', h3: 'center', quote: 'center', divider: { glyph: '◇', border: 'solid' }, table: 'lines', bullet: '—', caption: 'center', radius: '0', tipLabel: 'BEAUTY', bodyAlign: 'left', tracking: '.06em' },
     home: { name: '21 家居生活', note: '小屋图标 · 鼠尾草绿', thumb: '⌂', font: SANS, bg: '#FBF8F3', ink: '#4A443C', title: '#3E4A3A', accent: '#7C9070', soft: '#ECEFE6', line: '#D9D3C7', muted: '#9A9286', h3: 'highlight', quote: 'round', divider: { glyph: '⌂', border: 'solid' }, table: 'lines', bullet: '•', caption: 'center', radius: '10px', imageRadius: '10px', tipLabel: '好物' },
     pet: { name: '22 萌宠日常', note: '对话气泡 · 焦糖奶黄', thumb: '汪喵', font: SANS, bg: '#FFFCF5', ink: '#4A3F35', title: '#8A4B1E', accent: '#F28C38', soft: '#FFEFD9', line: '#F5D3A8', muted: '#A68B70', h3: 'highlight', quote: 'dashed', divider: { glyph: '●  ●  ●', border: 'none' }, table: 'grid', bullet: '●', caption: 'center', radius: '16px', imageRadius: '16px', highlight: true, tipLabel: '铲屎官' },
     film: { name: '23 影视剧评', note: '电影票根 · 银幕红黑', thumb: 'SCENE', font: SANS, bg: '#FFFFFF', ink: '#2E2E33', title: '#1C1C22', accent: '#D7263D', soft: '#F4F1EC', line: '#D8D2C8', muted: '#8B8790', h3: 'bar', quote: 'bar', divider: { glyph: '■  ■  ■', border: 'none' }, table: 'lines', bullet: '●', caption: 'mono', radius: '0', tipLabel: '观影' },
     gaming: { name: '24 电竞游戏', note: '暗色霓虹 · 等级徽章', thumb: 'LV.', font: SANS, bg: '#15131F', ink: '#CFCBE6', title: '#F1EEFF', accent: '#8B5CF6', em: '#3DE8A0', soft: '#211D33', line: '#3B3561', muted: '#8C86AD', h3: 'bar', quote: 'bar', divider: { glyph: '◆', border: 'solid' }, table: 'grid', bullet: '›', caption: 'mono', radius: '4px', tipLabel: 'GG' },
-    notice: { name: '25 政务通知', note: '公文规范 · 庄重红线', thumb: '一、', font: SERIF, bg: '#FFFFFF', ink: '#262626', title: '#1A1A1A', accent: '#C62828', soft: '#FBF1F1', line: '#E3C4C4', muted: '#808080', h3: 'plain', quote: 'rule', divider: { glyph: '', border: 'solid' }, table: 'grid', bullet: '●', caption: 'center', radius: '0', indent: true, tipLabel: '提示' },
+    notice: { name: '25 政务通知', note: '公文规范 · 庄重红线', thumb: '一、', font: SERIF, bg: '#FFFFFF', ink: '#262626', title: '#1A1A1A', accent: '#C62828', soft: '#FBF1F1', line: '#E3C4C4', muted: '#808080', h3: 'plain', quote: 'rule', divider: { glyph: '', border: 'solid' }, table: 'grid', bullet: '●', caption: 'center', radius: '0', indent: true, tipLabel: '提示', bodyFont: "'FangSong','STFangsong','仿宋',serif" },
     wedding: { name: '26 婚礼喜事', note: '香槟金线 · 浪漫典雅', thumb: '✧', font: SERIF, bg: '#FFFBF7', ink: '#5B4A42', title: '#8C5E3C', accent: '#C9A063', soft: '#F7EDE1', line: '#E6D3BC', muted: '#A8927F', h3: 'center', quote: 'center', divider: { glyph: '—  ✧  —', border: 'none' }, table: 'lines', bullet: '✧', caption: 'center', radius: '0', imageFrame: true, tipLabel: '囍' },
     sale: { name: '27 电商促销', note: '爆款标签 · 红黄抢眼', thumb: 'HOT', font: SANS, bg: '#FFFFFF', ink: '#333333', title: '#D6002E', accent: '#FF2D55', soft: '#FFF6CC', line: '#FFD43B', muted: '#8C8C8C', h3: 'highlight', quote: 'dashed', divider: { glyph: '★', border: 'dashed' }, table: 'grid', bullet: '★', caption: 'center', radius: '8px', imageRadius: '8px', highlight: true, tipLabel: '福利' },
-    art: { name: '28 艺术展览', note: '展签编号 · 克莱因蓝', thumb: 'N°', font: SERIF, bg: '#FAFAF8', ink: '#2A2A2A', title: '#111111', accent: '#1F3FBF', soft: '#EEF0F8', line: '#D6D6D2', muted: '#8A8A85', h3: 'plain', quote: 'rule', divider: { glyph: '', border: 'solid' }, table: 'lines', bullet: '—', caption: 'mono', radius: '0', tipLabel: 'NOTE' }
+    art: { name: '28 艺术展览', note: '展签编号 · 克莱因蓝', thumb: 'N°', font: SERIF, bg: '#FAFAF8', ink: '#2A2A2A', title: '#111111', accent: '#1F3FBF', soft: '#EEF0F8', line: '#D6D6D2', muted: '#8A8A85', h3: 'plain', quote: 'rule', divider: { glyph: '', border: 'solid' }, table: 'lines', bullet: '—', caption: 'mono', radius: '0', tipLabel: 'NOTE', bodyAlign: 'left', tracking: '.04em' }
   };
   // Retired templates map to their closest replacement so old drafts still open.
   const LEGACY_THEME_ALIASES = { travel: 'nature', stay: 'city', olive: 'nature', wood: 'city', lucid: 'reading', paper: 'reading', blue: 'magazine', signal: 'tech', mint: 'lingnan', minimal: 'reading' };
@@ -2880,7 +2884,8 @@
     const fontStyle = sourceStyle?.fontStyle || 'normal';
     const textDecoration = (sourceStyle?.textDecoration || 'none').replace(/"/g, "'");
     const indent = profile.indent ? '2em' : '0';
-    return `margin:0 0 22px 0;padding:0;color:${profile.ink};font-family:${profile.font};font-size:${typographyState.fontSize}px;font-weight:${fontWeight};font-style:${fontStyle};text-decoration:${textDecoration};line-height:${typographyState.lineHeight};letter-spacing:.02em;text-indent:${indent};text-align:${align};word-break:break-word;`;
+    const bodyAlign = align === 'justify' && profile.bodyAlign ? profile.bodyAlign : align;
+    return `margin:0 0 22px 0;padding:0;color:${profile.ink};font-family:${profile.bodyFont || profile.font};font-size:${typographyState.fontSize}px;font-weight:${fontWeight};font-style:${fontStyle};text-decoration:${textDecoration};line-height:${typographyState.lineHeight};letter-spacing:${profile.tracking || '.02em'};text-indent:${indent};text-align:${bodyAlign};word-break:break-word;`;
   }
 
   function cleanLegacyHeading(text) {
@@ -3120,6 +3125,7 @@
     const inline = node => emphasize(cleanInlineMarkup(node));
 
     const renderTip = ({ title, bodyHtml }) => {
+      if (DESIGN.tip) return DESIGN.tip({ title, bodyHtml });
       const box = p.quote === 'frame' ? `border:1px solid ${p.ink};` : `border-left:3px solid ${p.accent};`;
       return `<section${role('tip')} style="margin:26px 0;padding:12px 16px;${box}border-radius:0;background-color:${p.soft};"><p${part('title')} style="margin:0 0 6px 0;${textBase}color:${p.title};font-size:${fz(14)}px;line-height:1.7;font-weight:700;"><span${part('badge')}${locked} style="display:inline-block;margin:0 8px 0 0;padding:0 7px;background-color:${p.accent};color:#FFFFFF;font-size:${fz(11)}px;line-height:1.8;letter-spacing:.1em;font-weight:700;">${p.tipLabel || 'TIP'}</span>${escaped(title)}</p>${bodyHtml || editorMode ? `<p style="margin:0;${textBase}color:${p.ink};font-size:${fz(14)}px;line-height:${typographyState.lineHeight};">${emptyEditable(bodyHtml)}</p>` : ''}</section>`;
     };
@@ -3128,23 +3134,26 @@
       const list = stations.length ? stations : (editorMode ? [{ name: '点击编辑站点', note: '' }] : []);
       const tagHtml = tags.map(tag => `<span${part('tag')} style="display:inline-block;margin:0 6px 4px 0;padding:1px 9px;border-radius:999px;background-color:${p.soft};color:${p.title};font-size:${fz(12)}px;line-height:1.7;">${escaped(tag)}</span>`).join('');
       const stationHtml = list.map((station, index) => {
-        const glyph = index === 0 || index === list.length - 1 ? '●' : '○';
+        const ends = index === 0 || index === list.length - 1;
+        const glyph = DESIGN.routeDots ? DESIGN.routeDots(index, ends) : (ends ? '●' : '○');
         const note = station.note ? `<br/><span${part('note')} style="display:inline-block;margin:0 0 0 20px;color:${muted};font-size:${fz(12)}px;line-height:1.6;">${escaped(station.note)}</span>` : '';
         return `<p style="margin:0;padding:0 0 10px 0;font-family:${p.font};text-indent:0;text-align:left;color:${p.ink};font-size:${fz(14)}px;line-height:1.7;"><span${part('dot')}${locked} style="margin:0 8px 0 0;color:${p.accent};font-size:${fz(12)}px;">${glyph}</span>${escaped(station.name)}${note}</p>`;
       }).join('');
-      const frame = radius === '0'
+      const frame = DESIGN.routeFrame || (radius === '0'
         ? `border:1px solid ${p.line};border-top:3px solid ${p.accent};border-radius:0;`
-        : `border:1px solid ${p.line};border-radius:${radius};`;
+        : `border:1px solid ${p.line};border-radius:${radius};`);
       return `<section${role('route')} style="margin:26px 0;padding:14px 16px 6px 16px;${frame}"><p${part('label')} style="margin:0 0 2px 0;${textBase}color:${p.accent};font-family:${MONO};font-size:${fz(11)}px;line-height:1.6;letter-spacing:.15em;">${escaped(label || 'ROUTE')}</p><p${part('title')} style="margin:0 0 8px 0;${textBase}color:${p.title};font-size:${fz(16)}px;line-height:1.6;font-weight:700;">${escaped(title)}</p>${tagHtml ? `<p${part('tags')} style="margin:0 0 6px 0;${textBase}line-height:1.6;">${tagHtml}</p>` : ''}${stationHtml ? `<section${part('stations')} style="margin:6px 0 8px 4px;padding:2px 0 0 14px;border-left:1px dashed ${p.line};">${stationHtml}</section>` : ''}</section>`;
     };
 
     const renderCard = ({ category, title, rows }) => {
+      if (DESIGN.card) return DESIGN.card({ category, title, rows });
       const rowHtml = rows.map(row => `<p style="margin:0 0 4px 0;${textBase}color:${p.ink};font-size:${fz(13)}px;line-height:1.8;">${row.key ? `<span${part('key')} style="display:inline-block;width:4em;color:${p.accent};font-size:${fz(12)}px;">${escaped(row.key)}</span>` : ''}${escaped(row.value)}</p>`).join('');
       const border = p.quote === 'frame' ? p.ink : p.line;
       return `<section${role('card')} style="margin:26px 0;padding:0;border:1px solid ${border};border-radius:${radius};"><section style="margin:0 16px;padding:14px 0 12px 0;border-bottom:1px dashed ${border};">${category ? `<p${part('category')} style="margin:0 0 4px 0;${textBase}color:${p.accent};font-size:${fz(11)}px;line-height:1.6;letter-spacing:.1em;">${escaped(category)}</p>` : ''}<p${part('title')} style="margin:0;${textBase}color:${p.title};font-size:${fz(17)}px;line-height:1.5;font-weight:700;">${escaped(title)}</p></section>${rowHtml || editorMode ? `<section${part('rows')} style="margin:0;padding:10px 16px 10px 16px;">${rowHtml || `<p style="margin:0;${textBase}font-size:${fz(13)}px;line-height:1.8;color:${p.ink};"><br/></p>`}</section>` : ''}</section>`;
     };
 
     const renderQuote = ({ bodyHtml, cite }) => {
+      if (DESIGN.quote) return DESIGN.quote({ bodyHtml, cite });
       if (p.quote === 'center') {
         return `<section${role('quote')} style="margin:30px 0;padding:0 18px;text-align:center;"><p${part('mark')}${locked} style="margin:0;padding:0;text-indent:0;text-align:center;color:${p.line};font-family:Georgia,'Songti SC',serif;font-size:${fz(40)}px;line-height:1.25;">“</p><p style="margin:4px 0 12px 0;padding:0;text-indent:0;text-align:center;color:${p.title};font-family:${p.font};font-size:${fz(17)}px;font-style:italic;line-height:${typographyState.lineHeight};">${emptyEditable(bodyHtml)}</p>${cite || editorMode ? `<p${part('cite')} style="margin:0;padding:0;text-indent:0;text-align:center;line-height:1.6;"><span style="display:inline-block;padding:8px 0 0 0;border-top:1px solid ${p.accent};color:${muted};font-family:${p.font};font-size:${fz(12)}px;">— ${escaped(cite)}</span></p>` : ''}</section>`;
       }
@@ -3167,6 +3176,7 @@
     const renderNote = bodyHtml => `<section${role('note')} style="margin:24px 0;padding:2px 0 2px 14px;border-left:2px solid ${p.line};border-radius:0;"><p style="margin:0;${textBase}color:${muted};font-size:${fz(15)}px;line-height:${typographyState.lineHeight};">${emptyEditable(bodyHtml)}</p></section>`;
 
     const renderDivider = () => {
+      if (DESIGN.divider) return DESIGN.divider();
       const d = p.divider || { glyph: '◆', border: 'solid' };
       const ruleStyle = d.border === 'double' ? `3px double ${p.line}` : `1px ${d.border} ${p.line}`;
       const ruleSpan = width => `<span style="display:inline-block;width:${width};vertical-align:middle;border-top:${ruleStyle};font-size:1px;line-height:2px;">&nbsp;</span>`;
@@ -3195,10 +3205,11 @@
       const grid = p.table === 'grid';
       const html = kept.map((row, rowIndex) => {
         const head = rowIndex === 0;
-        const border = grid ? `border:1px solid ${p.line};` : `border:0;border-bottom:1px solid ${p.line};${head ? `border-top:1px solid ${p.line};` : ''}`;
+        const lineColor = DESIGN.tableLine || p.line;
+        const border = grid ? `border:1px solid ${lineColor};` : `border:0;border-bottom:1px solid ${lineColor};${head ? `border-top:1px solid ${lineColor};` : ''}`;
         const cells = Array.from({ length: cols }, (_, colIndex) => {
           const text = row[colIndex] || '';
-          return `<td style="padding:8px 6px;${border}${head ? `background-color:${p.soft};color:${p.title};font-weight:700;` : `color:${p.ink};`}font-family:${p.font};font-size:${fz(13)}px;line-height:1.6;text-align:center;vertical-align:middle;word-break:break-all;">${escaped(text) || (editorMode ? '<br/>' : '&nbsp;')}</td>`;
+          return `<td style="padding:8px 6px;${border}${head ? (DESIGN.tableHead || `background-color:${p.soft};color:${p.title};font-weight:700;`) : `color:${p.ink};`}font-family:${p.font};font-size:${fz(13)}px;line-height:1.6;text-align:center;vertical-align:middle;word-break:break-all;">${escaped(text) || (editorMode ? '<br/>' : '&nbsp;')}</td>`;
         }).join('');
         return `<tr>${cells}</tr>`;
       }).join('');
@@ -3212,8 +3223,121 @@
         center: 'text-align:center;letter-spacing:.1em;',
         plain: ''
       };
-      return `<p${role('subheading')} style="margin:28px 0 12px 0;${textBase}color:${p.title};font-size:${fz(17)}px;line-height:1.6;font-weight:700;${variants[p.h3] || ''}">${cleanInlineMarkup(node)}</p>`;
+      return `<p${role('subheading')} style="margin:28px 0 12px 0;${textBase}color:${p.title};font-size:${fz(17)}px;line-height:1.6;font-weight:700;${DESIGN.h3 || variants[p.h3] || ''}">${cleanInlineMarkup(node)}</p>`;
     };
+
+
+    // Theme designs (v5): templates can replace whole components, not only
+    // recolour them, so each theme reads as its own design. Every variant keeps
+    // the data-part structure the parser above relies on, so edits survive
+    // re-rendering and template switches. Only WeChat-safe inline styles.
+    const KAI = "'KaiTi','STKaiti','楷体',serif";
+    const markP = (style, text) => `<p${part('mark')}${locked} style="margin:0 0 8px 0;padding:0;text-indent:0;line-height:1.6;${style}">${text}</p>`;
+    const tipFrom = c => ({ title, bodyHtml }) => `<section${role('tip')} style="margin:26px 0;${c.box}"><p${part('title')} style="margin:0 0 6px 0;${textBase}line-height:1.7;${c.title}"><span${part('badge')}${locked} style="${c.badge}">${c.label}</span>${escaped(title)}</p>${bodyHtml || editorMode ? `<p style="margin:0;${textBase}${c.body}">${emptyEditable(bodyHtml)}</p>` : ''}</section>`;
+    const quoteFrom = c => ({ bodyHtml, cite }) => `<section${role('quote')} style="margin:30px 0;${c.box}">${c.mark || ''}<p style="margin:0;${textBase}${c.body}">${emptyEditable(bodyHtml)}</p>${cite || editorMode ? `<p${part('cite')} style="margin:10px 0 0 0;${textBase}line-height:1.6;${c.cite}">—— ${escaped(cite)}</p>` : ''}</section>`;
+    const cardFrom = c => ({ category, title, rows }) => {
+      const rowHtml = rows.map(row => `<p style="margin:0 0 4px 0;${textBase}${c.row}">${row.key ? `<span${part('key')} style="${c.key}">${escaped(row.key)}</span>` : ''}${escaped(row.value)}</p>`).join('');
+      return `<section${role('card')} style="margin:26px 0;padding:0;${c.box}"><section style="${c.head}">${category ? `<p${part('category')} style="margin:0 0 4px 0;${textBase}line-height:1.6;${c.cat}">${escaped(category)}</p>` : ''}<p${part('title')} style="margin:0;${textBase}line-height:1.5;${c.title}">${escaped(title)}</p></section>${rowHtml || editorMode ? `<section${part('rows')} style="margin:0;${c.rows}">${rowHtml || `<p style="margin:0;${textBase}${c.row}">${editorMode ? '<br/>' : ''}</p>`}</section>` : ''}</section>`;
+    };
+    const lockedP = style => html => `<p${role('opening')}${locked} style="padding:0;text-indent:0;${style}">${html}</p>`;
+    const DESIGNS = {
+      career: {
+        routeFrame: `border:1px solid ${p.line};border-left:4px solid ${p.title};border-radius:4px;`,
+        routeDots: (i, ends) => ends ? '▶' : '▷',
+        tip: { box: `padding:14px 16px;background-color:${p.soft};border-radius:4px;`, title: `color:${p.title};font-size:${fz(15)}px;font-weight:700;`, badge: `display:inline-block;margin:0 8px 0 0;padding:0 8px;background-color:${p.title};color:#FFFFFF;font-size:${fz(11)}px;line-height:1.9;letter-spacing:.1em;font-weight:700;`, label: '划重点', body: `color:${p.ink};font-size:${fz(14)}px;line-height:1.85;` },
+        quote: { box: 'padding:0;', mark: markP(`margin:0;color:${p.accent};font-family:Georgia,serif;font-size:${fz(48)}px;line-height:1;font-weight:700;`, '“'), body: `color:${p.title};font-size:${fz(18)}px;line-height:1.7;font-weight:700;`, cite: `text-align:right;color:${muted};font-size:${fz(12)}px;` },
+        card: { box: `border:1px solid ${p.line};border-radius:4px;`, head: `margin:0;padding:12px 16px;border-bottom:1px solid ${p.line};`, cat: `color:${p.accent};font-size:${fz(11)}px;letter-spacing:.15em;font-weight:700;`, title: `color:${p.title};font-size:${fz(17)}px;font-weight:700;`, rows: 'padding:10px 16px;', row: `color:${p.ink};font-size:${fz(13)}px;line-height:2;`, key: `display:inline-block;margin:0 10px 0 0;padding:0 6px;background-color:${p.title};color:#FFFFFF;font-size:${fz(11)}px;line-height:1.8;font-weight:700;` },
+        h3: `display:inline-block;padding:0 2px;border-bottom:5px solid ${p.soft};line-height:1.35;`
+      },
+      fashion: {
+        routeFrame: `border:0;border-top:1px solid ${p.title};border-bottom:1px solid ${p.title};`,
+        routeDots: (i, ends) => ends ? '◆' : '◇',
+        tip: { box: `padding:14px 2px;border-top:1px solid ${p.title};border-bottom:1px solid ${p.title};`, title: `color:${p.title};font-size:${fz(14)}px;letter-spacing:.12em;font-weight:700;`, badge: `margin:0 10px 0 0;color:${p.accent};font-family:Georgia,'Times New Roman',serif;font-size:${fz(14)}px;font-style:italic;font-weight:400;letter-spacing:.04em;`, label: 'Beauty Tip', body: `color:${p.ink};font-size:${fz(14)}px;line-height:1.9;letter-spacing:.04em;` },
+        quote: { box: `padding:20px 6px;border-top:1px solid ${p.title};border-bottom:1px solid ${p.title};`, body: `text-align:center;color:${p.accent};font-size:${fz(20)}px;font-style:italic;line-height:1.7;letter-spacing:.06em;`, cite: `text-align:center;color:${muted};font-size:${fz(11)}px;letter-spacing:.2em;` },
+        card: { box: `border:1px solid ${p.title};`, head: 'margin:0;padding:16px 18px 10px;', cat: `text-align:center;color:${p.accent};font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:${fz(13)}px;`, title: `text-align:center;color:${p.title};font-size:${fz(17)}px;letter-spacing:.16em;font-weight:700;`, rows: `padding:10px 18px 14px;border-top:1px solid ${p.line};`, row: `color:${p.ink};font-size:${fz(13)}px;line-height:2;letter-spacing:.04em;`, key: `display:inline-block;width:5em;color:${muted};font-size:${fz(11)}px;letter-spacing:.15em;` },
+        h3: `font-style:italic;letter-spacing:.1em;color:${p.accent};font-weight:600;`
+      },
+      home: {
+        routeFrame: `border:0;border-radius:14px;background-color:${p.soft};`,
+        routeDots: (i, ends) => ends ? '⌂' : '·',
+        tip: { box: `padding:16px 18px;border-radius:14px;background-color:${p.soft};`, title: `color:${p.title};font-size:${fz(15)}px;font-weight:700;`, badge: `display:inline-block;margin:0 8px 0 0;padding:0 10px;border-radius:999px;background-color:${p.accent};color:#FFFFFF;font-size:${fz(11)}px;line-height:1.9;font-weight:700;`, label: '✎ 好物', body: `color:${p.ink};font-size:${fz(14)}px;line-height:1.85;` },
+        quote: { box: `padding:18px 20px;border-radius:14px;background-color:#FFFFFF;border:1px solid ${p.line};`, mark: markP(`color:${p.accent};font-size:${fz(12)}px;letter-spacing:.2em;`, '⌂ 生活手记'), body: `color:${p.title};font-size:${fz(16)}px;line-height:1.9;`, cite: `text-align:right;color:${muted};font-size:${fz(12)}px;` },
+        card: { box: `border-radius:14px;background-color:${p.soft};`, head: 'margin:0;padding:14px 18px 6px;', cat: `color:${p.accent};font-size:${fz(11)}px;letter-spacing:.1em;`, title: `color:${p.title};font-size:${fz(17)}px;font-weight:700;`, rows: 'padding:4px 18px 14px;', row: `color:${p.ink};font-size:${fz(13)}px;line-height:2;`, key: `display:inline-block;width:4.5em;color:${p.accent};font-size:${fz(12)}px;font-weight:700;` },
+        h3: `display:inline-block;padding:2px 14px;border-radius:999px;background-color:${p.soft};`,
+        image: `padding:8px;background-color:${p.soft};border:0;border-radius:16px;`
+      },
+      pet: {
+        routeFrame: `border:2px dashed ${p.accent};border-radius:18px;`,
+        routeDots: (i, ends) => ends ? '★' : '☆',
+        tip: { box: `padding:14px 16px;border:2px dashed ${p.accent};border-radius:18px;background-color:#FFFFFF;`, title: `color:${p.title};font-size:${fz(15)}px;font-weight:700;`, badge: `display:inline-block;margin:0 8px 0 0;padding:0 10px;border-radius:999px;background-color:${p.accent};color:#FFFFFF;font-size:${fz(11)}px;line-height:1.9;font-weight:700;`, label: '铲屎官须知', body: `color:${p.ink};font-size:${fz(14)}px;line-height:1.85;` },
+        quote: { box: `padding:14px 18px;border-radius:18px;background-color:${p.soft};`, mark: markP(`margin:0 0 6px 0;color:${p.accent};font-size:${fz(13)}px;font-weight:700;`, '主子说：'), body: `color:${p.ink};font-size:${fz(15)}px;line-height:1.85;`, cite: `text-align:right;color:${muted};font-size:${fz(12)}px;` },
+        card: { box: `border:2px solid ${p.accent};border-radius:16px;`, head: `margin:0;padding:10px 16px;background-color:${p.accent};border-radius:13px 13px 0 0;`, cat: `color:#FFF4E6;font-size:${fz(11)}px;letter-spacing:.1em;`, title: `color:#FFFFFF;font-size:${fz(17)}px;font-weight:700;`, rows: 'padding:10px 16px;', row: `color:${p.ink};font-size:${fz(13)}px;line-height:2;`, key: `display:inline-block;width:4.5em;color:${p.accent};font-size:${fz(12)}px;font-weight:700;` },
+        image: `padding:6px;border:2px dashed ${p.accent};border-radius:20px;`
+      },
+      film: {
+        routeFrame: `border:1px solid ${p.title};border-top:6px solid ${p.title};`,
+        routeDots: (i, ends) => ends ? '▶' : '▷',
+        tip: { box: `padding:12px 16px;border:1px solid ${p.title};border-left:6px solid ${p.accent};`, title: `color:${p.title};font-size:${fz(15)}px;font-weight:700;`, badge: `display:inline-block;margin:0 8px 0 0;padding:0 6px;background-color:${p.title};color:#FFFFFF;font-family:${MONO};font-size:${fz(11)}px;line-height:1.9;letter-spacing:.12em;`, label: 'NOTE', body: `color:${p.ink};font-size:${fz(14)}px;line-height:1.85;` },
+        quote: { box: `padding:24px 20px;background-color:${p.title};`, mark: markP(`margin:0 0 12px 0;text-align:center;color:${p.accent};font-family:${MONO};font-size:${fz(11)}px;letter-spacing:.3em;`, '● 台词'), body: `text-align:center;color:#F4F4F4;font-size:${fz(16)}px;line-height:1.9;`, cite: `text-align:center;color:${p.accent};font-size:${fz(12)}px;` },
+        card: { box: `border:1px solid ${p.title};`, head: `margin:0;padding:12px 16px;background-color:${p.title};`, cat: `color:${p.accent};font-family:${MONO};font-size:${fz(11)}px;letter-spacing:.2em;`, title: `color:#FFFFFF;font-size:${fz(17)}px;font-weight:700;`, rows: 'padding:10px 16px;', row: `color:${p.ink};font-size:${fz(13)}px;line-height:2;`, key: `display:inline-block;width:4.5em;color:${muted};font-family:${MONO};font-size:${fz(11)}px;letter-spacing:.1em;` },
+        tableHead: `background-color:${p.title};color:#FFFFFF;font-weight:700;`,
+        image: `padding:10px;background-color:${p.title};border:0;border-radius:0;`,
+        opening: lockedP(`margin:0 0 26px 0;background-color:${p.title};color:#FFFFFF;text-align:center;font-size:${fz(10)}px;letter-spacing:.9em;line-height:1.8;`)('■■■■■■■■■■■■')
+      },
+      gaming: {
+        routeFrame: `border:1px solid ${p.em};border-radius:4px;background-color:${p.soft};`,
+        routeDots: (i, ends) => ends ? '◆' : '◇',
+        tip: { box: `padding:12px 16px;border:1px solid ${p.em};border-radius:4px;background-color:${p.soft};`, title: `color:${p.em};font-family:${MONO};font-size:${fz(14)}px;font-weight:700;`, badge: `margin:0 8px 0 0;color:${p.accent};font-family:${MONO};`, label: '[GG]', body: `color:${p.ink};font-size:${fz(14)}px;line-height:1.85;` },
+        quote: { box: `padding:12px 16px;background-color:${p.soft};border:1px solid ${p.line};border-radius:4px;`, mark: markP(`margin:0 0 6px 0;color:${muted};font-family:${MONO};font-size:${fz(11)}px;`, '$ cat quote.txt'), body: `color:${p.em};font-family:${MONO};font-size:${fz(14)}px;line-height:1.8;`, cite: `text-align:right;color:${muted};font-family:${MONO};font-size:${fz(11)}px;` },
+        card: { box: `border:1px solid ${p.accent};border-radius:4px;background-color:${p.soft};`, head: `margin:0;padding:12px 16px;border-bottom:1px dashed ${p.line};`, cat: `color:${p.accent};font-family:${MONO};font-size:${fz(11)}px;letter-spacing:.2em;`, title: `color:${p.title};font-size:${fz(17)}px;font-weight:700;`, rows: 'padding:10px 16px;', row: `color:${p.em};font-family:${MONO};font-size:${fz(13)}px;line-height:2;`, key: `display:inline-block;width:5em;color:${muted};font-family:${MONO};font-size:${fz(11)}px;` },
+        tableHead: `background-color:${p.accent};color:#FFFFFF;font-weight:700;`,
+        h3: `padding:0 0 0 10px;border-left:3px solid ${p.em};font-family:${MONO};`
+      },
+      notice: {
+        routeFrame: `border:1px solid ${p.ink};`,
+        routeDots: (i) => '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'[i] || '○',
+        tip: { box: `padding:12px 16px;border:1px solid ${p.ink};`, title: `color:${p.ink};font-size:${fz(15)}px;font-weight:700;`, badge: `display:inline-block;margin:0 8px 0 0;padding:0 4px;border:1px solid ${p.accent};color:${p.accent};font-size:${fz(12)}px;line-height:1.6;font-weight:400;`, label: '注', body: `color:${p.ink};font-size:${fz(15)}px;line-height:1.9;` },
+        quote: { box: 'padding:0 0 0 2em;', body: `font-family:${KAI};color:${p.ink};font-size:${fz(16)}px;line-height:1.9;`, cite: `text-align:right;color:${p.ink};font-size:${fz(14)}px;` },
+        card: { box: `border:1px solid ${p.ink};`, head: `margin:0;padding:10px 14px;border-bottom:1px solid ${p.ink};`, cat: `text-align:center;color:${muted};font-size:${fz(11)}px;`, title: `text-align:center;color:${p.ink};font-family:${SANS};font-size:${fz(16)}px;font-weight:700;`, rows: 'padding:0;', row: `margin:0;padding:8px 14px;border-bottom:1px solid ${p.line};color:${p.ink};font-size:${fz(14)}px;line-height:1.7;`, key: `display:inline-block;width:5em;font-family:${SANS};font-weight:700;color:${p.ink};font-size:${fz(13)}px;` },
+        tableLine: p.ink,
+        h3: `font-family:${KAI};`,
+        opening: lockedP(`margin:0 0 28px 0;border-top:3px solid ${p.accent};border-bottom:1px solid ${p.accent};font-size:1px;line-height:3px;`)('&nbsp;')
+      },
+      wedding: {
+        routeFrame: `border:3px double ${p.accent};background-color:#FFFFFF;`,
+        routeDots: (i, ends) => ends ? '❀' : '✧',
+        tip: { box: `padding:18px 20px;border:3px double ${p.accent};background-color:#FFFFFF;`, title: `text-align:center;color:${p.title};font-size:${fz(15)}px;letter-spacing:.1em;font-weight:700;`, badge: `display:block;margin:0 0 4px 0;color:${p.accent};font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:${fz(13)}px;font-weight:400;`, label: '✧ 温馨提示 ✧', body: `text-align:center;color:${p.ink};font-size:${fz(14)}px;line-height:1.9;` },
+        quote: { box: 'padding:4px 12px;', mark: markP(`text-align:center;color:${p.accent};font-size:${fz(14)}px;letter-spacing:.6em;`, '— ✧ —'), body: `text-align:center;color:${p.title};font-size:${fz(17)}px;font-style:italic;line-height:1.9;letter-spacing:.06em;`, cite: `text-align:center;color:${muted};font-size:${fz(12)}px;letter-spacing:.1em;` },
+        card: { box: `border:3px double ${p.accent};background-color:#FFFFFF;`, head: 'margin:0;padding:18px 18px 8px;', cat: `text-align:center;color:${p.accent};font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:${fz(13)}px;`, title: `text-align:center;color:${p.title};font-size:${fz(18)}px;letter-spacing:.2em;font-weight:700;`, rows: 'padding:6px 18px 18px;', row: `text-align:center;color:${p.ink};font-size:${fz(14)}px;line-height:2;`, key: `margin:0 8px 0 0;color:${p.accent};font-size:${fz(12)}px;letter-spacing:.1em;` },
+        image: `padding:8px;border:1px solid ${p.accent};background-color:#FFFFFF;border-radius:0;`,
+        opening: lockedP(`margin:0 0 28px 0;text-align:center;color:${p.accent};font-size:${fz(14)}px;letter-spacing:.8em;line-height:1.6;`)('✧ ❀ ✧')
+      },
+      sale: {
+        routeFrame: `border:2px dashed ${p.accent};border-radius:10px;background-color:${p.soft};`,
+        routeDots: (i, ends) => ends ? '★' : '☆',
+        tip: { box: `padding:14px 16px;border:2px dashed ${p.accent};border-radius:10px;background-color:${p.soft};`, title: `color:${p.title};font-size:${fz(16)}px;font-weight:800;`, badge: `display:inline-block;margin:0 8px 0 0;padding:0 10px;border-radius:999px;background-color:${p.accent};color:#FFFFFF;font-size:${fz(12)}px;line-height:1.8;font-weight:800;`, label: '福利', body: `color:${p.ink};font-size:${fz(14)}px;line-height:1.85;` },
+        quote: { box: `padding:14px 16px;border-radius:12px;background-color:#FFFFFF;border:1px solid ${p.line};`, mark: markP(`margin:0 0 6px 0;color:${p.accent};font-size:${fz(13)}px;font-weight:700;`, '★★★★★ 买家好评'), body: `color:${p.ink};font-size:${fz(15)}px;line-height:1.8;`, cite: `text-align:right;color:${muted};font-size:${fz(12)}px;` },
+        card: { box: `border:2px solid ${p.accent};border-radius:10px;`, head: `margin:0;padding:10px 16px;background-color:${p.accent};border-radius:7px 7px 0 0;`, cat: `color:${p.line};font-size:${fz(11)}px;font-weight:700;letter-spacing:.1em;`, title: `color:#FFFFFF;font-size:${fz(18)}px;font-weight:800;`, rows: `padding:10px 16px;background-color:${p.soft};border-radius:0 0 8px 8px;`, row: `color:${p.ink};font-size:${fz(14)}px;line-height:2;`, key: `display:inline-block;width:4.5em;color:${p.accent};font-size:${fz(12)}px;font-weight:800;` }
+      },
+      art: {
+        routeFrame: `border:0;border-top:2px solid ${p.title};`,
+        routeDots: (i, ends) => ends ? '■' : '□',
+        tip: { box: `padding:2px 0 2px 16px;border-left:3px solid ${p.accent};`, title: `color:${p.title};font-size:${fz(14)}px;font-weight:600;`, badge: `display:block;margin:0 0 4px 0;color:${muted};font-family:${MONO};font-size:${fz(10)}px;letter-spacing:.25em;font-weight:400;`, label: 'NOTE / 展讯', body: `color:${p.ink};font-size:${fz(14)}px;line-height:1.9;` },
+        quote: { box: `padding:4px 0 4px 22px;border-left:1px solid ${p.accent};`, body: `color:${p.title};font-size:${fz(19)}px;line-height:1.8;`, cite: `color:${muted};font-family:${MONO};font-size:${fz(11)}px;letter-spacing:.15em;` },
+        card: { box: `border-top:2px solid ${p.title};background-color:#FFFFFF;`, head: 'margin:0;padding:14px 0 8px;', cat: `color:${p.accent};font-family:${MONO};font-size:${fz(10)}px;letter-spacing:.25em;`, title: `color:${p.title};font-style:italic;font-size:${fz(17)}px;font-weight:600;`, rows: `padding:6px 0 4px;border-top:1px solid ${p.line};`, row: `color:${p.ink};font-size:${fz(13)}px;line-height:2;`, key: `display:inline-block;width:6em;color:${muted};font-family:${MONO};font-size:${fz(10)}px;letter-spacing:.15em;` },
+        h3: `letter-spacing:.12em;font-weight:600;padding:0 0 6px 0;border-bottom:1px solid ${p.line};`,
+        image: `padding:18px;background-color:#FFFFFF;border:1px solid ${p.line};border-radius:0;`,
+        divider: () => `<p${role('divider')}${locked} style="margin:32px 0;padding:0;text-align:left;text-indent:0;line-height:1.25;"><span style="display:inline-block;width:48px;vertical-align:middle;border-top:3px solid ${p.accent};font-size:1px;line-height:2px;">&nbsp;</span></p>`
+      }
+    };
+    const themeDesign = DESIGNS[p.theme] || {};
+    const DESIGN = {
+      ...themeDesign,
+      tip: themeDesign.tip && tipFrom(themeDesign.tip),
+      quote: themeDesign.quote && quoteFrom(themeDesign.quote),
+      card: themeDesign.card && cardFrom(themeDesign.card)
+    };
+    if (DESIGN.opening) blocks.push(DESIGN.opening);
 
     const fieldText = (root, name) => root.querySelector(`[data-part="${name}"]`)?.textContent.replace(/\s+/g, ' ').trim() || '';
     const textWithout = (element, selector) => {
@@ -3239,6 +3363,8 @@
 
     const nodes = source.querySelectorAll('h2,h3,p,blockquote,ul,ol,hr,table,figure,img,section[data-template-role],[data-template-role="widget"],.theme-tip-card,.theme-route-card,.route-card,.stay-card');
     nodes.forEach(node => {
+      // Template-generated ornaments are re-created on every render, never parsed back.
+      if (node.closest('[data-template-role="opening"]')) return;
       if (node.closest(componentSelector) && !node.matches(componentSelector)) return;
       if (node.closest('[data-template-role="widget"]') && !node.matches('[data-template-role="widget"]')) return;
       if (node.closest('section[data-template-role]') && !node.matches('section[data-template-role]')) return;
@@ -3251,6 +3377,7 @@
         // Re-render in both modes (keeping the role) so components pick up the
         // current template and survive any number of re-renders.
         const type = node.dataset.templateRole;
+        if (type === 'opening') return;
         if (type === 'route') {
           const rail = node.querySelector('[data-part="stations"]');
           const stations = rail ? [...rail.querySelectorAll(':scope > p')].map(station => ({
@@ -3370,7 +3497,7 @@
         const align = (node.tagName === 'FIGURE' && node.getAttribute('data-align')) || 'center';
         const margin = align === 'left' ? '28px auto 8px 0' : align === 'right' ? '28px 0 8px auto' : '28px auto 8px auto';
         const frame = (node.tagName === 'FIGURE' && node.getAttribute('data-frame')) || 'none';
-        const templateFrame = p.imageFrame ? `padding:4px;border:1px solid ${p.line};border-radius:0;` : 'border:0;border-radius:0;';
+        const templateFrame = DESIGN.image || (p.imageFrame ? `padding:4px;border:1px solid ${p.line};border-radius:0;` : 'border:0;border-radius:0;');
         const frameStyle = frame === 'polaroid'
           ? 'padding:10px 10px 24px 10px;background-color:#FFFFFF;box-shadow:0 6px 20px rgba(0,0,0,.12);border:0;border-radius:0;'
           : frame === 'shadow'
@@ -3863,10 +3990,15 @@
   // paragraph to type into; otherwise the first text landed as a bare text
   // node that showed without template styling.
   function ensureEditableParagraph() {
-    if (editor.textContent.trim() || editor.querySelector('p,h2,h3,figure,img,table,section,ul,ol,blockquote,hr')) return;
-    editor.innerHTML = `<p data-template-role="body" style="${bodyStyle(canonicalProfile())}"><br/></p>`;
+    const content = [...editor.children].filter(child => child.dataset.templateRole !== 'opening');
+    if (content.length || [...editor.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) return;
+    const paragraph = document.createElement('p');
+    paragraph.setAttribute('data-template-role', 'body');
+    paragraph.setAttribute('style', bodyStyle(canonicalProfile()));
+    paragraph.appendChild(document.createElement('br'));
+    editor.appendChild(paragraph);
     const caret = document.createRange();
-    caret.setStart(editor.firstChild, 0);
+    caret.setStart(paragraph, 0);
     caret.collapse(true);
     getSelection().removeAllRanges();
     getSelection().addRange(caret);
