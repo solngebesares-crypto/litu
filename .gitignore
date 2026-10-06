@@ -1,6 +1,7 @@
 invite-codes.json
 invite-codes.json.tmp
 .invite-secret
+admin.json
 node_modules/
 uploads/
 dist/

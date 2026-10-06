@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$ROOT/dist/paihaokan-deploy.sh"
 mkdir -p "$ROOT/dist"
 STAGE=$(mktemp -d); trap 'rm -rf "$STAGE"' EXIT
-cp "$ROOT/index.html" "$ROOT/login.html" "$ROOT/server.js" "$ROOT/README.md" "$ROOT/deploy/install.sh" "$STAGE/"
+cp "$ROOT/index.html" "$ROOT/login.html" "$ROOT/admin.html" "$ROOT/server.js" "$ROOT/README.md" "$ROOT/deploy/install.sh" "$STAGE/"
 {
   cat <<'HEAD'
 #!/usr/bin/env bash

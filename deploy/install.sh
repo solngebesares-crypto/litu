@@ -19,7 +19,7 @@ say() { printf '\n\033[1;35m▶ %s\033[0m\n' "$*"; }
 die() { printf '\n\033[1;31m✘ %s\033[0m\n' "$*" >&2; exit 1; }
 
 [ "$(id -u)" -eq 0 ] || die "请用 root 运行：sudo bash $0"
-for f in index.html login.html server.js; do
+for f in index.html login.html admin.html server.js; do
   [ -f "$SRC_DIR/$f" ] || die "缺少 $f，请把它和本脚本放在同一目录"
 done
 
@@ -70,7 +70,7 @@ echo "Node.js $("$NODE_BIN" -v)"
 say "3/6 安装程序到 $APP_DIR"
 id "$APP_USER" >/dev/null 2>&1 || useradd --system --home-dir "$APP_DIR" --shell /usr/sbin/nologin "$APP_USER" 2>/dev/null || useradd -r -d "$APP_DIR" -s /sbin/nologin "$APP_USER"
 mkdir -p "$APP_DIR/uploads"
-install -m 0644 "$SRC_DIR/index.html" "$SRC_DIR/login.html" "$SRC_DIR/server.js" "$APP_DIR/"
+install -m 0644 "$SRC_DIR/index.html" "$SRC_DIR/login.html" "$SRC_DIR/admin.html" "$SRC_DIR/server.js" "$APP_DIR/"
 [ -f "$SRC_DIR/README.md" ] && install -m 0644 "$SRC_DIR/README.md" "$APP_DIR/"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
@@ -150,6 +150,14 @@ else
 fi
 (cd "$APP_DIR" && runuser -u "$APP_USER" -- "$NODE_BIN" server.js invite list)
 
+if [ ! -s "$APP_DIR/admin.json" ]; then
+  echo
+  (cd "$APP_DIR" && runuser -u "$APP_USER" -- "$NODE_BIN" server.js admin password)
+  ADMIN_NOTE="后台密码见上方，请记下来"
+else
+  ADMIN_NOTE="沿用原来的后台密码"
+fi
+
 PUBLIC_IP=$(curl -fsS --connect-timeout 3 http://100.100.100.200/latest/meta-data/eipv4 2>/dev/null \
   || curl -fsS --connect-timeout 3 http://100.100.100.200/latest/meta-data/public-ipv4 2>/dev/null \
   || curl -fsS --connect-timeout 5 https://ifconfig.me 2>/dev/null || echo "你的服务器公网IP")
@@ -163,14 +171,18 @@ cat <<EOF
  访问地址：$ADDRESS
  用上面列出的邀请码登录即可使用。
 
+ 管理后台：$ADDRESS/admin（$ADMIN_NOTE）
+ 在后台可以生成邀请码、查看激活和使用情况、解绑或停用。
+
  如果浏览器打不开：到阿里云控制台 → 云服务器 ECS → 安全组 →
  入方向，添加规则「允许 HTTP(80) 端口，授权对象 0.0.0.0/0」。
 
  常用命令：
    生成邀请码  cd $APP_DIR && runuser -u $APP_USER -- node server.js invite create --count 5
    查看邀请码  cd $APP_DIR && runuser -u $APP_USER -- node server.js invite list
+   修改后台密码 cd $APP_DIR && runuser -u $APP_USER -- node server.js admin password 新密码
    查看日志    journalctl -u paihaokan -n 50
    重启服务    systemctl restart paihaokan
- 需要备份的数据：$APP_DIR/invite-codes.json、$APP_DIR/.invite-secret、$APP_DIR/uploads/
+ 需要备份的数据：$APP_DIR/invite-codes.json、$APP_DIR/.invite-secret、$APP_DIR/admin.json、$APP_DIR/uploads/
 ========================================================
 EOF

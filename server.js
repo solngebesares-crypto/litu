@@ -168,12 +168,12 @@ function clientKey(req) {
   const forwarded = TRUST_PROXY ? String(req.headers['x-forwarded-for'] || '').split(',').map(part => part.trim()).filter(Boolean).pop() : '';
   return forwarded || req.socket.remoteAddress || '';
 }
-function loginBlocked(req) {
-  const entry = failedLogins.get(clientKey(req));
+function loginBlocked(req, scope = 'invite') {
+  const entry = failedLogins.get(`${scope}:${clientKey(req)}`);
   return Boolean(entry && entry.count >= 10 && Date.now() - entry.since < 15 * 60e3);
 }
-function recordFailedLogin(req) {
-  const key = clientKey(req);
+function recordFailedLogin(req, scope = 'invite') {
+  const key = `${scope}:${clientKey(req)}`;
   const entry = failedLogins.get(key);
   if (!entry || Date.now() - entry.since >= 15 * 60e3) failedLogins.set(key, { count: 1, since: Date.now() });
   else entry.count += 1;
@@ -428,11 +428,198 @@ async function createDraft(payload) {
   return result;
 }
 
+/* ------------------------------------------------------------------ */
+/* Admin console (/admin): invite codes and usage                      */
+/* ------------------------------------------------------------------ */
+// The admin password is stored as a scrypt hash in admin.json. Admin sessions
+// are signed cookies tied to that hash, so changing the password signs every
+// admin out. Admin writes require a same-origin JSON request.
+const ADMIN_FILE = process.env.ADMIN_FILE || path.join(__dirname, 'admin.json');
+const ADMIN_COOKIE = 'phk_admin';
+const ADMIN_SESSION_DAYS = 7;
+
+function loadAdmin() {
+  try { return JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8')); } catch (error) { return null; }
+}
+
+function setAdminPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(String(password), salt, 64).toString('hex');
+  fs.writeFileSync(ADMIN_FILE, `${JSON.stringify({ salt, hash, updatedAt: new Date().toISOString() }, null, 2)}\n`, { mode: 0o600 });
+}
+
+function checkAdminPassword(password) {
+  const admin = loadAdmin();
+  if (!admin || !password) return false;
+  const actual = crypto.scryptSync(String(password), admin.salt, 64);
+  const expected = Buffer.from(admin.hash, 'hex');
+  return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+}
+
+function adminToken() {
+  const admin = loadAdmin();
+  const payload = Buffer.from(JSON.stringify({ v: admin.hash.slice(0, 16), e: Date.now() + ADMIN_SESSION_DAYS * 86400e3 })).toString('base64url');
+  return `${payload}.${sign(`admin.${payload}`)}`;
+}
+
+function isAdmin(req) {
+  const token = parseCookies(req)[ADMIN_COOKIE];
+  const admin = loadAdmin();
+  if (!admin || !token || !token.includes('.')) return false;
+  const [payload, signature] = token.split('.');
+  const expected = sign(`admin.${payload}`);
+  if (signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return false;
+  try {
+    const session = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return session.v === admin.hash.slice(0, 16) && Date.now() < session.e;
+  } catch (error) { return false; }
+}
+
+function adminCookie(req, value, maxAgeSeconds) {
+  const secure = process.env.COOKIE_SECURE === '1' || (TRUST_PROXY && req.headers['x-forwarded-proto'] === 'https');
+  return `${ADMIN_COOKIE}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAgeSeconds}${secure ? '; Secure' : ''}`;
+}
+
+// Blocks cross-site requests: admin writes must be JSON from this same site.
+function sameOriginJson(req) {
+  if (!/^application\/json\b/i.test(req.headers['content-type'] || '')) return false;
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  try { return new URL(origin).host === req.headers.host; } catch (error) { return false; }
+}
+
+function inviteStatus(invite) {
+  if (invite.disabled) return 'disabled';
+  if (invite.expiresAt && Date.now() > Date.parse(invite.expiresAt)) return 'expired';
+  return boundDevices(invite).length ? 'active' : 'unused';
+}
+
+function deviceLabel(userAgent) {
+  const ua = String(userAgent || '');
+  const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : '未知系统';
+  const browser = /MicroMessenger/.test(ua) ? '微信' : /Edg\//.test(ua) ? 'Edge' : /QQBrowser/.test(ua) ? 'QQ浏览器' : /UCBrowser/.test(ua) ? 'UC' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '浏览器';
+  return `${os} · ${browser}`;
+}
+
+function adminInviteView(invite) {
+  const devices = boundDevices(invite).map(device => ({
+    boundAt: device.boundAt,
+    lastActiveAt: [device.lastSeenAt, device.lastLoginAt, device.boundAt].filter(Boolean).sort().pop(),
+    device: deviceLabel(device.userAgent)
+  }));
+  return {
+    code: invite.code,
+    note: invite.note || '',
+    status: inviteStatus(invite),
+    maxDevices: maxDevicesOf(invite),
+    devices,
+    lastActiveAt: devices.map(device => device.lastActiveAt).sort().pop() || null,
+    createdAt: invite.createdAt,
+    expiresAt: invite.expiresAt || null
+  };
+}
+
+function adminSummary(data) {
+  const invites = data.codes.map(adminInviteView);
+  const since = days => new Date(Date.now() - days * 86400e3).toISOString();
+  const count = test => invites.filter(test).length;
+  let imageCount = 0;
+  let imageBytes = 0;
+  try {
+    for (const name of fs.readdirSync(UPLOAD_DIR)) {
+      imageCount += 1;
+      imageBytes += fs.statSync(path.join(UPLOAD_DIR, name)).size;
+    }
+  } catch (error) { /* no uploads yet */ }
+  return {
+    total: invites.length,
+    activated: count(item => item.devices.length > 0),
+    activeToday: count(item => item.lastActiveAt && item.lastActiveAt >= since(1)),
+    active7d: count(item => item.lastActiveAt && item.lastActiveAt >= since(7)),
+    unused: count(item => item.status === 'unused'),
+    inactive: count(item => item.status === 'disabled' || item.status === 'expired'),
+    imageCount,
+    imageBytes
+  };
+}
+
+function createInvites(data, { count, maxDevices, days, note }) {
+  const created = [];
+  while (created.length < count) {
+    const code = generateCode();
+    if (findInvite(data, code)) continue;
+    const invite = { code, note, maxDevices, devices: [], maxUses: 0, uses: 0, createdAt: new Date().toISOString(), expiresAt: days > 0 ? new Date(Date.now() + days * 86400e3).toISOString() : null, disabled: false };
+    data.codes.push(invite);
+    created.push(invite);
+  }
+  return created;
+}
+
+async function handleAdmin(req, res, pathname) {
+  if (req.method === 'GET' && (pathname === '/admin' || pathname === '/admin/')) return sendFile(res, 'admin.html');
+  if (!pathname.startsWith('/api/admin/')) return false;
+  if (req.method === 'POST' && !sameOriginJson(req)) return json(res, 403, { ok: false, error: '请求被拒绝' });
+
+  if (req.method === 'POST' && pathname === '/api/admin/login') {
+    if (loginBlocked(req, 'admin')) return json(res, 429, { ok: false, error: '尝试次数过多，请 15 分钟后再试' });
+    if (!loadAdmin()) return json(res, 400, { ok: false, error: '还没有设置后台密码，请在服务器上运行 node server.js admin password' });
+    const payload = await readJson(req);
+    if (!checkAdminPassword(payload.password)) {
+      recordFailedLogin(req, 'admin');
+      return json(res, 401, { ok: false, error: '密码不正确' });
+    }
+    failedLogins.delete(`admin:${clientKey(req)}`);
+    return json(res, 200, { ok: true }, { 'Set-Cookie': adminCookie(req, adminToken(), ADMIN_SESSION_DAYS * 86400) });
+  }
+  if (req.method === 'POST' && pathname === '/api/admin/logout') {
+    return json(res, 200, { ok: true }, { 'Set-Cookie': adminCookie(req, '', 0) });
+  }
+  if (!isAdmin(req)) return json(res, 401, { ok: false, error: '请先登录后台' });
+
+  if (req.method === 'GET' && pathname === '/api/admin/overview') {
+    const data = loadInvites();
+    const invites = data.codes.map(adminInviteView).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    return json(res, 200, { ok: true, summary: adminSummary(data), invites });
+  }
+  if (req.method !== 'POST') return json(res, 405, { ok: false, error: '不支持的请求' });
+
+  if (pathname === '/api/admin/invites') {
+    const payload = await readJson(req);
+    const count = Math.max(1, Math.min(200, Math.floor(Number(payload.count) || 1)));
+    const maxDevices = Math.max(1, Math.min(20, Math.floor(Number(payload.devices) || 1)));
+    const days = Math.max(0, Math.min(3650, Math.floor(Number(payload.days) || 0)));
+    const note = String(payload.note || '').trim().slice(0, 60);
+    const data = loadInvites();
+    const created = createInvites(data, { count, maxDevices, days, note });
+    saveInvites(data);
+    return json(res, 200, { ok: true, codes: created.map(invite => invite.code) });
+  }
+  const action = pathname.match(/^\/api\/admin\/invites\/([A-Za-z0-9-]{4,20})\/(unbind|disable|enable|delete|note)$/);
+  if (action) {
+    const data = loadInvites();
+    const invite = findInvite(data, action[1]);
+    if (!invite) return json(res, 404, { ok: false, error: '找不到这个邀请码' });
+    const kind = action[2];
+    if (kind === 'unbind') invite.devices = [];
+    else if (kind === 'disable') invite.disabled = true;
+    else if (kind === 'enable') invite.disabled = false;
+    else if (kind === 'delete') data.codes.splice(data.codes.indexOf(invite), 1);
+    else if (kind === 'note') invite.note = String((await readJson(req)).note || '').trim().slice(0, 60);
+    saveInvites(data);
+    return json(res, 200, { ok: true });
+  }
+  return json(res, 404, { ok: false, error: 'Not found' });
+}
+
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
   try {
     if (req.method === 'GET' && pathname === '/api/health') return json(res, 200, { ok: true });
     if (req.method === 'GET' && pathname.startsWith('/uploads/')) return sendUploadedImage(res, pathname.slice('/uploads/'.length));
+    if (pathname === '/admin' || pathname === '/admin/' || pathname.startsWith('/api/admin/')) {
+      const handled = await handleAdmin(req, res, pathname);
+      if (handled !== false) return handled;
+    }
 
     if (req.method === 'POST' && pathname === '/api/invite/login') {
       if (loginBlocked(req)) return json(res, 429, { ok: false, error: '尝试次数过多，请 15 分钟后再试' });
@@ -464,7 +651,7 @@ const server = http.createServer(async (req, res) => {
       invite.uses = (invite.uses || 0) + 1;
       invite.lastUsedAt = now;
       saveInvites(data);
-      failedLogins.delete(clientKey(req));
+      failedLogins.delete(`invite:${clientKey(req)}`);
       return json(res, 200, { ok: true }, { 'Set-Cookie': [
         sessionCookie(req, createSessionToken(invite.code, deviceId, sessionKey), SESSION_DAYS * 86400),
         sessionCookie(req, deviceId, 5 * 365 * 86400, DEVICE_COOKIE)
@@ -591,6 +778,14 @@ function runInviteCli(args) {
 
 if (process.argv[2] === 'invite') {
   runInviteCli(process.argv.slice(3));
+} else if (process.argv[2] === 'admin' && process.argv[3] === 'password') {
+  // node server.js admin password [新密码]   不填则随机生成一个
+  const password = process.argv[4] || crypto.randomBytes(9).toString('base64url');
+  if (password.length < 8) { console.error('后台密码至少 8 位'); process.exitCode = 1; }
+  else {
+    setAdminPassword(password);
+    console.log(`后台密码已设置为：${password}\n后台地址：http://你的服务器地址/admin（修改密码后，已登录的后台会被退出）`);
+  }
 } else {
   server.listen(PORT, HOST, () => {
     console.log(`排好看已启动：http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
